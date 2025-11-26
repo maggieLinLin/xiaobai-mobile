@@ -1000,32 +1000,55 @@ function initMusic() {
 }
 
 function addCustomMusic() {
-    const title = document.getElementById('add-music-title').value.trim();
-    const artist = document.getElementById('add-music-artist').value.trim();
+    let title = document.getElementById('add-music-title').value.trim();
+    let artist = document.getElementById('add-music-artist').value.trim();
     const url = document.getElementById('add-music-url').value.trim();
+    const fileInput = document.getElementById('add-music-file');
+    const file = fileInput.files[0];
     
-    if (!title || !artist || !url) {
-        alert('请填写完整信息');
+    if (!url && !file) {
+        alert('请输入链接或上传文件');
         return;
     }
     
-    const song = {
-        id: Date.now(),
-        title: title,
-        artist: artist,
-        url: url
-    };
-    
-    state.music.playlist.push(song);
-    saveState();
-    playSong(song);
-    closeApp();
-    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const song = {
+                id: Date.now(),
+                title: title || file.name.replace(/\.[^/.]+$/, ''),
+                artist: artist || '未知歌手',
+                url: e.target.result
+            };
+            state.music.playlist.push(song);
+            saveState();
+            playSong(song);
+            closeApp();
+            clearAddMusicForm();
+            alert('添加成功！');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        const song = {
+            id: Date.now(),
+            title: title || '未命名歌曲',
+            artist: artist || '未知歌手',
+            url: url
+        };
+        state.music.playlist.push(song);
+        saveState();
+        playSong(song);
+        closeApp();
+        clearAddMusicForm();
+        alert('添加成功！');
+    }
+}
+
+function clearAddMusicForm() {
     document.getElementById('add-music-title').value = '';
     document.getElementById('add-music-artist').value = '';
     document.getElementById('add-music-url').value = '';
-    
-    alert('添加成功！');
+    document.getElementById('add-music-file').value = '';
 }
 
 function updateProgress() {

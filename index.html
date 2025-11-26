@@ -138,14 +138,8 @@
                             <div class="music-info">
                                 <div class="music-title">未播放</div>
                                 <div class="music-artist">添加音乐开始播放</div>
-                            </div>
-                            <div class="music-progress">
                                 <div class="progress-bar">
                                     <div class="progress-fill" id="progress-fill"></div>
-                                </div>
-                                <div class="music-time">
-                                    <span id="current-time">0:00</span>
-                                    <span id="total-time">0:00</span>
                                 </div>
                             </div>
                             <div class="music-controls">
@@ -284,17 +278,19 @@
                 </div>
                 <div style="padding:20px;">
                     <div style="margin-bottom:20px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:bold;">音乐名称</label>
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">歌曲名称</label>
                         <input type="text" id="add-music-title" placeholder="输入歌曲名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
                     </div>
                     <div style="margin-bottom:20px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:bold;">艺术家</label>
-                        <input type="text" id="add-music-artist" placeholder="输入艺术家名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">歌手</label>
+                        <input type="text" id="add-music-artist" placeholder="输入歌手名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
                     </div>
                     <div style="margin-bottom:20px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:bold;">音乐链接</label>
-                        <input type="url" id="add-music-url" placeholder="粘贴音乐 URL (支持 MP3)" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
-                        <div style="font-size:11px;color:#999;margin-top:5px;">支持直接 MP3 链接</div>
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">音乐来源</label>
+                        <input type="url" id="add-music-url" placeholder="粘贴 MP3 链接或 URL" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;margin-bottom:10px;">
+                        <div style="text-align:center;margin:10px 0;color:#999;font-size:12px;">─── 或 ───</div>
+                        <input type="file" id="add-music-file" accept="audio/*" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                        <div style="font-size:11px;color:#999;margin-top:5px;">支持 MP3、WAV、OGG 等音频格式</div>
                     </div>
                     <button id="confirm-add-music" style="width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:15px;font-size:16px;font-weight:bold;cursor:pointer;">添加到播放列表</button>
                 </div>
