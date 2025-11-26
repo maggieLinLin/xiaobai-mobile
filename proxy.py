@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
+from ytmusicapi import YTMusic
 
 app = Flask(__name__)
 CORS(app)
+ytmusic = YTMusic()
 
 @app.route('/')
 @app.route('/music')
@@ -13,20 +15,18 @@ def music():
         return jsonify({'error': '缺少查询参数'}), 400
     
     try:
-        search_url = f'https://netease-cloud-music-api-mu-six.vercel.app/search?keywords={query}&limit=10'
-        res = requests.get(search_url, timeout=10)
-        data = res.json()
-        
-        if data.get('result', {}).get('songs'):
-            songs = []
-            for s in data['result']['songs']:
-                song_id = s.get('id')
+        results = ytmusic.search(query, filter='songs', limit=10)
+        songs = []
+        for s in results:
+            video_id = s.get('videoId')
+            if video_id:
                 songs.append({
-                    'id': song_id,
-                    'title': s.get('name', ''),
-                    'artist': ', '.join([a.get('name', '') for a in s.get('artists', [])]),
-                    'url': f'https://music.163.com/song/media/outer/url?id={song_id}.mp3'
+                    'id': video_id,
+                    'title': s.get('title', ''),
+                    'artist': ', '.join([a.get('name', '') for a in s.get('artists', [])]) if s.get('artists') else '未知艺人',
+                    'url': f'https://www.youtube.com/watch?v={video_id}'
                 })
+        if songs:
             return jsonify({'code': 200, 'data': songs})
     except Exception as e:
         print(f'API Error: {e}')
