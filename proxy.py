@@ -13,32 +13,19 @@ def music():
         return jsonify({'error': '缺少查询参数'}), 400
     
     try:
-        url = f'http://mobilecdn.kugou.com/api/v3/search/song?format=json&keyword={query}&page=1&pagesize=10'
-        res = requests.get(url, timeout=10)
+        search_url = f'https://netease-cloud-music-api-mu-six.vercel.app/search?keywords={query}&limit=10'
+        res = requests.get(search_url, timeout=10)
         data = res.json()
         
-        if data.get('status') == 1 and data.get('data', {}).get('info'):
+        if data.get('result', {}).get('songs'):
             songs = []
-            for i, s in enumerate(data['data']['info'][:10]):
-                song_hash = s.get('hash', '')
-                play_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{i+1}.mp3"
-                
-                # 嘗試獲取真實播放鏈接
-                if song_hash:
-                    try:
-                        play_api = f'http://www.kugou.com/yy/index.php?r=play/getdata&hash={song_hash}'
-                        play_res = requests.get(play_api, timeout=5)
-                        play_data = play_res.json()
-                        if play_data.get('status') == 1 and play_data.get('data', {}).get('play_url'):
-                            play_url = play_data['data']['play_url']
-                    except:
-                        pass
-                
+            for s in data['result']['songs']:
+                song_id = s.get('id')
                 songs.append({
-                    'id': song_hash,
-                    'title': s.get('songname', ''),
-                    'artist': s.get('singername', ''),
-                    'url': play_url
+                    'id': song_id,
+                    'title': s.get('name', ''),
+                    'artist': ', '.join([a.get('name', '') for a in s.get('artists', [])]),
+                    'url': f'https://music.163.com/song/media/outer/url?id={song_id}.mp3'
                 })
             return jsonify({'code': 200, 'data': songs})
     except Exception as e:
