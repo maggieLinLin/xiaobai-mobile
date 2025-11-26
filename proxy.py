@@ -14,7 +14,11 @@ def music():
     
     try:
         search_url = f'https://s.music.163.com/search/get/?src=lofter&type=1&filterDj=false&limit=10&offset=0&s={query}'
-        res = requests.get(search_url, timeout=10)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': 'https://music.163.com/'
+        }
+        res = requests.get(search_url, headers=headers, timeout=10)
         data = res.json()
         
         if data.get('result', {}).get('songs'):
@@ -24,7 +28,7 @@ def music():
                 # 獲取真實播放鏈接
                 play_url = f'http://music.163.com/song/media/outer/url?id={song_id}'
                 try:
-                    play_res = requests.get(play_url, allow_redirects=True, timeout=5)
+                    play_res = requests.get(play_url, headers=headers, allow_redirects=True, timeout=5)
                     real_url = play_res.url
                 except:
                     real_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{len(songs)+1}.mp3"
