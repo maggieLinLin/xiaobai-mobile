@@ -1,15 +1,8 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "proxy.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/music",
-      "dest": "proxy.py"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ]
 }
