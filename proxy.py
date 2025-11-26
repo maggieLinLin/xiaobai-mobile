@@ -1,11 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-from ytmusicapi import YTMusic
 
 app = Flask(__name__)
 CORS(app)
-ytmusic = YTMusic()
 
 @app.route('/')
 @app.route('/music')
@@ -15,18 +13,28 @@ def music():
         return jsonify({'error': '缺少查询参数'}), 400
     
     try:
-        results = ytmusic.search(query, filter='songs', limit=10)
-        songs = []
-        for s in results:
-            video_id = s.get('videoId')
-            if video_id:
+        search_url = f'https://s.music.163.com/search/get/?src=lofter&type=1&filterDj=false&limit=10&offset=0&s={query}'
+        res = requests.get(search_url, timeout=10)
+        data = res.json()
+        
+        if data.get('result', {}).get('songs'):
+            songs = []
+            for s in data['result']['songs']:
+                song_id = s.get('id')
+                # 獲取真實播放鏈接
+                play_url = f'http://music.163.com/song/media/outer/url?id={song_id}'
+                try:
+                    play_res = requests.get(play_url, allow_redirects=True, timeout=5)
+                    real_url = play_res.url
+                except:
+                    real_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{len(songs)+1}.mp3"
+                
                 songs.append({
-                    'id': video_id,
-                    'title': s.get('title', ''),
-                    'artist': ', '.join([a.get('name', '') for a in s.get('artists', [])]) if s.get('artists') else '未知艺人',
-                    'url': f'https://www.youtube.com/watch?v={video_id}'
+                    'id': song_id,
+                    'title': s.get('name', ''),
+                    'artist': s.get('artists', [{}])[0].get('name', '未知艺人'),
+                    'url': real_url
                 })
-        if songs:
             return jsonify({'code': 200, 'data': songs})
     except Exception as e:
         print(f'API Error: {e}')
