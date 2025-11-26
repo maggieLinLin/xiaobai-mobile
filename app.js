@@ -1053,7 +1053,7 @@ async function searchMusic() {
         let songs = [];
         
         try {
-            const res = await fetch(`http://localhost:5000/music?q=${encodeURIComponent(query)}`);
+            const res = await fetch(`https://xiaobai-mobile.vercel.app/music?q=${encodeURIComponent(query)}`);
             const data = await res.json();
             if (data.code === 200 && data.data) {
                 songs = data.data;

@@ -5,6 +5,7 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
 @app.route('/music')
 def music():
     query = request.args.get('q', '')
