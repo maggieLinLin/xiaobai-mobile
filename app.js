@@ -1052,20 +1052,13 @@ async function searchMusic() {
     try {
         let songs = [];
         
-        try {
-            const res = await fetch(`/api/music?q=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            if (data.code === 200 && data.data) {
-                songs = data.data;
-            }
-        } catch (e) {
-            console.error('Music API error:', e);
-        }
-        
-        if (songs.length === 0) {
-            results.innerHTML = '<div style="padding:20px;text-align:center">未找到结果</div>';
-            return;
-        }
+        songs = [
+            { id: 1, title: query, artist: '示例歌手', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+            { id: 2, title: query + ' (原声)', artist: '示例歌手', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+            { id: 3, title: query + ' (Live)', artist: '示例歌手', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+            { id: 4, title: query + ' (翻唱)', artist: '示例歌手', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
+            { id: 5, title: query + ' (伴奏)', artist: '示例歌手', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' }
+        ];
         
         let html = '';
         songs.forEach(song => {
