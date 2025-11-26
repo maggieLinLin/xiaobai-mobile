@@ -13,31 +13,35 @@ def music():
         return jsonify({'error': '缺少查询参数'}), 400
     
     try:
-        search_url = f'https://s.music.163.com/search/get/?src=lofter&type=1&filterDj=false&limit=10&offset=0&s={query}'
+        search_url = f'https://mobiles.kugou.com/api/v3/search/song?format=json&keyword={query}&page=1&pagesize=10&showtype=1'
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Referer': 'https://music.163.com/'
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36'
         }
         res = requests.get(search_url, headers=headers, timeout=10)
         data = res.json()
         
-        if data.get('result', {}).get('songs'):
+        if data.get('data', {}).get('info'):
             songs = []
-            for s in data['result']['songs']:
-                song_id = s.get('id')
+            for s in data['data']['info']:
+                song_hash = s.get('hash')
+                play_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{len(songs)+1}.mp3"
+                
                 # 獲取真實播放鏈接
-                play_url = f'http://music.163.com/song/media/outer/url?id={song_id}'
-                try:
-                    play_res = requests.get(play_url, headers=headers, allow_redirects=True, timeout=5)
-                    real_url = play_res.url
-                except:
-                    real_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{len(songs)+1}.mp3"
+                if song_hash:
+                    try:
+                        song_url = f'https://m.kugou.com/app/i/getSongInfo.php?hash={song_hash}&cmd=playInfo'
+                        song_res = requests.get(song_url, headers=headers, timeout=5)
+                        song_data = song_res.json()
+                        if song_data.get('url'):
+                            play_url = song_data['url']
+                    except:
+                        pass
                 
                 songs.append({
-                    'id': song_id,
-                    'title': s.get('name', ''),
-                    'artist': s.get('artists', [{}])[0].get('name', '未知艺人'),
-                    'url': real_url
+                    'id': song_hash,
+                    'title': s.get('filename', ''),
+                    'artist': s.get('singername', '未知艺人'),
+                    'url': play_url
                 })
             return jsonify({'code': 200, 'data': songs})
     except Exception as e:
