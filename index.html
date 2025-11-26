@@ -132,23 +132,32 @@
                 <div id="home-pages">
                     <div class="home-page active">
                         <div id="music-widget" class="widget music-full">
+                            <div class="music-cover-art">
+                                <div class="music-vinyl">🎵</div>
+                            </div>
                             <div class="music-info">
-                                <div class="music-cover">🎵</div>
-                                <div class="music-text">
-                                    <div class="music-title">未播放</div>
-                                    <div class="music-artist">点击搜索音乐</div>
+                                <div class="music-title">未播放</div>
+                                <div class="music-artist">添加音乐开始播放</div>
+                            </div>
+                            <div class="music-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                                <div class="music-time">
+                                    <span id="current-time">0:00</span>
+                                    <span id="total-time">0:00</span>
                                 </div>
                             </div>
                             <div class="music-controls">
-                                <button id="music-prev">⏮</button>
-                                <button id="music-play">▶</button>
-                                <button id="music-next">⏭</button>
-                                <button id="music-fav">♡</button>
+                                <button id="music-prev" class="control-btn">⏮</button>
+                                <button id="music-play" class="control-btn play-btn">▶</button>
+                                <button id="music-next" class="control-btn">⏭</button>
                             </div>
-                            <div class="music-side">
-                                <button id="music-list">☰</button>
-                                <button id="music-lyric">📝</button>
-                                <button id="music-search">🔍</button>
+                            <div class="music-actions">
+                                <button id="music-fav" class="action-btn">♡</button>
+                                <button id="music-add" class="action-btn">➕</button>
+                                <button id="music-list" class="action-btn">☰</button>
+                                <button id="music-search" class="action-btn">🔍</button>
                             </div>
                         </div>
                         <div class="widget-row">
@@ -266,6 +275,29 @@
                     <h3>我的最爱</h3>
                 </div>
                 <div id="fav-list"></div>
+            </div>
+
+            <div id="add-music-modal" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3>添加音乐</h3>
+                </div>
+                <div style="padding:20px;">
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">音乐名称</label>
+                        <input type="text" id="add-music-title" placeholder="输入歌曲名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">艺术家</label>
+                        <input type="text" id="add-music-artist" placeholder="输入艺术家名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">音乐链接</label>
+                        <input type="url" id="add-music-url" placeholder="粘贴音乐 URL (支持 MP3)" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                        <div style="font-size:11px;color:#999;margin-top:5px;">支持直接 MP3 链接</div>
+                    </div>
+                    <button id="confirm-add-music" style="width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:15px;font-size:16px;font-weight:bold;cursor:pointer;">添加到播放列表</button>
+                </div>
             </div>
 
             <div id="lyric-float" class="hidden">

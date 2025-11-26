@@ -974,38 +974,98 @@ function initMusic() {
     const musicPrev = document.getElementById('music-prev');
     const musicNext = document.getElementById('music-next');
     const musicFav = document.getElementById('music-fav');
+    const musicAdd = document.getElementById('music-add');
     const musicSearch = document.getElementById('music-search');
     const musicList = document.getElementById('music-list');
-    const musicLyric = document.getElementById('music-lyric');
     const doSearch = document.getElementById('do-search');
-    const closeLyric = document.getElementById('close-lyric');
     const searchInput = document.getElementById('music-search-input');
+    const confirmAdd = document.getElementById('confirm-add-music');
+    const player = document.getElementById('music-player');
     
     if (musicPlay) musicPlay.onclick = (e) => { e.stopPropagation(); e.preventDefault(); togglePlay(); };
     if (musicPrev) musicPrev.onclick = (e) => { e.stopPropagation(); e.preventDefault(); prevSong(); };
     if (musicNext) musicNext.onclick = (e) => { e.stopPropagation(); e.preventDefault(); nextSong(); };
     if (musicFav) musicFav.onclick = (e) => { e.stopPropagation(); e.preventDefault(); toggleFavorite(); };
+    if (musicAdd) musicAdd.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('add-music-modal'); };
     if (musicSearch) musicSearch.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('music-search-modal'); };
     if (musicList) musicList.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('music-fav-modal'); };
-    if (musicLyric) musicLyric.onclick = (e) => { e.stopPropagation(); e.preventDefault(); toggleLyric(); };
     if (doSearch) doSearch.onclick = searchMusic;
-    if (closeLyric) closeLyric.onclick = () => document.getElementById('lyric-float').classList.add('hidden');
+    if (confirmAdd) confirmAdd.onclick = addCustomMusic;
     if (searchInput) searchInput.onkeypress = e => { if (e.key === 'Enter') searchMusic(); };
+    
+    if (player) {
+        player.ontimeupdate = updateProgress;
+        player.onended = () => { nextSong(); };
+    }
+}
+
+function addCustomMusic() {
+    const title = document.getElementById('add-music-title').value.trim();
+    const artist = document.getElementById('add-music-artist').value.trim();
+    const url = document.getElementById('add-music-url').value.trim();
+    
+    if (!title || !artist || !url) {
+        alert('请填写完整信息');
+        return;
+    }
+    
+    const song = {
+        id: Date.now(),
+        title: title,
+        artist: artist,
+        url: url
+    };
+    
+    state.music.playlist.push(song);
+    saveState();
+    playSong(song);
+    closeApp();
+    
+    document.getElementById('add-music-title').value = '';
+    document.getElementById('add-music-artist').value = '';
+    document.getElementById('add-music-url').value = '';
+    
+    alert('添加成功！');
+}
+
+function updateProgress() {
+    const player = document.getElementById('music-player');
+    const fill = document.getElementById('progress-fill');
+    const currentTime = document.getElementById('current-time');
+    const totalTime = document.getElementById('total-time');
+    
+    if (!player || !fill) return;
+    
+    const percent = (player.currentTime / player.duration) * 100;
+    fill.style.width = percent + '%';
+    
+    if (currentTime) currentTime.textContent = formatTime(player.currentTime);
+    if (totalTime) totalTime.textContent = formatTime(player.duration);
+}
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
 }
 
 function togglePlay() {
     const player = document.getElementById('music-player');
     const btn = document.getElementById('music-play');
+    const vinyl = document.querySelector('.music-vinyl');
     if (!player || !btn) return;
     
     if (state.music.isPlaying) {
         player.pause();
         btn.textContent = '\u25b6';
         state.music.isPlaying = false;
+        if (vinyl) vinyl.classList.remove('playing');
     } else {
         player.play().catch(() => {});
         btn.textContent = '\u23f8';
         state.music.isPlaying = true;
+        if (vinyl) vinyl.classList.add('playing');
     }
 }
 
