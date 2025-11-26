@@ -20,11 +20,25 @@ def music():
         if data.get('status') == 1 and data.get('data', {}).get('info'):
             songs = []
             for i, s in enumerate(data['data']['info'][:10]):
+                song_hash = s.get('hash', '')
+                play_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{i+1}.mp3"
+                
+                # 嘗試獲取真實播放鏈接
+                if song_hash:
+                    try:
+                        play_api = f'http://www.kugou.com/yy/index.php?r=play/getdata&hash={song_hash}'
+                        play_res = requests.get(play_api, timeout=5)
+                        play_data = play_res.json()
+                        if play_data.get('status') == 1 and play_data.get('data', {}).get('play_url'):
+                            play_url = play_data['data']['play_url']
+                    except:
+                        pass
+                
                 songs.append({
-                    'id': s.get('hash', i),
+                    'id': song_hash,
                     'title': s.get('songname', ''),
                     'artist': s.get('singername', ''),
-                    'url': f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-{i+1}.mp3"
+                    'url': play_url
                 })
             return jsonify({'code': 200, 'data': songs})
     except Exception as e:
