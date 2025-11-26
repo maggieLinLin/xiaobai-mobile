@@ -1,0 +1,121 @@
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+#phone-container{position:relative}
+#phone-frame{width:375px;height:667px;background:#E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover;border-radius:40px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;position:relative;border:12px solid #78B9DC}
+#notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:25px;background:#333;border-radius:0 0 15px 15px;z-index:1000;cursor:pointer}
+#status-bar{position:absolute;top:0;width:100%;height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 15px;font-size:12px;color:#333;z-index:999}
+#status-time{margin-left:5px}
+#status-battery{display:flex;align-items:center;gap:5px}
+#pull-hint{position:absolute;top:40px;left:0;width:100%;text-align:center;font-size:11px;color:#666;padding:5px;background:rgba(255,255,255,0.5);z-index:998;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+#settings-page{position:absolute;top:-100%;left:0;width:100%;height:100%;background:rgba(255,255,255,0.98);z-index:998;overflow-y:auto;transition:top 0.3s ease}
+#settings-page.show{top:0}
+.settings-header{display:flex;justify-content:space-between;align-items:center;padding:50px 25px 20px;background:linear-gradient(135deg,#007AFF,#0051D5);color:white;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.settings-header h2{font-size:26px;font-weight:600;color:white}
+#close-settings{font-size:36px;border:none;background:rgba(255,255,255,0.2);cursor:pointer;color:white;width:40px;height:40px;border-radius:50%;transition:all 0.3s}
+#close-settings:hover{background:rgba(255,255,255,0.3);transform:rotate(90deg)}
+.settings-content{padding:0;background:linear-gradient(180deg,#f8f9fa 0%,#ffffff 100%)}
+.settings-tabs{display:flex;background:white;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+.tab-btn{flex:1;padding:18px;border:none;background:none;cursor:pointer;font-size:15px;transition:all 0.3s;color:#666;position:relative}
+.tab-btn:hover{background:rgba(0,122,255,0.05)}
+.tab-btn.active{color:#007AFF;font-weight:bold}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:#007AFF;border-radius:3px 3px 0 0}
+.tab-content{display:none;padding:25px;max-height:500px;overflow-y:auto}
+.tab-content::-webkit-scrollbar{width:8px}
+.tab-content::-webkit-scrollbar-track{background:#f1f1f1;border-radius:10px}
+.tab-content::-webkit-scrollbar-thumb{background:#007AFF;border-radius:10px}
+.tab-content::-webkit-scrollbar-thumb:hover{background:#0051D5}
+.tab-content.active{display:block}
+.tab-content h3{color:#333;font-size:16px;margin:20px 0 15px;padding-bottom:8px;border-bottom:2px solid #f0f0f0}
+.tab-content h4{color:#666;font-size:14px;margin:15px 0 10px}
+.settings-section{margin-bottom:30px}
+.settings-section h3{font-size:18px;margin-bottom:15px}
+.settings-section input[type="text"],.settings-section input[type="password"],.settings-section input[type="number"],.settings-section select,.settings-section textarea,.tab-content input[type="text"],.tab-content input[type="password"],.tab-content select,.tab-content textarea{width:100%;padding:12px 15px;margin-bottom:12px;border:2px solid #e8e8e8;border-radius:12px;font-size:14px;transition:all 0.3s;background:white}
+.tab-content input:focus,.tab-content select:focus,.tab-content textarea:focus{border-color:#007AFF;outline:none;box-shadow:0 0 0 3px rgba(0,122,255,0.1)}
+.tab-content input[type="range"]{margin:10px 0;accent-color:#007AFF}
+.settings-section textarea{min-height:100px;resize:vertical}
+.settings-section button,.tab-content button{padding:12px 24px;margin:8px 8px 8px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#007AFF,#0051D5);color:white;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,122,255,0.3)}
+.tab-content button:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,122,255,0.4)}
+.tab-content button:active{transform:translateY(0)}
+#saved-configs::-webkit-scrollbar{width:6px}
+#saved-configs::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+#saved-configs::-webkit-scrollbar-thumb:hover{background:#999}
+.settings-section button:hover{background:#0051D5}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.theme-btn{padding:18px;border:3px solid #e8e8e8;border-radius:15px;background:white;cursor:pointer;font-size:14px;transition:all 0.3s;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.theme-btn:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,0.12);border-color:#007AFF}
+.theme-btn[data-theme="cinnamoroll"]{background:linear-gradient(135deg,#E0F4FF,#ACD6EC);color:#333}
+.theme-btn[data-theme="hellokitty"]{background:linear-gradient(135deg,#FFFFFF,#F0BDCC);color:#333}
+.theme-btn[data-theme="kuromi"]{background:linear-gradient(135deg,#DCC9FF,#B399E1);color:#333}
+.theme-btn[data-theme="mymelody"]{background:linear-gradient(135deg,#FCD4E2,#F4ABC3);color:#333}
+#home-screen{position:absolute;top:40px;width:100%;height:calc(100% - 40px);overflow:hidden}
+#home-pages{display:flex;width:200%;height:100%;transition:transform 0.3s ease}
+.home-page{width:50%;padding:20px}
+.widget-row{display:flex;gap:10px;margin-bottom:20px;align-items:flex-start}
+.widget{flex:1;background:rgba(255,255,255,0.4);backdrop-filter:blur(10px);border-radius:20px;padding:15px;color:#333;overflow:hidden;position:relative}
+.music-full{width:100%;margin-bottom:15px;display:flex;align-items:center;gap:10px;padding:10px;position:relative;z-index:1}
+.music-info{display:flex;align-items:center;gap:10px;flex:1}
+.music-cover{width:50px;height:50px;background:rgba(0,0,0,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.music-text{flex:1}
+.music-title{font-weight:bold;font-size:14px}
+.music-artist{font-size:11px;color:#666}
+.music-controls{display:flex;gap:5px}
+.music-controls button,.music-side button{width:32px;height:32px;border:none;background:rgba(0,0,0,0.1);border-radius:8px;cursor:pointer;font-size:14px;z-index:10;position:relative}
+.music-side{display:flex;flex-direction:column;gap:5px}
+.search-area{padding:20px}
+.search-area input{width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px}
+.search-area select{width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px}
+#search-results,#fav-list{padding:20px;overflow-y:auto;flex:1}
+.song-item{padding:15px;border-bottom:1px solid #eee;cursor:pointer}
+.song-item:hover{background:#f5f5f5}
+#lyric-float{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:15px 30px;border-radius:20px;z-index:1001;max-width:300px;text-align:center}
+#close-lyric{position:absolute;top:5px;right:10px;background:none;border:none;color:white;font-size:20px;cursor:pointer}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:15px}
+.calendar-day{padding:15px;text-align:center;border-radius:10px;cursor:pointer;background:#f5f5f5;font-size:16px;font-weight:500}
+.calendar-day:hover{background:#e0e0e0}
+.calendar-day.today{background:#007AFF;color:white}
+.calendar-day.has-memo{border:2px solid #FF9500}
+#calendar-widget{font-size:12px;height:160px;flex:1.2;overflow-y:auto}
+#time-widget{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px}
+#current-time{font-size:32px;font-weight:bold}
+#current-date{font-size:14px;margin-top:5px}
+.app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;padding:0 20px}
+.home-page:first-child .app-grid{position:absolute;bottom:80px;left:0;width:375px;padding:0 20px;box-sizing:border-box}
+.app-icon{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s}
+.app-icon:active{transform:scale(0.9)}
+.app-icon img{width:60px;height:60px;border-radius:20px;margin-bottom:5px}
+.app-icon span{font-size:12px;text-align:center;color:#333}
+#page-indicator{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.3);transition:all 0.3s}
+.dot.active{background:rgba(0,0,0,0.7);width:20px;border-radius:4px}
+.app-window{position:absolute;top:0;left:0;width:100%;height:100%;background:white;z-index:997;display:flex;flex-direction:column}
+.app-window.hidden{display:none}
+.app-header{display:flex;align-items:center;padding:50px 20px 15px;border-bottom:1px solid #eee}
+.back-btn{font-size:24px;border:none;background:none;cursor:pointer;margin-right:15px}
+.app-header h3{font-size:18px}
+.chat-list{flex:1;overflow-y:auto}
+.chat-item{display:flex;align-items:center;padding:15px 20px;border-bottom:1px solid #eee;cursor:pointer}
+.chat-item:hover{background:#f5f5f5}
+.chat-avatar{width:50px;height:50px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:24px;margin-right:15px}
+.chat-info{flex:1}
+.chat-name{font-weight:bold;margin-bottom:5px}
+.chat-preview{font-size:14px;color:#666}
+#chat-messages{flex:1;overflow-y:auto;padding:20px;background:#f5f5f5}
+.message{margin-bottom:15px;display:flex}
+.message.user{justify-content:flex-end}
+.message-bubble{max-width:70%;padding:10px 15px;border-radius:18px;word-wrap:break-word}
+.message.user .message-bubble{background:#007AFF;color:white;border-bottom-right-radius:4px}
+.message.ai .message-bubble{background:white;color:#333;border-bottom-left-radius:4px}
+.chat-input-area{display:flex;padding:10px;border-top:1px solid #eee;background:white}
+#chat-input{flex:1;padding:10px;border:1px solid #ddd;border-radius:20px;margin-right:10px;font-size:14px}
+#send-btn{padding:10px 20px;border:none;border-radius:20px;background:#007AFF;color:white;cursor:pointer}
+#calendar-full{padding:20px}
+#memo-area{padding:20px;border-top:1px solid #eee}
+#memo-area h4{margin-bottom:10px}
+#memo-input{width:100%;min-height:100px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px}
+#save-memo{padding:10px 20px;border:none;border-radius:8px;background:#007AFF;color:white;cursor:pointer}
+.hidden{display:none!important}
+.font-cute{font-family:'Comic Sans MS',cursive,sans-serif}
+.font-elegant{font-family:'Times New Roman',serif}
+@media (max-width:400px){#phone-frame{border-width:8px;border-radius:30px}}
