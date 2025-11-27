@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小白机</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="phone-container">
+        <div id="phone-frame">
+            <div id="notch"></div>
+            <div id="status-bar">
+                <span id="status-time"></span>
+                <span id="status-battery">
+                    <span id="battery-level">100%</span>
+                    <span id="battery-icon">🔋</span>
+                </span>
+            </div>
+            <div id="pull-hint">⬇ 下拉打开设置 / 点击灵动岛 ⬆</div>
+
+            <div id="settings-page" class="hidden">
+                <div class="settings-header">
+                    <h2>设置</h2>
+                    <button id="close-settings">×</button>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-tabs">
+                        <button class="tab-btn active" data-tab="api">API</button>
+                        <button class="tab-btn" data-tab="font">字体</button>
+                        <button class="tab-btn" data-tab="beauty">美化</button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-api">
+                        <h3>🤖 API 配置</h3>
+                        <div style="font-size:11px;color:#999;margin-bottom:10px">⚠ 不需要加 /v1</div>
+                        <input type="text" id="api-url" placeholder="API 反代地址">
+                        <input type="password" id="api-key" placeholder="API 密钥">
+                        <button id="fetch-models">拉取模型</button>
+                        <select id="model-select"><option>请先拉取模型</option></select>
+                        <label>模型温度: <span id="temp-value">0.7</span></label>
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7" style="width:100%">
+                        <label style="display:flex;align-items:center;gap:10px;margin:15px 0">
+                            <input type="checkbox" id="enable-system-role">启用后台角色
+                        </label>
+                        <div style="font-size:11px;color:red;margin-top:-10px;margin-bottom:15px">⚠ 开启后将自动增加额度调用</div>
+                        
+                        <h4>💾 API 配置列表</h4>
+                        <div style="display:flex;gap:10px;margin-bottom:10px">
+                            <input type="text" id="api-config-name" placeholder="配置名称" style="flex:1">
+                            <button id="save-api-config" style="margin:0">保存</button>
+                        </div>
+                        <select id="api-config-list" size="4" style="width:100%;margin-bottom:10px;padding:8px;border-radius:10px;border:2px solid #e8e8e8"></select>
+                        <div style="display:flex;gap:10px">
+                            <button id="load-api-config" style="flex:1;margin:0;background:linear-gradient(135deg,#28a745,#20873a)">加载选中</button>
+                            <button id="delete-api-config" style="flex:1;margin:0;background:linear-gradient(135deg,#dc3545,#c82333)">删除选中</button>
+                        </div>
+                        
+                        <h4 style="margin-top:20px">🎙 Minimax TTS</h4>
+                        <div style="font-size:11px;color:#666;margin-bottom:10px">该设置用于提供AI语音信息</div>
+                        <input type="text" id="minimax-group-id" placeholder="Minimax Group ID">
+                        <input type="password" id="minimax-api-key" placeholder="Minimax API Key">
+                        <button id="fetch-tts-models">拉取语音模型</button>
+                        <select id="tts-model-select"><option>请先拉取模型</option></select>
+                        
+                        <h4 style="margin-top:15px">💾 TTS 配置列表</h4>
+                        <div style="display:flex;gap:10px;margin-bottom:10px">
+                            <input type="text" id="tts-config-name" placeholder="配置名称" style="flex:1">
+                            <button id="save-tts-config" style="margin:0">保存</button>
+                        </div>
+                        <select id="tts-config-list" size="3" style="width:100%;margin-bottom:10px;padding:8px;border-radius:10px;border:2px solid #e8e8e8"></select>
+                        <div style="display:flex;gap:10px">
+                            <button id="load-tts-config" style="flex:1;margin:0;background:linear-gradient(135deg,#28a745,#20873a)">加载选中</button>
+                            <button id="delete-tts-config" style="flex:1;margin:0;background:linear-gradient(135deg,#dc3545,#c82333)">删除选中</button>
+                        </div>
+                        
+                        <button id="save-api" style="width:100%;margin-top:25px">保存当前所有设定</button>
+                        <div style="display:flex;gap:10px;margin-top:10px">
+                            <button id="export-api" style="flex:1;margin:0">导出 API 设定</button>
+                            <button id="import-api" style="flex:1;margin:0">导入 API 设定</button>
+                        </div>
+                        
+                        <h4 style="margin-top:25px;color:#d9534f">📦 全机数据</h4>
+                        <div class="btn-group">
+                            <button id="export-all-data" style="background:linear-gradient(135deg,#28a745,#20873a)">导出全机数据</button>
+                            <button id="import-all-data" style="background:linear-gradient(135deg,#17a2b8,#138496)">导入全机数据</button>
+                            <button id="clear-all-data" style="background:linear-gradient(135deg,#dc3545,#c82333)">清除本机数据</button>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-font">
+                        <h3>🔤 字体设置</h3>
+                        <a href="https://www.tsanger.cn/" target="_blank" style="display:inline-block;padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;text-decoration:none;border-radius:10px;margin-bottom:15px;font-size:13px">🌐 更多字体（需要魔法）</a>
+                        <label>字体 URL:</label>
+                        <input type="text" id="font-url" placeholder="输入字体 URL (.ttf, .woff, .woff2)">
+                        <button id="apply-font-url">应用 URL 字体</button>
+                        <label style="margin-top:15px">本地字体:</label>
+                        <input type="file" id="font-upload" accept=".ttf,.woff,.woff2">
+                        <div id="font-preview" style="margin:20px 0;padding:20px;background:rgba(0,0,0,0.05);border-radius:15px;text-align:center">
+                            <div style="font-size:14px;color:#666;margin-bottom:10px">字体预览</div>
+                            <div id="preview-text" style="font-size:18px">欢迎使用小白机</div>
+                        </div>
+                        <button id="reset-font">恢复默认字体</button>
+                    </div>
+
+                    <div class="tab-content" id="tab-beauty">
+                        <h3>🎨 主题</h3>
+                        <div class="theme-grid">
+                            <button class="theme-btn" data-theme="cinnamoroll">玉桂狗</button>
+                            <button class="theme-btn" data-theme="hellokitty">Hello Kitty</button>
+                            <button class="theme-btn" data-theme="kuromi">库洛米</button>
+                            <button class="theme-btn" data-theme="mymelody">美乐蒂</button>
+                        </div>
+                        <h3 style="margin-top:20px">✨ 自定义</h3>
+                        <label>壁纸: <input type="file" id="wallpaper-upload" accept="image/*"></label>
+                        <label>边框颜色: <input type="color" id="frame-color"></label>
+                        <button id="toggle-fullscreen">强制全屏</button>
+                        <h3 style="margin-top:20px">💅 CSS</h3>
+                        <textarea id="custom-css" placeholder="自定义 CSS..."></textarea>
+                        <button id="apply-css">应用</button>
+                        <h3 style="margin-top:20px">📦 套装</h3>
+                        <button id="export-theme">导出</button>
+                        <button id="import-theme">导入</button>
+                        
+                        <h3 style="margin-top:20px;color:#d9534f">🧹 清除数据</h3>
+                        <button id="clear-beauty-data" style="width:100%;background:linear-gradient(135deg,#dc3545,#c82333)">清除全局美化数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="home-screen">
+                <div id="home-pages">
+                    <div class="home-page active">
+                        <div id="music-widget" class="widget music-full">
+                            <div class="music-cover-art">
+                                <div class="music-vinyl">🎵</div>
+                            </div>
+                            <div class="music-info">
+                                <div class="music-title">未播放</div>
+                                <div class="music-artist">添加音乐开始播放</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                            </div>
+                            <div class="music-controls">
+                                <button id="music-prev" class="control-btn">⏮</button>
+                                <button id="music-play" class="control-btn play-btn">▶</button>
+                                <button id="music-next" class="control-btn">⏭</button>
+                            </div>
+                            <div class="music-actions">
+                                <button id="music-fav" class="action-btn">♡</button>
+                                <button id="music-add" class="action-btn">➕</button>
+                                <button id="music-list" class="action-btn">☰</button>
+                                <button id="music-search" class="action-btn">🔍</button>
+                            </div>
+                        </div>
+                        <div class="widget-row">
+                            <div id="calendar-widget" class="widget"></div>
+                            <div id="time-widget" class="widget">
+                                <div id="current-time"></div>
+                                <input type="text" id="current-date" placeholder="欢迎使用小白机" style="border:none;background:transparent;text-align:center;outline:none;cursor:text;font-size:12px;width:100%;color:#333">
+                            </div>
+                        </div>
+                        <div id="today-memo-widget">今天没有任务</div>
+                        <div class="app-grid">
+                            <div class="app-icon" data-app="linee">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%2300B900'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EL%3C/text%3E%3C/svg%3E">
+                                <span>Linee</span>
+                            </div>
+                            <div class="app-icon" data-app="developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%234A90E2'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E🌍%3C/text%3E%3C/svg%3E">
+                                <span>世界书</span>
+                            </div>
+                            <div class="app-icon" data-app="developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23FF2442'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E小%3C/text%3E%3C/svg%3E">
+                                <span>小红书</span>
+                            </div>
+                            <div class="app-icon" data-app="developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%2307C160'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EIM%3C/text%3E%3C/svg%3E">
+                                <span>IM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="home-page">
+                        <div class="app-grid">
+                            <div class="app-icon developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23999'/%3E%3Ctext x='22' y='28' font-size='16' text-anchor='middle' fill='white'%3E开发中%3C/text%3E%3C/svg%3E">
+                                <span>开发中</span>
+                            </div>
+                            <div class="app-icon developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23999'/%3E%3Ctext x='22' y='28' font-size='16' text-anchor='middle' fill='white'%3E开发中%3C/text%3E%3C/svg%3E">
+                                <span>开发中</span>
+                            </div>
+                            <div class="app-icon developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23999'/%3E%3Ctext x='22' y='28' font-size='16' text-anchor='middle' fill='white'%3E开发中%3C/text%3E%3C/svg%3E">
+                                <span>开发中</span>
+                            </div>
+                            <div class="app-icon developing">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23999'/%3E%3Ctext x='22' y='28' font-size='16' text-anchor='middle' fill='white'%3E开发中%3C/text%3E%3C/svg%3E">
+                                <span>开发中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="page-indicator">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+
+            <div id="linee-app" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3>Linee</h3>
+                </div>
+                <div id="chat-list" class="chat-list">
+                    <div class="chat-item" data-chat="ai-assistant">
+                        <div class="chat-avatar">🤖</div>
+                        <div class="chat-info">
+                            <div class="chat-name">AI 助手</div>
+                            <div class="chat-preview">开始聊天吧~</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat-window" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3 id="chat-title">AI 助手</h3>
+                </div>
+                <div id="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="输入消息...">
+                    <button id="send-btn">发送</button>
+                </div>
+            </div>
+
+            <div id="calendar-app" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3>日历</h3>
+                </div>
+                <div id="calendar-full"></div>
+                <div id="memo-area">
+                    <h4 id="memo-date-title">备忘录</h4>
+                    <textarea id="memo-input" placeholder="输入备忘录..."></textarea>
+                    <button id="save-memo">保存</button>
+                </div>
+            </div>
+
+            <div id="music-search-modal" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3>搜索音乐</h3>
+                </div>
+                <div class="search-area">
+                    <input type="text" id="music-search-input" placeholder="搜索歌曲或歌手...">
+                    <select id="music-platform">
+                        <option value="kugou">酷狗音乐</option>
+                    </select>
+                    <button id="do-search">搜索</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+
+            <div id="music-fav-modal" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3>我的最爱</h3>
+                </div>
+                <div id="fav-list"></div>
+            </div>
+
+            <div id="add-music-modal" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">←</button>
+                    <h3>添加音乐</h3>
+                </div>
+                <div style="padding:20px;">
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">歌曲名称</label>
+                        <input type="text" id="add-music-title" placeholder="输入歌曲名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">歌手</label>
+                        <input type="text" id="add-music-artist" placeholder="输入歌手名称" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:bold;">音乐来源</label>
+                        <input type="url" id="add-music-url" placeholder="粘贴 MP3 链接或 URL" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;margin-bottom:10px;">
+                        <div style="text-align:center;margin:10px 0;color:#999;font-size:12px;">─── 或 ───</div>
+                        <input type="file" id="add-music-file" accept="audio/*" style="width:100%;padding:12px;border-radius:10px;border:2px solid #e8e8e8;font-size:14px;">
+                        <div style="font-size:11px;color:#999;margin-top:5px;">支持 MP3、WAV、OGG 等音频格式</div>
+                    </div>
+                    <button id="confirm-add-music" style="width:100%;padding:15px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:15px;font-size:16px;font-weight:bold;cursor:pointer;">添加到播放列表</button>
+                </div>
+            </div>
+
+            <div id="lyric-float" class="hidden">
+                <div id="lyric-text">暂无歌词</div>
+                <button id="close-lyric">×</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="hidden-file-input" accept=".json" style="display:none">
+    <input type="file" id="hidden-theme-input" accept=".json" style="display:none">
+    <audio id="music-player" style="display:none"></audio>
+    <style id="custom-style"></style>
+    <style id="custom-font"></style>
+    <script src="app.js"></script>
+</body>
+</html>
