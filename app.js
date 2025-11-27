@@ -931,8 +931,8 @@ function renderFullCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = now.toISOString().split('T')[0];
     
-    let html = `<div style="padding:20px"><h3>${year}年${month + 1}月</h3><div class="calendar-grid">`;
-    html += '<div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>';
+    let html = `<div style="padding:10px"><h3 style="margin-bottom:15px">${year}年${month + 1}月</h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">`;
+    html += '<div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">日</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">一</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">二</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">三</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">四</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">五</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">六</div>';
     
     for (let i = 0; i < firstDay; i++) html += '<div></div>';
     
@@ -954,8 +954,18 @@ function renderFullCalendar() {
 
 function selectDate(date) {
     state.selectedDate = date;
-    document.getElementById('memo-date-title').textContent = `${date} 备忘录`;
-    document.getElementById('memo-input').value = state.memos[date] || '';
+    const memoTitle = document.getElementById('memo-date-title');
+    const memoInput = document.getElementById('memo-input');
+    const memoArea = document.getElementById('memo-area');
+    
+    if (memoTitle) memoTitle.textContent = `${date} 备忘录`;
+    if (memoInput) memoInput.value = state.memos[date] || '';
+    if (memoArea) memoArea.style.display = 'block';
+    
+    document.querySelectorAll('.calendar-day').forEach(el => {
+        el.style.background = el.dataset.date === date ? '#007AFF' : '';
+        el.style.color = el.dataset.date === date ? 'white' : '';
+    });
 }
 
 function saveMemo() {
