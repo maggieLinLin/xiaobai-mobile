@@ -76,8 +76,13 @@ function updateBattery() {
     if ('getBattery' in navigator) {
         navigator.getBattery().then(battery => {
             const level = Math.floor(battery.level * 100);
-            document.getElementById('battery-level').textContent = level + '%';
-            document.getElementById('battery-icon').textContent = battery.charging ? '⚡' : '🔋';
+            const batteryContainer = document.getElementById('status-battery');
+            batteryContainer.innerHTML = `
+                <div style="position:relative;display:inline-flex;align-items:center;gap:2px">
+                    <div style="width:30px;height:14px;border-radius:7px;background:linear-gradient(to right, white ${level}%, #ccc ${level}%);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:#333">${level}</div>
+                    ${battery.charging ? '<span style="font-size:10px">⚡</span>' : ''}
+                </div>
+            `;
         });
     }
 }
@@ -261,6 +266,14 @@ function initSettings() {
     
     document.getElementById('apply-font-url').onclick = applyFontURL;
     document.getElementById('font-upload').onchange = uploadFont;
+    document.getElementById('apply-font-file').onclick = () => {
+        const fileInput = document.getElementById('font-upload');
+        if (fileInput.files.length > 0) {
+            uploadFont({ target: fileInput });
+        } else {
+            alert('请先选择字体文件');
+        }
+    };
     document.getElementById('reset-font').onclick = resetFont;
     document.getElementById('fetch-tts-models').onclick = fetchTTSModels;
     document.getElementById('save-api-config').onclick = saveApiConfig;
