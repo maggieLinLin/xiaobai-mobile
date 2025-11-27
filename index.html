@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小白机</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/phone.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/apps.css">
 </head>
 <body>
     <div id="phone-container">
@@ -310,6 +314,17 @@
     <audio id="music-player" style="display:none"></audio>
     <style id="custom-style"></style>
     <style id="custom-font"></style>
+    <!-- 使用單一文件版本（推薦） -->
     <script src="app.js"></script>
+    <!-- 或使用模塊化版本（取消下面的註釋並註釋掉上面的 app.js）
+    <script src="js/state.js"></script>
+    <script src="js/statusbar.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/apps.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/music.js"></script>
+    <script src="js/main.js"></script>
+    -->
 </body>
 </html>
