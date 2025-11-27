@@ -182,7 +182,7 @@ function renderMiniCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date().toISOString().split('T')[0];
     
-    let html = `<div style="padding:5px;height:100%">
+    let html = `<div style="padding:5px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <button id="cal-prev" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px">◀</button>
             <div style="font-size:11px;font-weight:bold">${year}年${month + 1}月</div>
@@ -197,12 +197,19 @@ function renderMiniCalendar() {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === today;
         const hasMemo = state.memos[dateStr];
-        const style = `padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${isToday ? 'background:#007AFF;color:white;font-weight:bold;' : ''}${hasMemo ? 'border:1px solid #FF9500;' : ''}`;
-        html += `<div style="${style}" class="cal-day" data-date="${dateStr}">${day}</div>`;
+        const bgColor = isToday ? 'background:#007AFF !important;color:white !important;font-weight:bold !important;' : '';
+        const border = hasMemo ? 'border:1px solid #FF9500;' : '';
+        html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border}" class="cal-day" data-date="${dateStr}">${day}</div>`;
     }
     
     html += '</div></div>';
     widget.innerHTML = html;
+    
+    const todayMemoWidget = document.getElementById('today-memo-widget');
+    if (todayMemoWidget) {
+        const memo = state.memos[today];
+        todayMemoWidget.textContent = memo && memo.trim() ? memo : '今天没有任务';
+    }
     
     const prevBtn = document.getElementById('cal-prev');
     const nextBtn = document.getElementById('cal-next');
@@ -929,7 +936,7 @@ function renderFullCalendar() {
     const month = now.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = now.toISOString().split('T')[0];
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
     let html = `<div style="padding:10px"><h3 style="margin-bottom:15px">${year}年${month + 1}月</h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">`;
     html += '<div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">日</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">一</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">二</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">三</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">四</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">五</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">六</div>';
