@@ -1,0 +1,17 @@
+{
+  "name": "xiaobai-music-proxy",
+  "version": "1.0.0",
+  "description": "小白機音樂 API 競速代理服務",
+  "main": "music-proxy-server.js",
+  "scripts": {
+    "start": "node music-proxy-server.js",
+    "dev": "nodemon music-proxy-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
