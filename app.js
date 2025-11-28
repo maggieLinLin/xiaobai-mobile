@@ -1162,23 +1162,46 @@ async function searchMusic() {
     const results = document.getElementById('search-results');
     results.innerHTML = '<div style="padding:20px;text-align:center">正在搜索...</div>';
     
+    const apis = [
+        { name: 'API 1', url: `https://web-production-b3dd5.up.railway.app/music?q=${encodeURIComponent(query)}` },
+        { name: 'API 2', url: `https://api.injahow.cn/meting/?type=search&id=${encodeURIComponent(query)}&source=netease` },
+        { name: 'API 3', url: `https://music.cyrilstudio.top/search?keywords=${encodeURIComponent(query)}` }
+    ];
+    
     try {
         let songs = [];
+        let successApi = null;
         
-        try {
-            const res = await fetch(`https://web-production-b3dd5.up.railway.app/music?q=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            if (data.code === 200 && data.data) {
-                songs = data.data;
+        for (const api of apis) {
+            try {
+                console.log(`嘗試 ${api.name}: ${api.url}`);
+                const res = await fetch(api.url, { method: 'GET', mode: 'cors' });
+                const data = await res.json();
+                
+                if (api.name === 'API 1' && data.code === 200 && data.data) {
+                    songs = data.data;
+                    successApi = api.name;
+                    break;
+                } else if (api.name === 'API 2' && Array.isArray(data)) {
+                    songs = data.map(s => ({ id: s.id, title: s.name || s.title, artist: s.artist || s.author, url: s.url }));
+                    successApi = api.name;
+                    break;
+                } else if (api.name === 'API 3' && data.result && data.result.songs) {
+                    songs = data.result.songs.map(s => ({ id: s.id, title: s.name, artist: s.artists?.[0]?.name || '未知', url: `https://music.cyrilstudio.top/song/url?id=${s.id}` }));
+                    successApi = api.name;
+                    break;
+                }
+            } catch (e) {
+                console.error(`${api.name} 失敗:`, e);
             }
-        } catch (e) {
-            console.error('Music API error:', e);
         }
         
         if (songs.length === 0) {
-            results.innerHTML = '<div style="padding:20px;text-align:center">未找到结果</div>';
+            results.innerHTML = '<div style="padding:20px;text-align:center;color:#ff6b6b">所有 API 均無法訪問<br><br>建議：<br>1. 檢查網絡連接<br>2. 使用本地音樂文件<br>3. 手動輸入音樂 URL</div>';
             return;
         }
+        
+        console.log(`成功使用 ${successApi}，找到 ${songs.length} 首歌曲`);
         
         let html = '';
         songs.forEach(song => {
@@ -1198,7 +1221,7 @@ async function searchMusic() {
         });
     } catch (e) {
         console.error('Search error:', e);
-        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失败: ${e.message}<br>请检查网络连接或尝试其他平台</div>`;
+        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失敗: ${e.message}<br><br>請嘗試：<br>1. 使用「添加音樂」功能上傳本地文件<br>2. 手動輸入音樂 URL</div>`;
     }
 }
 
