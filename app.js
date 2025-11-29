@@ -1410,29 +1410,34 @@ async function searchMusic() {
     
     // 優先使用 Meting API 反代 /api 端點格式，支援更好的搜索結果
     const apis = [
-        { 
-            name: 'Meting API 反代 - NetEase', 
+        {
+            name: 'Meting API 反代 - NetEase',
             url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}`,
             parse: (data) => {
                 try {
-                    // 處理 {"source":"netease","results":[...]} 格式
+                    // 處理標準 Meting API 響應格式
                     let songs = [];
-                    if (data && data.results && Array.isArray(data.results)) {
-                        songs = data.results;
+                    if (data && Array.isArray(data)) {
+                        // 如果數據是直接的歌曲數組
+                        songs = data;
                     } else if (data && data.data && Array.isArray(data.data)) {
-                        // 備用格式 {"data":[...]}
+                        // 如果數據在 data 字段中
                         songs = data.data;
+                    } else if (data && data.results && Array.isArray(data.results)) {
+                        // 如果數據在 results 字段中
+                        songs = data.results;
                     } else {
                         console.error('未知的數據格式:', data);
                         return [];
                     }
-                    
+
                     return songs.filter(song => song && song.name).map(song => ({
                         title: song.name || '未知歌曲',
                         artist: song.artist || '未知歌手',
-                        url: song.url || song.mp3Url || '',
+                        url: song.url || '',
                         id: song.id || '',
-                        pic: song.pic || song.cover || ''
+                        pic: song.pic || '',
+                        lyric_id: song.lyric_id || ''  // 支持歌詞 ID
                     }));
                 } catch (e) {
                     console.error('NetEase 解析錯誤:', e);
@@ -1440,49 +1445,78 @@ async function searchMusic() {
                 return [];
             }
         },
-        { 
-            name: 'Meting API 反代 - NetEase (備用)', 
-            url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}&limit=50`,
+        {
+            name: 'Meting API 反代 - 擴展搜索',
+            url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}&limit=50&quality=high`,
             parse: (data) => {
                 try {
+                    // 同樣處理標準格式，但增加更高品質搜索
                     let songs = [];
-                    if (data && data.results && Array.isArray(data.results)) {
-                        songs = data.results;
+                    if (data && Array.isArray(data)) {
+                        songs = data;
                     } else if (data && data.data && Array.isArray(data.data)) {
                         songs = data.data;
+                    } else if (data && data.results && Array.isArray(data.results)) {
+                        songs = data.results;
                     } else {
+                        console.error('擴展搜索未知數據格式:', data);
                         return [];
                     }
-                    
+
                     return songs.filter(song => song && song.name).map(song => ({
                         title: song.name || '未知歌曲',
                         artist: song.artist || '未知歌手',
-                        url: song.url || song.mp3Url || '',
+                        url: song.url || '',
                         id: song.id || '',
-                        pic: song.pic || song.cover || ''
+                        pic: song.pic || '',
+                        lyric_id: song.lyric_id || ''
                     }));
                 } catch (e) {
-                    console.error('NetEase 備用解析錯誤:', e);
+                    console.error('NetEase 擴展搜索解析錯誤:', e);
                 }
                 return [];
             }
         },
         {
             name: 'YesPlayMusic API - 網易',
-            url: `https://music-api.vercel.app/search?keywords=${encodeURIComponent(query)}&limit=30`,
+            url: `https://music-api.vercel.app/search?keywords=${encodeURIComponent(query)}&limit=40`,
             parse: (data) => {
                 try {
+                    // 處理 YesPlayMusic 格式
                     if (data && data.result && data.result.songs && Array.isArray(data.result.songs)) {
                         return data.result.songs.map(song => ({
                             title: song.name || '未知歌曲',
                             artist: song.artists?.map(a => a.name).join(' / ') || '未知歌手',
-                            url: '',
+                            url: '',  // YesPlayMusic 需要單獨獲取
                             id: song.id || '',
-                            pic: song.album?.picUrl || ''
+                            pic: song.album?.picUrl || '',
+                            lyric_id: ''
                         }));
                     }
                 } catch (e) {
                     console.error('YesPlayMusic 解析錯誤:', e);
+                }
+                return [];
+            }
+        },
+        {
+            name: 'A Player API - 備用',
+            url: `https://api.a-player.net/search?term=${encodeURIComponent(query)}&limit=30`,
+            parse: (data) => {
+                try {
+                    // 處理 A Player 格式作為最終備用
+                    if (data && data.songs && Array.isArray(data.songs)) {
+                        return data.songs.map(song => ({
+                            title: song.title || '未知歌曲',
+                            artist: song.artist || '未知歌手',
+                            url: song.url || '',
+                            id: song.id || Date.now().toString(),
+                            pic: song.cover || '',
+                            lyric_id: ''
+                        }));
+                    }
+                } catch (e) {
+                    console.error('A Player 解析錯誤:', e);
                 }
                 return [];
             }
