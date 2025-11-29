@@ -70,6 +70,11 @@ function noteKey(dateKey){
   return `note:${dateKey}`;
 }
 
+/* ---------- 鑑別 helpers ---------- */
+function parseStoredNote(raw){
+  try{ return JSON.parse(raw); } catch(e){ return null; }
+}
+
 /* ---------- 儲存 / 讀取記事（強一致性版） ----------
    存入 JSON: { content: string, updatedAt: number }
    刪除時 removeItem。所有讀取都直接從 localStorage 讀取（無 memory cache）。
@@ -99,24 +104,12 @@ function saveNoteForDate(dateKey, content){
   processNoteUpdate(dateKey);
 }
 
-/* loadNoteForDate 支援兩種回傳：
-   - loadNoteForDate(dateKey) => returns content string (or '')
-   - loadNoteForDate(dateKey, true) => returns payload object {content, updatedAt} 或 null
-*/
 function loadNoteForDate(dateKey, raw = false){
-  const k = noteKey(dateKey);
-  const s = localStorage.getItem(k);
+  const s = localStorage.getItem(noteKey(dateKey));
   if(!s) return raw ? null : '';
-  try{
-    const obj = JSON.parse(s);
-    if(raw) return obj;
-    return obj && obj.content ? obj.content : '';
-  } catch(e){
-    // 若 parse 失敗（舊格式或損壞），當作空並移除以免再次出錯
-    console.warn('note parse error for', k, e);
-    localStorage.removeItem(k);
-    return raw ? null : '';
-  }
+  const obj = parseStoredNote(s);
+  if(!obj) return raw ? null : '';
+  return raw ? obj : (obj.content || '');
 }
 
 /* ---------- applyHasNoteClass: 根據 localStorage 實際資料決定 day 是否有記事 ---------- */
@@ -148,6 +141,32 @@ function scheduleAutoSave(){
 
 /* ---------- 更新主頁任務框（空內容時要顯示 placeholder） ---------- */
 const taskBox = document.getElementById('today-memo-widget');
+
+/* ---------- 強制把內容寫入 task box（絕對同步顯示） ---------- */
+function forceUpdateTaskBox(content){
+  // 直接操作 DOM，避免舊記憶體或 render 覆蓋
+  const normalized = (content || '').trim();
+  if(normalized === ''){
+    taskBox.value = '';
+    taskBox.placeholder = '今天沒有任務';
+  } else {
+    taskBox.placeholder = '';
+    taskBox.value = content;
+  }
+
+  // 立即調整高度（並保證沒有垂直捲軸）
+  adjustTaskBoxHeight();
+
+  // 確保瀏覽器已經套用 DOM 變更（防止下一步 render 覆蓋時看不到）
+  // 用 microtask 與 rAF 做雙保險：先 microtask，再一個 rAF
+  Promise.resolve().then(() => {
+    requestAnimationFrame(() => {
+      // 重新觸發任何需要被同步的 UI handler（例如 has-note 樣式）
+      // 如果有需要，也可以 dispatch 一個輕量事件給其他模組
+      window.dispatchEvent(new CustomEvent('taskbox-updated', {detail:{value: taskBox.value}}));
+    });
+  });
+}
 
 function updateTaskBox(content){
   const trimmed = (content || '').trim();
@@ -1687,8 +1706,8 @@ function processNoteUpdate(dateKey){
   // 如果是當前編輯日或今天，強制更新主頁
   const todayKey = localDateKey(new Date());
   if(dateKey === currentEditingDate || dateKey === todayKey){
-    // 若 payload 為 null => empty => show placeholder
-    updateTaskBox(payload ? payload.content : '');
+    // 若 payload 為 null => empty => show placeholder（使用強制同步版本）
+    forceUpdateTaskBox(payload ? payload.content : '');
   }
 }
 
