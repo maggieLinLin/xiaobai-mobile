@@ -30,8 +30,8 @@
 #time-widget{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px}
 #current-time{font-size:48px;font-weight:bold;font-family:'MTWFHZ',sans-serif}
 #current-date{font-size:18px;margin-top:5px;font-family:'MTWFHZ',sans-serif}
-.app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;padding:0 20px}
-.home-page:first-child .app-grid{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:calc(100% - 40px)}
+.app-grid{display:flex;justify-content:space-around;padding:0 20px;box-sizing:border-box}
+.home-page .app-grid{position:absolute;bottom:60px;left:0;width:100%}
 .app-icon{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s}
 .app-icon:active{transform:scale(0.9)}
 .app-icon img{width:60px;height:60px;border-radius:20px;margin-bottom:5px}
