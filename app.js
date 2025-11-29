@@ -41,6 +41,8 @@ function loadState() {
     if (saved) {
         Object.assign(state, JSON.parse(saved));
     }
+    // 确保日历显示当前月
+    state.calendarDate = null;
 }
 
 // 保存状态
