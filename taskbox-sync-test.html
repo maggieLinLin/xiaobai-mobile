@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>任务栏同步测试 - XiaoBai Mobile</title>
+    <link href="css/base.css" rel="stylesheet">
+    <link href="css/phone.css" rel="stylesheet">
+    <link href="css/home.css" rel="stylesheet">
+</head>
+<body>
+<div id="phone-frame">
+    <div id="phone-screen">
+        <!-- 主屏幕 -->
+        <div id="home-screen">
+            <!-- 状态栏 -->
+            <div id="status-bar">
+                <div id="notch">
+                    <div style="width:20px;height:4px;background:#666;border-radius:2px;margin:0 auto"></div>
+                </div>
+                <div id="status-battery"></div>
+                <div id="status-time">00:00</div>
+            </div>
+
+            <!-- 主页面 -->
+            <div id="home-pages">
+                <div class="page active">
+                    <!-- 时间和日期 -->
+                    <div class="widget" style="text-align:center;padding:20px">
+                        <div id="current-time" style="font-size:48px;font-weight:bold">00:00</div>
+                        <div id="current-date" style="font-size:18px;margin-top:10px;border:none;background:transparent;width:100%;text-align:center;" contenteditable="true">欢迎使用小白机</div>
+                    </div>
+
+                    <!-- Mini 日历 -->
+                    <div class="widget" id="calendar-widget"></div>
+
+                    <!-- 今日任务栏 -->
+                    <div class="widget">
+                        <h2 style="margin-bottom:10px">今日任务</h2>
+                        <textarea id="today-memo-widget" placeholder="今天没有任务" style="width:100%;min-height:100px;padding:10px;border:1px solid #ddd;border-radius:8px;resize:none;"></textarea>
+                        <button id="save-task" style="margin-top:10px;padding:10px 20px;background:#007AFF;color:white;border:none;border-radius:8px;cursor:pointer;">保存任务</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 应用 -->
+            <div class="app-grid">
+                <div class="app-icon" data-app="calendar-app">
+                    <div class="app-icon-img">📅</div>
+                    <div class="app-icon-label">日历</div>
+                </div>
+                <div class="app-icon" data-app="developing">
+                    <div class="app-icon-img">🎵</div>
+                    <div class="app-icon-label">音乐</div>
+                </div>
+                <div class="app-icon" data-app="developing">
+                    <div class="app-icon-img">📱</div>
+                    <div class="app-icon-label">设置</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应用窗口 -->
+        <div id="app-windows">
+            <!-- 日历应用 -->
+            <div id="calendar-app" class="app-window hidden">
+                <div class="app-header">
+                    <button class="back-btn">← 返回</button>
+                    <h1>日历</h1>
+                </div>
+                <div id="calendar-full"></div>
+                <div id="memo-area" style="display:none;padding:20px;border-top:1px solid #ddd">
+                    <h3 id="memo-date-title">备忘录</h3>
+                    <textarea id="memo-input" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;"></textarea>
+                    <button id="save-memo" style="margin-top:10px;padding:10px 20px;background:#007AFF;color:white;border:none;border-radius:8px;">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+
+<script>
+// 测试脚本 - 验证任务栏同步功能
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔥 任务栏同步测试开始');
+
+    // 测试1: 直接在任务栏输入内容
+    const taskBox = document.getElementById('today-memo-widget');
+    taskBox.addEventListener('input', function() {
+        console.log('📝 任务栏输入触发:', this.value);
+    });
+
+    // 测试2: 模拟点击日历日期后跳转回来
+    document.querySelectorAll('.cal-day').forEach(day => {
+        day.addEventListener('click', function() {
+            console.log('📅 点击日期:', this.dataset.date);
+            setTimeout(() => {
+                // 模拟从日历返回，检查任务栏是否保持内容
+                const currentValue = taskBox.value;
+                console.log('🔄 返回主页后任务栏值:', currentValue);
+                if (currentValue && currentValue !== '今天沒有任務') {
+                    console.log('✅ 任务栏同步正常 - 内容保留');
+                }
+            }, 500);
+        });
+    });
+
+    // 测试3: 跨标签页同步
+    window.addEventListener('storage', function(e) {
+        if (e.key && e.key.startsWith('note:')) {
+            console.log('🔄 跨标签页存储变化:', e.key);
+        }
+    });
+
+    // 测试4: 手动检查localStorage同步
+    setInterval(() => {
+        const todayKey = localDateKey(new Date());
+        const stored = localStorage.getItem('note:' + todayKey);
+        if (stored) {
+            try {
+                const data = JSON.parse(stored);
+                const uiValue = taskBox.value;
+                const storedValue = data.content || '';
+                if (uiValue !== storedValue && uiValue !== '今天沒有任務') {
+                    console.warn('⚠️ 发现不一致:', {ui: uiValue, stored: storedValue});
+                }
+            } catch(e) {
+                console.error('解析存储数据失败');
+            }
+        }
+    }, 1000);
+
+    // 测试结果显示
+    setTimeout(() => {
+        console.log('\n🎯 测试结果说明:');
+        console.log('1. 直接在任务栏输入 - 应自动保存');
+        console.log('2. 点击日历日期切换 - 任务栏应保持内容');
+        console.log('3. 在另一个浏览器标签页修改 - 当前页应同步更新');
+        console.log('4. 清空任务栏并保存 - 应显示"今天沒有任務"');
+        console.log('5. F12控制台查看实时日志');
+    }, 2000);
+});
+
+// 确保函数可用
+if (typeof localDateKey !== 'function') {
+    function localDateKey(date = new Date()){
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2,'0');
+        const d = String(date.getDate()).padStart(2,'0');
+        return `${y}-${m}-${d}`;
+    }
+}
+</script>
+
+</body>
+</html>
