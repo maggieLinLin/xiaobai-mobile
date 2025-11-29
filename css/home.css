@@ -30,7 +30,7 @@
   width: 100%;
   box-sizing: border-box;
   resize: none;
-  overflow-y: auto;
+  overflow-y: hidden; /* 强制隐藏滚动条，不显示 */
   line-height: 1.5em;
   max-height: calc(1.5em * 5);
   min-height: 1.5em;

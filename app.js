@@ -65,46 +65,97 @@ function localDateKey(date = new Date()){
   return `${y}-${m}-${d}`;
 }
 
-// ---------- 儲存 / 讀取記事 ----------
+/* ---------- 儲存 / 讀取記事（改進：空字移除） ---------- */
 function saveNoteForDate(dateKey, content){
-  // 使用 localStorage，key 格式: note:YYYY-MM-DD
-  localStorage.setItem(`note:${dateKey}`, content || '');
+  const trimmed = (content || '').trim();
+  if(trimmed === ''){
+    // 若為空，移除儲存（而不是存空字串），保證主頁能顯示「今天沒有任務」
+    localStorage.removeItem(`note:${dateKey}`);
+  } else {
+    localStorage.setItem(`note:${dateKey}`, content);
+  }
+  // 立即更新主頁顯示（避免 race）
+  if(dateKey === localDateKey(new Date())){
+    updateTaskBox( loadNoteForDate(dateKey) );
+  }
+  // 若需要，也應該更新 calendar 的 has-note 樣式
+  applyHasNoteClass(dateKey);
 }
 
 function loadNoteForDate(dateKey){
   return localStorage.getItem(`note:${dateKey}`) || '';
 }
 
-// ---------- 更新主頁任務框 ----------
+/* ---------- 確保 calendar 上有/無記事樣式正確 ---------- */
+function applyHasNoteClass(dateKey){
+  const el = document.querySelector(`#calendar .day[data-date="${dateKey}"]`);
+  if(!el) return;
+  const has = !!localStorage.getItem(`note:${dateKey}`);
+  el.classList.toggle('has-note', has);
+}
+
+let autoSaveTimer = null;
+
+/* ---------- 更新主頁任務框（空內容時要顯示 placeholder） ---------- */
 const taskBox = document.getElementById('today-memo-widget');
 
 function updateTaskBox(content){
-  if(!content || content.trim() === ''){
+  const trimmed = (content || '').trim();
+  if(trimmed === ''){
     taskBox.value = '';
     taskBox.placeholder = '今天没有任务';
   } else {
     taskBox.placeholder = '';
     taskBox.value = content;
   }
-  adjustTaskBoxHeight(); // 每次更新後調整高度
+  // 立即調整高度（且確保不出現滾動）
+  adjustTaskBoxHeight();
 }
 
-// ---------- 自適應高度 ----------
+/* ---------- 自動保存任務（延遲 2 秒）---------- */
+function autoSaveCurrentTask(){
+  if(autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    const currentEditDate = localDateKey(new Date()); // 假設正在編輯今天
+    // 這行為了編輯其他日期，但為簡單，硬編碼為今天
+    saveNoteForDate(currentEditDate, taskBox.value);
+  }, 2000); // 2 秒後自動儲存
+}
+
+/* ---------- 自適應高度（最多 5 行；絕對不顯示垂直捲軸） ---------- */
 function adjustTaskBoxHeight(){
+  // 強制隱藏垂直捲軸（視覺上絕不出現）
+  taskBox.style.overflowY = 'hidden';
+
   const style = window.getComputedStyle(taskBox);
-  const lineHeightStr = style.lineHeight;
-  let lineHeightPx = parseFloat(lineHeightStr);
+  let lineHeightPx = parseFloat(style.lineHeight);
   if(isNaN(lineHeightPx)){
     const fontSize = parseFloat(style.fontSize) || 14;
     lineHeightPx = fontSize * 1.2;
   }
   const maxLines = 5;
-  const maxHeight = lineHeightPx * maxLines;
+  const maxHeight = lineHeightPx * maxLines + parseFloat(style.paddingTop || 0) + parseFloat(style.paddingBottom || 0);
 
+  // 先讓高度自適（避免因為固定高度而拿不到 scrollHeight）
   taskBox.style.height = 'auto';
   const needed = taskBox.scrollHeight;
 
+  // 設定高度為需要或最大值（但不顯示捲軸）
   taskBox.style.height = Math.min(needed, maxHeight) + 'px';
+}
+
+/* ---------- 計算 textarea 行數（用以判斷是否阻止換行） ---------- */
+function countLinesInTextarea(t){
+  // using scrollHeight / lineHeight to approximate lines
+  const style = window.getComputedStyle(t);
+  let lineHeightPx = parseFloat(style.lineHeight);
+  if(isNaN(lineHeightPx)){
+    const fontSize = parseFloat(style.fontSize) || 14;
+    lineHeightPx = fontSize * 1.2;
+  }
+  const padding = (parseFloat(style.paddingTop || 0) + parseFloat(style.paddingBottom || 0));
+  const lines = Math.round((t.scrollHeight - padding) / lineHeightPx);
+  return lines;
 }
 
 function updateTime() {
@@ -234,9 +285,20 @@ function initHomeScreen() {
     updateTaskBox(todayNote);
     adjustTaskBoxHeight();
     
-    // 添加自我适应高度事件
+    // 添加自我适应高度事件 並阻止超過5行的換行，以及自動保存
     if (todayMemoWidget) {
-        todayMemoWidget.addEventListener('input', adjustTaskBoxHeight);
+        todayMemoWidget.addEventListener('input', () => {
+            adjustTaskBoxHeight();
+            autoSaveCurrentTask(); // 自動保存（延遲 2 秒）
+        });
+        todayMemoWidget.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const lines = countLinesInTextarea(todayMemoWidget);
+                if (lines >= 5) {
+                    e.preventDefault();
+                }
+            }
+        });
     }
 }
 
