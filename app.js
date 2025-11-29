@@ -74,44 +74,29 @@ function noteKey(dateKey){
    存入 JSON: { content: string, updatedAt: number }
    刪除時 removeItem。所有讀取都直接從 localStorage 讀取（無 memory cache）。
 ------------------------------------------------------------------ */
+/* 強化 save: 寫入 payload 並立即 dispatch event + set indicator */
 function saveNoteForDate(dateKey, content){
   const trimmed = (content || '').trim();
-  const k = noteKey(dateKey);
-
+  const key = noteKey(dateKey);
   if(trimmed === ''){
-    // 刪除資料（而非存空字串），避免舊值殘留
-    localStorage.removeItem(k);
-    // 通知同分頁與跨分頁：在 localStorage 上寫一個變動指示器（storage event 在同分頁不會觸發，所以同時 dispatch custom event）
-    localStorage.setItem('_last_note_update', JSON.stringify({dateKey, action: 'remove', updatedAt: Date.now()}));
-    // cleanup the indicator quickly to avoid polluting storage (optional)
-    setTimeout(() => {
-      try{ localStorage.removeItem('_last_note_update'); } catch(e){}
-    }, 50);
-    // dispatch custom event for same-tab listeners
-    window.dispatchEvent(new CustomEvent('notes-updated', {detail:{dateKey, action:'remove'}}));
-  } else {
-    const payload = { content: content, updatedAt: Date.now() };
-    localStorage.setItem(k, JSON.stringify(payload));
-    // also signal last update for cross-tab listeners
-    localStorage.setItem('_last_note_update', JSON.stringify({dateKey, action: 'save', updatedAt: payload.updatedAt}));
-    setTimeout(() => {
-      try{ localStorage.removeItem('_last_note_update'); } catch(e){}
-    }, 50);
-    window.dispatchEvent(new CustomEvent('notes-updated', {detail:{dateKey, action:'save'}}));
+    localStorage.removeItem(key);
+    const info = { dateKey, action:'remove', updatedAt: Date.now() };
+    localStorage.setItem('_last_note_update', JSON.stringify(info));
+    // quick cleanup
+    setTimeout(()=> localStorage.removeItem('_last_note_update'), 50);
+    window.dispatchEvent(new CustomEvent('notes-updated', {detail: info}));
+    // 立即 process to update UI (synchronous)
+    processNoteUpdate(dateKey);
+    return;
   }
-
-  // 立即更新 calendar 樣式與主頁 task box（讀取真正儲存的內容以避免 race）
-  // 注意：不要使用任何舊的 in-memory 資料，直接呼叫 loadNoteForDate
-  const currentStored = loadNoteForDate(dateKey, true); // true 表示回傳完整 payload（含 updatedAt）
-  // 如果是今天，強制更新主頁
-  if(dateKey === localDateKey(new Date())){
-    if(!currentStored){
-      updateTaskBox('');
-    } else {
-      updateTaskBox(currentStored.content || '');
-    }
-  }
-  applyHasNoteClass(dateKey);
+  const payload = { content, updatedAt: Date.now() };
+  localStorage.setItem(key, JSON.stringify(payload));
+  const info = { dateKey, action:'save', updatedAt: payload.updatedAt };
+  localStorage.setItem('_last_note_update', JSON.stringify(info));
+  setTimeout(()=> localStorage.removeItem('_last_note_update'), 50);
+  window.dispatchEvent(new CustomEvent('notes-updated', {detail: info}));
+  // 立即 process to ensure UI sync (avoid waiting for event loop scheduling)
+  processNoteUpdate(dateKey);
 }
 
 /* loadNoteForDate 支援兩種回傳：
@@ -1693,35 +1678,40 @@ async function playSong(song) {
     saveState();
 }
 
-/* ---------- 同分頁 / 跨分頁同步機制 ---------- */
-/* 1) 同分頁：我們在 save/remove 時會 dispatch 自訂事件 'notes-updated' */
-window.addEventListener('notes-updated', (e) => {
-  const { dateKey, action } = e.detail || {};
-  if(!dateKey) return;
+/* processNoteUpdate: 所有事件統一呼叫這裡以確保立即同步 UI */
+function processNoteUpdate(dateKey){
+  // 直接讀 localStorage（不要用 memory cache）
+  const payload = loadNoteForDate(dateKey, true); // payload 或 null
+  // 更新 calendar 樣式
   applyHasNoteClass(dateKey);
-  // 若更新的正好是 currentEditingDate 或今天，重新載入內容以保證一致
-  if(dateKey === currentEditingDate || dateKey === localDateKey(new Date())){
-    const payload = loadNoteForDate(dateKey, true);
+  // 如果是當前編輯日或今天，強制更新主頁
+  const todayKey = localDateKey(new Date());
+  if(dateKey === currentEditingDate || dateKey === todayKey){
+    // 若 payload 為 null => empty => show placeholder
     updateTaskBox(payload ? payload.content : '');
   }
+}
+
+/* 同分頁監聽（來自 dispatchEvent）*/
+window.addEventListener('notes-updated', (e) => {
+  try{
+    const info = e.detail || {};
+    if(!info.dateKey) return;
+    // process immediately
+    processNoteUpdate(info.dateKey);
+  }catch(err){ console.warn('notes-updated handler err', err); }
 });
 
-/* 2) 跨分頁：監聽 storage 事件（其他分頁在 localStorage 改動時會觸發） */
+/* 跨分頁監聽（storage event）*/
 window.addEventListener('storage', (ev) => {
-  // 我們使用 _last_note_update 作為變動指示器
+  if(!ev) return;
   if(ev.key === '_last_note_update' && ev.newValue){
     try{
       const info = JSON.parse(ev.newValue);
-      const { dateKey } = info;
-      if(!dateKey) return;
-      applyHasNoteClass(dateKey);
-      if(dateKey === currentEditingDate || dateKey === localDateKey(new Date())){
-        const payload = loadNoteForDate(dateKey, true);
-        updateTaskBox(payload ? payload.content : '');
+      if(info && info.dateKey){
+        processNoteUpdate(info.dateKey);
       }
-    } catch(e){
-      console.warn('storage event parse error', e);
-    }
+    } catch(e){ console.warn('storage parse err', e); }
   }
 });
 
