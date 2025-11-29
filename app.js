@@ -385,7 +385,12 @@ function renderMiniCalendar() {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = localDateKey(new Date()); // 使用本地日期
-    
+
+    // 🔒 關鍵：渲染前先保護當前任務欄的實時狀態
+    // 獲取當前任務欄的最新值（來自localStorage）
+    const todayKey = localDateKey(new Date());
+    const currentTask = loadNoteForDate(todayKey, true); // 獲取payload
+
     let html = `<div style="padding:5px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <button id="cal-prev" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px">◀</button>
@@ -394,9 +399,9 @@ function renderMiniCalendar() {
         </div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:8px;text-align:center">
             <div style="font-weight:bold">S</div><div style="font-weight:bold">M</div><div style="font-weight:bold">T</div><div style="font-weight:bold">W</div><div style="font-weight:bold">T</div><div style="font-weight:bold">F</div><div style="font-weight:bold">S</div>`;
-    
+
     for (let i = 0; i < firstDay; i++) html += '<div></div>';
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === today;
@@ -405,41 +410,46 @@ function renderMiniCalendar() {
         const border = hasMemo ? 'border:1px solid #FF9500;' : '';
         html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border}" class="cal-day" data-date="${dateStr}">${day}</div>`;
     }
-    
+
     html += '</div></div>';
     widget.innerHTML = html;
-    
-    const todayMemoWidget = document.getElementById('today-memo-widget');
-    if (todayMemoWidget) {
-        const memo = state.memos[today];
-        if (memo && memo.trim()) {
-            updateTaskBox(memo);
-        } else {
-            updateTaskBox('');
-        }
-    }
-    
+
+    // 🚫 移除導致覆蓋的舊邏輯
+    // const todayMemoWidget = document.getElementById('today-memo-widget');
+    // if (todayMemoWidget) {
+    //     const memo = state.memos[today];
+    //     if (memo && memo.trim()) {
+    //         updateTaskBox(memo);
+    //     } else {
+    //         updateTaskBox('');
+    //     }
+    // }
+
     const prevBtn = document.getElementById('cal-prev');
     const nextBtn = document.getElementById('cal-next');
-    
+
     if (prevBtn) {
         prevBtn.onclick = (e) => {
             e.stopPropagation();
             state.calendarDate = new Date(date.setMonth(date.getMonth() - 1));
             renderMiniCalendar();
             saveState();
+            // 渲染後立即恢復任務欄狀態（防覆蓋）
+            forceUpdateTaskBox(currentTask ? currentTask.content : '');
         };
     }
-    
+
     if (nextBtn) {
         nextBtn.onclick = (e) => {
             e.stopPropagation();
             state.calendarDate = new Date(date.setMonth(date.getMonth() + 1));
             renderMiniCalendar();
             saveState();
+            // 渲染後立即恢復任務欄狀態（防覆蓋）
+            forceUpdateTaskBox(currentTask ? currentTask.content : '');
         };
     }
-    
+
     widget.querySelectorAll('.cal-day').forEach(el => {
         el.onclick = (e) => {
             e.stopPropagation();
@@ -450,6 +460,10 @@ function renderMiniCalendar() {
             selectDate(el.dataset.date);
         };
     });
+
+    // 🔒 渲染完後立即強制同步當前任務欄（確保補償任何覆蓋）
+    // 使用微任務確保在所有同步DOM操作完成後執行
+    Promise.resolve().then(() => forceUpdateTaskBox(currentTask ? currentTask.content : ''));
 }
 
 // 设置页面
@@ -1087,14 +1101,27 @@ function openApp(appId) {
 
 function closeApp() {
     console.log('closeApp called');
+
+    // 檢查是否有日曆應用正在關閉，如果是，恢復任務欄
+    const calendarApp = document.getElementById('calendar-app');
+    const isClosingCalendar = calendarApp && !calendarApp.classList.contains('hidden');
+
     document.querySelectorAll('.app-window').forEach(w => {
         w.classList.add('hidden');
         console.log('Hiding:', w.id);
     });
+
     const homeScreen = document.getElementById('home-screen');
     if (homeScreen) {
         homeScreen.style.display = 'block';
         console.log('Home screen shown');
+
+        // 如果剛剛關閉了日曆應用，強制恢復今天的任務欄狀態
+        if (isClosingCalendar) {
+            console.log('📅 日曆應用已關閉，強制恢復任務欄狀態');
+            const todayKey = localDateKey(new Date());
+            processNoteUpdate(todayKey);
+        }
     }
 }
 
