@@ -153,10 +153,9 @@
                                 <button id="music-next" class="control-btn">⏭</button>
                             </div>
                             <div class="music-actions">
-                                <button id="music-fav" class="action-btn">♡</button>
-                                <button id="music-add" class="action-btn">➕</button>
-                                <button id="music-list" class="action-btn">☰</button>
-                                <button id="music-search" class="action-btn">🔍</button>
+                                <button id="music-search" class="action-btn" title="搜索音乐">🔍</button>
+                                <button id="music-add" class="action-btn" title="添加音乐">➕</button>
+                                <button id="music-list" class="action-btn" title="我的歌单">☰</button>
                             </div>
                         </div>
                         <div class="widget-row">
@@ -261,9 +260,6 @@
                 </div>
                 <div class="search-area">
                     <input type="text" id="music-search-input" placeholder="搜索歌曲或歌手...">
-                    <select id="music-platform">
-                        <option value="kugou">酷狗音乐</option>
-                    </select>
                     <button id="do-search">搜索</button>
                 </div>
                 <div id="search-results"></div>
@@ -272,7 +268,7 @@
             <div id="music-fav-modal" class="app-window hidden">
                 <div class="app-header">
                     <button class="back-btn">←</button>
-                    <h3>我的最爱</h3>
+                    <h3>我的歌单</h3>
                 </div>
                 <div id="fav-list"></div>
             </div>

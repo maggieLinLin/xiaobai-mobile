@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>測試獲取播放鏈接</title>
+</head>
+<body>
+    <h1>測試 Meting API 獲取播放鏈接</h1>
+    <p>歌曲 ID: 2647102754 (七里香 女聲版)</p>
+    
+    <h2>測試不同的端點格式：</h2>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testEndpoints() {
+            const songId = '2647102754';
+            const endpoints = [
+                {
+                    name: '方式1: /api?type=url',
+                    url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=url&id=${songId}`
+                },
+                {
+                    name: '方式2: /url',
+                    url: `https://meting-api-alpha-gilt.vercel.app/url?server=netease&id=${songId}`
+                },
+                {
+                    name: '方式3: /api + download',
+                    url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=download&id=${songId}`
+                },
+                {
+                    name: '方式4: /song',
+                    url: `https://meting-api-alpha-gilt.vercel.app/song?server=netease&id=${songId}`
+                }
+            ];
+
+            const resultsDiv = document.getElementById('results');
+
+            for (const endpoint of endpoints) {
+                const div = document.createElement('div');
+                div.style.margin = '20px 0';
+                div.style.border = '1px solid #ddd';
+                div.style.padding = '10px';
+                
+                div.innerHTML = `<h3>${endpoint.name}</h3>
+                                <p style="font-size:12px;word-break:break-all;">${endpoint.url}</p>
+                                <p>狀態: <span id="status-${endpoint.name}">⏳ 測試中...</span></p>
+                                <p>結果: <span id="result-${endpoint.name}">---</span></p>`;
+                resultsDiv.appendChild(div);
+
+                try {
+                    const res = await fetch(endpoint.url);
+                    const statusSpan = document.getElementById(`status-${endpoint.name}`);
+                    const resultSpan = document.getElementById(`result-${endpoint.name}`);
+                    
+                    statusSpan.textContent = `✅ HTTP ${res.status}`;
+                    
+                    try {
+                        const data = await res.json();
+                        resultSpan.innerHTML = `<pre style="background:#f5f5f5;padding:10px;overflow-x:auto;font-size:11px;">${JSON.stringify(data, null, 2).substring(0, 500)}</pre>`;
+                    } catch (e) {
+                        resultSpan.textContent = '非 JSON 響應';
+                    }
+                } catch (error) {
+                    const statusSpan = document.getElementById(`status-${endpoint.name}`);
+                    const resultSpan = document.getElementById(`result-${endpoint.name}`);
+                    statusSpan.textContent = `❌ ${error.message}`;
+                    resultSpan.textContent = '連接失敗';
+                }
+
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        testEndpoints();
+    </script>
+</body>
+</html>

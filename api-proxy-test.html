@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meting API 反代 - 搜索測試</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .search-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .status {
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .results {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .song-item {
+            padding: 12px;
+            border-bottom: 1px solid #e8e8e8;
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        
+        .song-item:last-child {
+            border-bottom: none;
+        }
+        
+        .song-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .song-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .song-artist {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        .api-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e8e8e8;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .controls button {
+            font-size: 13px;
+            padding: 10px 15px;
+        }
+        
+        .controls button:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .controls button:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        
+        .controls button:nth-child(4) {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 音樂搜索測試</h1>
+        <p class="subtitle">Meting API 反代 - <code>meting-api-alpha-gilt.vercel.app</code></p>
+        
+        <div class="search-group">
+            <input type="text" id="searchInput" placeholder="輸入歌曲名稱或歌手名..." value="一起來看流星雨">
+            <button onclick="search()">🔍 搜索</button>
+        </div>
+        
+        <div class="status" id="status">準備就緒，輸入搜索關鍵詞後點擊搜索</div>
+        
+        <div id="resultsContainer" style="display: none;">
+            <div class="results" id="results">
+                <div class="empty">搜索結果將顯示在這裡...</div>
+            </div>
+            <div class="controls">
+                <button onclick="search()">🔄 重新搜索</button>
+                <button onclick="clearResults()">🗑️ 清空結果</button>
+                <button onclick="testDirect()">🧪 直接測試 API</button>
+                <button onclick="copyUrl()">📋 複製 API URL</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'https://meting-api-alpha-gilt.vercel.app';
+        
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        async function search() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                updateStatus('❌ 請輸入搜索關鍵詞', 'error');
+                return;
+            }
+            
+            updateStatus('🔍 正在搜索...', 'loading');
+            document.getElementById('resultsContainer').style.display = 'block';
+            
+            try {
+                // 使用正確的 /api 端點格式
+                const searchUrl = `${API_URL}/api?server=netease&type=search&s=${encodeURIComponent(query)}`;
+                console.log('搜索 URL:', searchUrl);
+                
+                const response = await fetch(searchUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('搜索結果:', data);
+                
+                // 處理 data.data 嵌套格式
+                const songs = data && data.data ? data.data : [];
+                
+                if (!Array.isArray(songs) || songs.length === 0) {
+                    updateStatus('❌ 未找到搜索結果', 'error');
+                    displayResults([]);
+                    return;
+                }
+                
+                displayResults(songs);
+                updateStatus(`✅ 成功找到 ${songs.length} 首歌曲 (NetEase 源)`, 'success');
+                
+            } catch (error) {
+                console.error('搜索錯誤:', error);
+                updateStatus(`❌ 搜索失敗: ${error.message}`, 'error');
+                displayResults([]);
+            }
+        }
+        
+        function displayResults(songs) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!songs || songs.length === 0) {
+                resultsDiv.innerHTML = '<div class="empty">沒有搜索結果</div>';
+                return;
+            }
+            
+            let html = '';
+            songs.forEach((song, index) => {
+                const title = song.name || song.title || '未知歌曲';
+                // 支持多種藝術家字段格式：artist, artists[0].name, ar[0].name
+                let artist = song.artist || song.artists?.[0]?.name || song.ar?.[0]?.name || '未知歌手';
+                if (typeof artist === 'object' && artist.name) {
+                    artist = artist.name;
+                }
+                const url = song.url || song.mp3Url || '';
+                const hasUrl = url ? '✓' : '✗';
+                
+                html += `
+                    <div class="song-item" onclick="copySongInfo(${index})">
+                        <div class="song-title">${index + 1}. ${title} ${hasUrl}</div>
+                        <div class="song-artist">${artist}</div>
+                        <div style="font-size: 11px; color: #ccc; margin-top: 5px;">
+                            ID: ${song.id || 'N/A'} | ${url ? '有URL' : '無URL'}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html + `<div class="api-info">
+                <strong>API:</strong> ${API_URL}/api?server=netease&type=search<br>
+                <strong>查詢:</strong> ${document.getElementById('searchInput').value}<br>
+                <strong>結果數:</strong> ${songs.length}
+            </div>`;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '<div class="empty">搜索結果將顯示在這裡...</div>';
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('searchInput').value = '';
+            updateStatus('準備就緒，輸入搜索關鍵詞後點擊搜索');
+        }
+        
+        async function testDirect() {
+            updateStatus('🧪 直接測試 API...', 'loading');
+            
+            try {
+                const testUrl = `${API_URL}/api?server=netease&type=search&s=周杰伦`;
+                console.log('測試 URL:', testUrl);
+                const response = await fetch(testUrl);
+                const data = await response.json();
+                
+                console.log('API 響應:', data);
+                
+                const songs = data && data.data ? data.data : [];
+                if (Array.isArray(songs) && songs.length > 0) {
+                    updateStatus(`✅ API 正常工作！(獲得 ${songs.length} 首歌曲)`, 'success');
+                } else {
+                    updateStatus('⚠️ API 有響應但無結果，或格式不正確', 'error');
+                }
+            } catch (error) {
+                updateStatus(`❌ API 不可用: ${error.message}`, 'error');
+            }
+        }
+        
+        function copyUrl() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) {
+                updateStatus('❌ 請先輸入搜索關鍵詞', 'error');
+                return;
+            }
+            
+            const url = `${API_URL}/api?server=netease&type=search&s=${encodeURIComponent(query)}`;
+            navigator.clipboard.writeText(url).then(() => {
+                updateStatus('✅ API URL 已複製到剪貼板', 'success');
+                setTimeout(() => updateStatus('複製成功！'), 2000);
+            });
+        }
+        
+        function copySongInfo(index) {
+            updateStatus('ℹ️ 點擊按鈕以執行操作', 'info');
+        }
+        
+        // 頁面加載時自動搜索
+        window.addEventListener('load', () => {
+            setTimeout(() => search(), 500);
+        });
+        
+        // 回車鍵搜索
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') search();
+            });
+        });
+    </script>
+</body>
+</html>

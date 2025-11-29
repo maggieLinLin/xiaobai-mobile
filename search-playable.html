@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>搜索播放源</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; background: #f9f9f9; }
+        audio { width: 100%; margin-top: 10px; }
+        code { background: #f0f0f0; padding: 2px 6px; }
+        .result { margin-top: 10px; padding: 10px; background: white; border-left: 3px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 搜索可用的播放源</h1>
+    
+    <div class="test">
+        <h3>搜索 "七里香" 所有結果</h3>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function searchAndFindPlayable() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '⏳ 搜索中...';
+            
+            try {
+                // 搜索歌曲
+                const searchRes = await fetch('https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=七里香&limit=50');
+                const searchData = await searchRes.json();
+                
+                resultsDiv.innerHTML = '';
+                
+                let playableCount = 0;
+                
+                // 遍歷前 10 首歌曲，檢查是否可播放
+                for (let i = 0; i < Math.min(10, searchData.results.length); i++) {
+                    const song = searchData.results[i];
+                    const songDiv = document.createElement('div');
+                    songDiv.className = 'result';
+                    songDiv.innerHTML = `
+                        <p><strong>${i+1}. ${song.name}</strong> - ${song.artist}</p>
+                        <p>ID: <code>${song.id}</code></p>
+                        <p>檢查中... <span id="check-${i}">⏳</span></p>
+                        <div id="audio-${i}"></div>
+                    `;
+                    resultsDiv.appendChild(songDiv);
+                    
+                    // 檢查是否能播放
+                    try {
+                        const songRes = await fetch(`https://meting-api-alpha-gilt.vercel.app/api?type=song&id=${song.id}`);
+                        const songData = await songRes.json();
+                        
+                        if (songData.url) {
+                            document.getElementById(`check-${i}`).textContent = '✅ 有播放鏈接';
+                            document.getElementById(`audio-${i}`).innerHTML = `
+                                <audio controls style="width:100%;">
+                                    <source src="${songData.url}" type="audio/mpeg">
+                                </audio>
+                                <p style="font-size:12px;color:#666;">
+                                    URL: <code>${songData.url.substring(0, 60)}...</code>
+                                </p>
+                            `;
+                            playableCount++;
+                        } else {
+                            document.getElementById(`check-${i}`).textContent = '❌ 無播放鏈接';
+                        }
+                    } catch (e) {
+                        document.getElementById(`check-${i}`).textContent = '❌ 錯誤: ' + e.message;
+                    }
+                    
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                const summary = document.createElement('div');
+                summary.style.marginTop = '20px';
+                summary.style.padding = '15px';
+                summary.style.background = '#e7f3ff';
+                summary.style.border = '1px solid #b3d9ff';
+                summary.innerHTML = `
+                    <p><strong>檢查完成</strong></p>
+                    <p>✅ 可播放: ${playableCount} 首</p>
+                    <p>❌ 無法播放: ${Math.min(10, searchData.results.length) - playableCount} 首</p>
+                    ${playableCount > 0 ? '<p>✅ 搜索功能正常，可以播放找到的歌曲</p>' : '<p>❌ 所有歌曲都無法播放，可能是 API 限制</p>'}
+                `;
+                resultsDiv.appendChild(summary);
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `❌ 錯誤: ${error.message}`;
+            }
+        }
+
+        searchAndFindPlayable();
+    </script>
+</body>
+</html>

@@ -1003,7 +1003,6 @@ function initMusic() {
     const musicPlay = document.getElementById('music-play');
     const musicPrev = document.getElementById('music-prev');
     const musicNext = document.getElementById('music-next');
-    const musicFav = document.getElementById('music-fav');
     const musicAdd = document.getElementById('music-add');
     const musicSearch = document.getElementById('music-search');
     const musicList = document.getElementById('music-list');
@@ -1015,10 +1014,9 @@ function initMusic() {
     if (musicPlay) musicPlay.onclick = (e) => { e.stopPropagation(); e.preventDefault(); togglePlay(); };
     if (musicPrev) musicPrev.onclick = (e) => { e.stopPropagation(); e.preventDefault(); prevSong(); };
     if (musicNext) musicNext.onclick = (e) => { e.stopPropagation(); e.preventDefault(); nextSong(); };
-    if (musicFav) musicFav.onclick = (e) => { e.stopPropagation(); e.preventDefault(); toggleFavorite(); };
     if (musicAdd) musicAdd.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('add-music-modal'); };
     if (musicSearch) musicSearch.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('music-search-modal'); };
-    if (musicList) musicList.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('music-fav-modal'); };
+    if (musicList) musicList.onclick = (e) => { e.stopPropagation(); e.preventDefault(); showPlaylist(); };
     if (doSearch) doSearch.onclick = searchMusic;
     if (confirmAdd) confirmAdd.onclick = addCustomMusic;
     if (searchInput) searchInput.onkeypress = e => { if (e.key === 'Enter') searchMusic(); };
@@ -1136,17 +1134,29 @@ function nextSong() {
     playSong(next);
 }
 
-function toggleFavorite() {
-    if (!state.music.current) return;
-    const idx = state.music.favorites.findIndex(s => s.id === state.music.current.id);
-    if (idx >= 0) {
-        state.music.favorites.splice(idx, 1);
-        document.getElementById('music-fav').textContent = '\u2661';
-    } else {
-        state.music.favorites.push(state.music.current);
-        document.getElementById('music-fav').textContent = '\u2665';
+function showPlaylist() {
+    openApp('music-fav-modal');
+    const list = document.getElementById('fav-list');
+    if (state.music.playlist.length === 0) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:#999">歌單為空<br><br>使用搜索或添加功能來添加歌曲</div>';
+        return;
     }
-    saveState();
+    let html = '';
+    state.music.playlist.forEach((song, idx) => {
+        const isPlaying = state.music.current && state.music.current.id === song.id;
+        html += `<div class="song-item" style="${isPlaying ? 'background:rgba(102,126,234,0.1);' : ''}" data-idx="${idx}">
+            <div style="font-weight:bold">${song.title} ${isPlaying ? '🎵' : ''}</div>
+            <div style="font-size:12px;color:#666">${song.artist}</div>
+        </div>`;
+    });
+    list.innerHTML = html;
+    document.querySelectorAll('#fav-list .song-item').forEach(el => {
+        el.onclick = () => {
+            const idx = parseInt(el.dataset.idx);
+            playSong(state.music.playlist[idx]);
+            closeApp();
+        };
+    });
 }
 
 function toggleLyric() {
@@ -1155,55 +1165,169 @@ function toggleLyric() {
 }
 
 async function searchMusic() {
-    const query = document.getElementById('music-search-input').value;
-    const platform = document.getElementById('music-platform').value;
+    const query = document.getElementById('music-search-input').value.trim();
     if (!query) return alert('请输入搜索关键词');
     
     const results = document.getElementById('search-results');
     results.innerHTML = '<div style="padding:20px;text-align:center">正在搜索...</div>';
     
+    // 優先使用 Meting API 反代 /api 端點格式，支援更好的搜索結果
     const apis = [
-        { name: 'API 1', url: `https://web-production-b3dd5.up.railway.app/music?q=${encodeURIComponent(query)}` },
-        { name: 'API 2', url: `https://api.injahow.cn/meting/?type=search&id=${encodeURIComponent(query)}&source=netease` },
-        { name: 'API 3', url: `https://music.cyrilstudio.top/search?keywords=${encodeURIComponent(query)}` }
+        { 
+            name: 'Meting API 反代 - NetEase', 
+            url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}`,
+            parse: (data) => {
+                try {
+                    // 處理 {"source":"netease","results":[...]} 格式
+                    let songs = [];
+                    if (data && data.results && Array.isArray(data.results)) {
+                        songs = data.results;
+                    } else if (data && data.data && Array.isArray(data.data)) {
+                        // 備用格式 {"data":[...]}
+                        songs = data.data;
+                    } else {
+                        console.error('未知的數據格式:', data);
+                        return [];
+                    }
+                    
+                    return songs.filter(song => song && song.name).map(song => ({
+                        title: song.name || '未知歌曲',
+                        artist: song.artist || '未知歌手',
+                        url: song.url || song.mp3Url || '',
+                        id: song.id || '',
+                        pic: song.pic || song.cover || ''
+                    }));
+                } catch (e) {
+                    console.error('NetEase 解析錯誤:', e);
+                }
+                return [];
+            }
+        },
+        { 
+            name: 'Meting API 反代 - NetEase (備用)', 
+            url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}&limit=50`,
+            parse: (data) => {
+                try {
+                    let songs = [];
+                    if (data && data.results && Array.isArray(data.results)) {
+                        songs = data.results;
+                    } else if (data && data.data && Array.isArray(data.data)) {
+                        songs = data.data;
+                    } else {
+                        return [];
+                    }
+                    
+                    return songs.filter(song => song && song.name).map(song => ({
+                        title: song.name || '未知歌曲',
+                        artist: song.artist || '未知歌手',
+                        url: song.url || song.mp3Url || '',
+                        id: song.id || '',
+                        pic: song.pic || song.cover || ''
+                    }));
+                } catch (e) {
+                    console.error('NetEase 備用解析錯誤:', e);
+                }
+                return [];
+            }
+        },
+        {
+            name: 'YesPlayMusic API - 網易',
+            url: `https://music-api.vercel.app/search?keywords=${encodeURIComponent(query)}&limit=30`,
+            parse: (data) => {
+                try {
+                    if (data && data.result && data.result.songs && Array.isArray(data.result.songs)) {
+                        return data.result.songs.map(song => ({
+                            title: song.name || '未知歌曲',
+                            artist: song.artists?.map(a => a.name).join(' / ') || '未知歌手',
+                            url: '',
+                            id: song.id || '',
+                            pic: song.album?.picUrl || ''
+                        }));
+                    }
+                } catch (e) {
+                    console.error('YesPlayMusic 解析錯誤:', e);
+                }
+                return [];
+            }
+        }
     ];
     
     try {
         let songs = [];
         let successApi = null;
+        let errorMessages = [];
         
         for (const api of apis) {
             try {
-                console.log(`嘗試 ${api.name}: ${api.url}`);
-                const res = await fetch(api.url, { method: 'GET', mode: 'cors' });
-                const data = await res.json();
+                console.log(`🔍 嘗試 ${api.name}: ${api.url}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 增加到 15 秒
                 
-                if (api.name === 'API 1' && data.code === 200 && data.data) {
-                    songs = data.data;
+                const res = await fetch(api.url, { 
+                    method: 'GET', 
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0'
+                    },
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
+                console.log(`📊 ${api.name} 響應狀態: ${res.status}`);
+                
+                if (!res.ok && res.status !== 200) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
+                let data;
+                try {
+                    data = await res.json();
+                } catch (jsonErr) {
+                    console.error(`❌ JSON 解析失敗: ${api.name}`);
+                    throw new Error(`JSON 解析失敗`);
+                }
+                
+                console.log(`📦 ${api.name} 數據:`, data);
+                
+                if (data) {
+                    songs = api.parse(data);
+                    console.log(`✅ ${api.name} 解析結果: ${songs.length} 首歌曲`);
+                }
+                
+                if (songs && songs.length > 0) {
                     successApi = api.name;
-                    break;
-                } else if (api.name === 'API 2' && Array.isArray(data)) {
-                    songs = data.map(s => ({ id: s.id, title: s.name || s.title, artist: s.artist || s.author, url: s.url }));
-                    successApi = api.name;
-                    break;
-                } else if (api.name === 'API 3' && data.result && data.result.songs) {
-                    songs = data.result.songs.map(s => ({ id: s.id, title: s.name, artist: s.artists?.[0]?.name || '未知', url: `https://music.cyrilstudio.top/song/url?id=${s.id}` }));
-                    successApi = api.name;
+                    console.log(`🎉 成功: ${api.name} 找到 ${songs.length} 首歌曲`);
                     break;
                 }
             } catch (e) {
-                console.error(`${api.name} 失敗:`, e);
+                const errorMsg = `${api.name}: ${e.message}`;
+                errorMessages.push(errorMsg);
+                console.error(`❌ ${errorMsg}`);
             }
         }
         
         if (songs.length === 0) {
-            results.innerHTML = '<div style="padding:20px;text-align:center;color:#ff6b6b">所有 API 均無法訪問<br><br>建議：<br>1. 檢查網絡連接<br>2. 使用本地音樂文件<br>3. 手動輸入音樂 URL</div>';
+            console.error(`❌ 所有 API 均失敗:`, errorMessages);
+            results.innerHTML = `<div style="padding:20px;text-align:center;color:#ff6b6b">
+                <div style="margin-bottom:10px">所有 API 均無法訪問</div>
+                <div style="font-size:12px;color:#999;margin-bottom:15px">
+                    ${errorMessages.map(e => `• ${e}`).join('<br>')}
+                </div>
+                <div style="border-top:1px solid #f0f0f0;padding-top:15px">
+                    <div style="margin-bottom:8px"><strong>建議：</strong></div>
+                    1. 檢查網絡連接<br>
+                    2. 使用「添加音樂」功能上傳本地文件<br>
+                    3. 手動輸入音樂 URL<br>
+                    4. 稍後重試（API 可能暫時不可用）
+                </div>
+            </div>`;
             return;
         }
         
-        console.log(`成功使用 ${successApi}，找到 ${songs.length} 首歌曲`);
+        console.log(`✅ 成功使用 ${successApi}，找到 ${songs.length} 首歌曲`);
         
-        let html = '';
+        let html = `<div style="padding:10px;font-size:11px;color:#999;text-align:right">數據來源: ${successApi}</div>`;
         songs.forEach(song => {
             html += `<div class="song-item" data-song='${JSON.stringify(song).replace(/'/g, "&apos;")}'>
                 <div style="font-weight:bold">${song.title}</div>
@@ -1213,41 +1337,152 @@ async function searchMusic() {
         results.innerHTML = html;
         
         document.querySelectorAll('.song-item').forEach(el => {
-            el.onclick = () => {
+            el.onclick = async () => {
                 const song = JSON.parse(el.dataset.song.replace(/&apos;/g, "'"));
-                playSong(song);
+                await playSong(song);
                 closeApp();
             };
         });
     } catch (e) {
         console.error('Search error:', e);
-        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失敗: ${e.message}<br><br>請嘗試：<br>1. 使用「添加音樂」功能上傳本地文件<br>2. 手動輸入音樂 URL</div>`;
+        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失敗: ${e.message}<br><br>請嘗試：<br>1. 使用「添加音樂」功能上傳本地文件<br>2. 手動輸入音樂 URL<br>3. 重新搜索</div>`;
     }
 }
 
-function playSong(song) {
+async function playSong(song) {
     state.music.current = song;
     document.querySelector('.music-title').textContent = song.title;
     document.querySelector('.music-artist').textContent = song.artist;
     document.getElementById('lyric-text').textContent = song.title + ' - ' + song.artist;
     
     const player = document.getElementById('music-player');
-    if (song.url) {
-        player.src = song.url;
-        player.play().then(() => {
-            document.getElementById('music-play').textContent = '\u23f8';
-            state.music.isPlaying = true;
-        }).catch(e => {
-            alert('播放失败: ' + e.message);
-        });
+    
+    try {
+        // 如果沒有 URL，需要調用 API 獲取播放鏈接
+        if (!song.url || song.url.trim() === '') {
+            console.log('🔍 動態獲取播放鏈接...');
+            
+            // 使用 type=song 獲取完整歌曲信息（包含播放鏈接）
+            const url = `https://meting-api-alpha-gilt.vercel.app/api?type=song&id=${song.id}`;
+            console.log('📡 獲取歌曲信息:', url);
+            
+            const res = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            });
+            
+            if (!res.ok) {
+                throw new Error(`無法獲取播放鏈接: HTTP ${res.status}`);
+            }
+            
+            const data = await res.json();
+            console.log('📦 歌曲數據:', data);
+            
+            // 從響應中提取播放鏈接
+            if (data && data.url) {
+                song.url = data.url;
+                console.log('✅ 獲得播放鏈接:', song.url);
+            } else {
+                throw new Error('響應中找不到播放鏈接');
+            }
+            
+            if (!song.url) {
+                throw new Error('無法找到有效的播放鏈接');
+            }
+        }
+        
+        // 現在有 URL，開始播放
+        if (song.url) {
+            console.log('🎵 開始播放:', song.url);
+            
+            // 嘗試多種方式播放
+            let playSuccess = false;
+            
+            // 方式1: 直接設置 src
+            player.src = song.url;
+            
+            // 方式2: 使用 blob 和 createObjectURL (如果方式1失敗)
+            const tryBlobPlay = async () => {
+                if (playSuccess) return;
+                
+                try {
+                    console.log('嘗試 blob 播放方式...');
+                    const res = await fetch(song.url, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0',
+                            'Referer': 'https://music.163.com/'
+                        }
+                    });
+                    
+                    if (!res.ok) {
+                        console.log('fetch 失敗: HTTP ' + res.status);
+                        return;
+                    }
+                    
+                    const blob = await res.blob();
+                    console.log('✅ 獲得 blob:', blob.size, 'bytes');
+                    
+                    const blobUrl = URL.createObjectURL(blob);
+                    player.src = blobUrl;
+                    
+                    player.play().then(() => {
+                        console.log('✅ blob 播放成功');
+                        playSuccess = true;
+                        document.getElementById('music-play').textContent = '\u23f8';
+                        state.music.isPlaying = true;
+                    }).catch(e => {
+                        console.error('blob 播放失敗:', e);
+                    });
+                } catch (e) {
+                    console.error('blob 方式出錯:', e);
+                }
+            };
+            
+            // 監聽播放器事件
+            const canplayHandler = () => {
+                console.log('✅ 可以播放');
+                playSuccess = true;
+                player.removeEventListener('error', errorHandler);
+                document.getElementById('music-play').textContent = '\u23f8';
+                state.music.isPlaying = true;
+            };
+            
+            const errorHandler = () => {
+                console.error('播放器錯誤:', player.error?.code);
+                player.removeEventListener('canplay', canplayHandler);
+                
+                // 錯誤時，延遲後嘗試 blob 方式
+                setTimeout(() => tryBlobPlay(), 500);
+            };
+            
+            player.addEventListener('canplay', canplayHandler, { once: true });
+            player.addEventListener('error', errorHandler, { once: true });
+            
+            // 嘗試播放
+            const playPromise = player.play();
+            if (playPromise) {
+                playPromise.then(() => {
+                    console.log('✅ 播放開始');
+                    playSuccess = true;
+                    player.removeEventListener('error', errorHandler);
+                }).catch(e => {
+                    console.error('play() 失敗:', e);
+                    // 自動降級到 blob 方式
+                    setTimeout(() => tryBlobPlay(), 500);
+                });
+            }
+        } else {
+            alert('無法獲取播放鏈接，請稍後重試');
+        }
+    } catch (e) {
+        console.error('獲取播放鏈接出錯:', e);
+        alert('獲取播放鏈接失敗: ' + e.message + '\n\n請稍後重試');
     }
     
     if (!state.music.playlist.some(s => s.id === song.id)) {
         state.music.playlist.push(song);
     }
-    
-    const isFav = state.music.favorites.some(s => s.id === song.id);
-    document.getElementById('music-fav').textContent = isFav ? '\u2665' : '\u2661';
     
     saveState();
 }

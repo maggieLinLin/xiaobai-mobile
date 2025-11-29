@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>探索音樂源</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .api-test { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h3 { margin-top: 0; color: #333; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 12px; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin: 5px 0; }
+        button:hover { background: #0056b3; }
+        audio { width: 100%; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 探索可用的音樂源</h1>
+        
+        <div class="api-test">
+            <h3>1. 檢查 Meting API 返回的完整數據</h3>
+            <button onclick="checkMetingData()">查看完整數據結構</button>
+            <div id="meting-data"></div>
+        </div>
+
+        <div class="api-test">
+            <h3>2. 嘗試 QQ 音樂</h3>
+            <button onclick="searchQQ()">搜索 QQ 音樂</button>
+            <div id="qq-data"></div>
+        </div>
+
+        <div class="api-test">
+            <h3>3. 嘗試其他 API</h3>
+            <button onclick="tryOtherApis()">測試其他 API</button>
+            <div id="other-api"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkMetingData() {
+            const div = document.getElementById('meting-data');
+            div.innerHTML = '⏳ 加載中...';
+            
+            try {
+                const res = await fetch('https://meting-api-alpha-gilt.vercel.app/api?type=song&id=2647102754');
+                const data = await res.json();
+                
+                div.innerHTML = `
+                    <div class="status success">✅ 響應成功</div>
+                    <h4>完整數據:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <h4>所有字段:</h4>
+                    <ul>
+                        ${Object.keys(data).map(key => `<li><strong>${key}:</strong> ${typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]}</li>`).join('')}
+                    </ul>
+                `;
+            } catch (e) {
+                div.innerHTML = `<div class="status error">❌ 錯誤: ${e.message}</div>`;
+            }
+        }
+
+        async function searchQQ() {
+            const div = document.getElementById('qq-data');
+            div.innerHTML = '⏳ 搜索中...';
+            
+            try {
+                const res = await fetch('https://meting-api-alpha-gilt.vercel.app/api?server=qq&type=search&s=七里香&limit=5');
+                const data = await res.json();
+                
+                if (!data.results || data.results.length === 0) {
+                    div.innerHTML = '<div class="status error">❌ 找不到 QQ 音樂結果</div>';
+                    return;
+                }
+                
+                let html = '<div class="status success">✅ 找到結果</div>';
+                
+                for (let i = 0; i < Math.min(3, data.results.length); i++) {
+                    const song = data.results[i];
+                    html += `<h4>${i+1}. ${song.name} - ${song.artist}</h4>`;
+                    
+                    try {
+                        const songRes = await fetch(`https://meting-api-alpha-gilt.vercel.app/api?server=qq&type=song&id=${song.id}`);
+                        const songData = await songRes.json();
+                        
+                        html += `<pre>${JSON.stringify(songData, null, 2)}</pre>`;
+                        
+                        if (songData.url) {
+                            html += `<p>✅ 有播放鏈接: <code>${songData.url.substring(0, 80)}...</code></p>`;
+                            html += `<audio controls><source src="${songData.url}"></audio>`;
+                        }
+                    } catch (e) {
+                        html += `<p>❌ 無法獲取詳情: ${e.message}</p>`;
+                    }
+                }
+                
+                div.innerHTML = html;
+            } catch (e) {
+                div.innerHTML = `<div class="status error">❌ 錯誤: ${e.message}</div>`;
+            }
+        }
+
+        async function tryOtherApis() {
+            const div = document.getElementById('other-api');
+            div.innerHTML = '⏳ 測試中...';
+            
+            const apis = [
+                {
+                    name: '網易雲 (api.neteasecloudmusic.com)',
+                    url: 'https://api.neteasecloudmusic.com/search?keywords=七里香&type=1&limit=5'
+                },
+                {
+                    name: 'YesPlayMusic',
+                    url: 'https://music-api.vercel.app/search?keywords=七里香&limit=5'
+                },
+                {
+                    name: 'musicapi (備選)',
+                    url: 'https://musicapi.aitune.io/search?keywords=七里香&limit=5'
+                }
+            ];
+            
+            let html = '';
+            
+            for (const api of apis) {
+                html += `<h4>${api.name}</h4>`;
+                try {
+                    const res = await fetch(api.url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        html += `<div class="status success">✅ HTTP ${res.status}</div>`;
+                        html += `<pre>${JSON.stringify(data).substring(0, 500)}...</pre>`;
+                    } else {
+                        html += `<div class="status error">❌ HTTP ${res.status}</div>`;
+                    }
+                } catch (e) {
+                    html += `<div class="status error">❌ 連接失敗: ${e.message}</div>`;
+                }
+                html += '<hr>';
+            }
+            
+            div.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

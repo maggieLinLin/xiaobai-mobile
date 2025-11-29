@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 連接診斷工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .api-test {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+        }
+        
+        .api-test h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .api-test-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .api-test-status.loading {
+            background: #ffc107;
+        }
+        
+        .api-test-status.success {
+            background: #28a745;
+            animation: none;
+        }
+        
+        .api-test-status.error {
+            background: #dc3545;
+            animation: none;
+        }
+        
+        .api-url {
+            font-size: 11px;
+            color: #999;
+            word-break: break-all;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .api-result {
+            font-size: 12px;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+        
+        .api-result.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .api-result.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .summary strong {
+            color: #1976d2;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logs {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API 連接診斷</h1>
+        <p class="subtitle">檢測所有音樂搜索 API 的連接狀態</p>
+        
+        <div id="tests"></div>
+        
+        <button onclick="runDiagnostics()">🔄 重新診斷</button>
+        
+        <div id="summary" style="display: none;" class="summary">
+            <strong>診斷結果：</strong><span id="summaryText"></span>
+        </div>
+        
+        <div id="logs" class="logs"></div>
+    </div>
+    
+    <script>
+        const apis = [
+            {
+                name: 'Meting API - NetEase',
+                url: 'https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=test',
+                type: 'json',
+                checkResponse: (data) => data && data.data && Array.isArray(data.data)
+            },
+            {
+                name: 'Meting API - QQ 音樂',
+                url: 'https://meting-api-alpha-gilt.vercel.app/api?server=qq&type=search&s=test',
+                type: 'json',
+                checkResponse: (data) => data && data.data && Array.isArray(data.data)
+            },
+            {
+                name: 'Meting API - 酷狗音樂',
+                url: 'https://meting-api-alpha-gilt.vercel.app/api?server=kugou&type=search&s=test',
+                type: 'json',
+                checkResponse: (data) => data && data.data && Array.isArray(data.data)
+            }
+        ];
+        
+        let logs = [];
+        
+        function log(msg) {
+            logs.push(msg);
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = logs.map(l => `<div>${new Date().toLocaleTimeString()}: ${l}</div>`).join('');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        async function testApi(api) {
+            const testDiv = document.getElementById('tests');
+            const id = `test-${apis.indexOf(api)}`;
+            
+            if (!document.getElementById(id)) {
+                testDiv.innerHTML += `
+                    <div class="api-test" id="${id}">
+                        <h3>
+                            <span class="api-test-status loading"></span>
+                            ${api.name}
+                        </h3>
+                        <div class="api-url">${api.url}</div>
+                        <div class="api-result">測試中...</div>
+                    </div>
+                `;
+            }
+            
+            const testEl = document.getElementById(id);
+            const statusEl = testEl.querySelector('.api-test-status');
+            const resultEl = testEl.querySelector('.api-result');
+            
+            try {
+                log(`正在測試 ${api.name}...`);
+                
+                const response = await Promise.race([
+                    fetch(api.url, { mode: 'cors', method: 'GET' }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('超時（10秒）')), 10000)
+                    )
+                ]);
+                
+                log(`${api.name} 狀態碼: ${response.status}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                log(`${api.name} 響應: ${JSON.stringify(data).substring(0, 100)}...`);
+                
+                if (api.checkResponse(data)) {
+                    statusEl.className = 'api-test-status success';
+                    resultEl.className = 'api-result success';
+                    resultEl.innerHTML = '✅ 正常工作';
+                    log(`✅ ${api.name} 正常!`);
+                } else {
+                    statusEl.className = 'api-test-status error';
+                    resultEl.className = 'api-result error';
+                    resultEl.innerHTML = '❌ 返回無效數據';
+                    log(`❌ ${api.name} 返回無效數據`);
+                }
+            } catch (error) {
+                statusEl.className = 'api-test-status error';
+                resultEl.className = 'api-result error';
+                resultEl.innerHTML = `❌ 錯誤: ${error.message}`;
+                log(`❌ ${api.name} 失敗: ${error.message}`);
+            }
+        }
+        
+        async function runDiagnostics() {
+            logs = [];
+            log('開始 API 診斷...');
+            log('用戶代理: ' + navigator.userAgent.substring(0, 80));
+            
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('tests').innerHTML = '';
+            
+            const results = [];
+            
+            for (const api of apis) {
+                await testApi(api);
+                const testEl = document.getElementById(`test-${apis.indexOf(api)}`);
+                results.push(testEl.querySelector('.api-result').textContent);
+            }
+            
+            // 顯示摘要
+            const successCount = results.filter(r => r.includes('✅')).length;
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.style.display = 'block';
+            
+            if (successCount === 3) {
+                summaryDiv.innerHTML = `<strong style="color: #2e7d32;">✅ 所有 API 正常工作</strong><br>
+                    您應該能夠正常搜索音樂。請嘗試在應用中搜索。`;
+            } else if (successCount > 0) {
+                summaryDiv.innerHTML = `<strong style="color: #f57c00;">⚠️ 部分 API 可用 (${successCount}/3)</strong><br>
+                    應用應該能夠搜索，但如果遇到問題，請檢查您的網絡連接。`;
+            } else {
+                summaryDiv.innerHTML = `<strong style="color: #c62828;">❌ 所有 API 均無法訪問</strong><br>
+                    可能原因：
+                    <br>1. 網絡連接問題
+                    <br>2. 防火牆/代理限制
+                    <br>3. API 服務暫時不可用
+                    <br>4. 跨域 (CORS) 被阻止
+                    <br><br>請檢查您的網絡設置或稍後重試。`;
+            }
+        }
+        
+        // 頁面加載時自動診斷
+        window.addEventListener('load', runDiagnostics);
+    </script>
+</body>
+</html>

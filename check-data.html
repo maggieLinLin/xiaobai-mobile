@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>測試正確的 API 格式</title>
+</head>
+<body>
+    <h1>根據官方文檔測試 Meting API</h1>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testCorrectFormat() {
+            const resultsDiv = document.getElementById('results');
+            
+            const tests = [
+                {
+                    name: '獲取播放鏈接 (正確格式)',
+                    url: 'https://meting-api-alpha-gilt.vercel.app/api?type=url&id=2647102754'
+                },
+                {
+                    name: '獲取歌曲詳情',
+                    url: 'https://meting-api-alpha-gilt.vercel.app/api?type=song&id=2647102754'
+                },
+                {
+                    name: '獲取歌詞',
+                    url: 'https://meting-api-alpha-gilt.vercel.app/api?type=lrc&id=2647102754'
+                },
+                {
+                    name: '獲取封面',
+                    url: 'https://meting-api-alpha-gilt.vercel.app/api?type=pic&id=2647102754'
+                }
+            ];
+
+            for (const test of tests) {
+                const div = document.createElement('div');
+                div.style.margin = '20px 0';
+                div.style.border = '1px solid #ddd';
+                div.style.padding = '10px';
+                
+                resultsDiv.appendChild(div);
+                div.innerHTML = `<h3>${test.name}</h3>
+                                <p style="font-size:11px;word-break:break-all;color:#666;">${test.url}</p>
+                                <p>狀態: <span id="status-${test.name}">⏳ 測試中...</span></p>
+                                <p>結果: <span id="result-${test.name}">---</span></p>`;
+
+                try {
+                    const res = await fetch(test.url);
+                    const statusSpan = document.getElementById(`status-${test.name}`);
+                    const resultSpan = document.getElementById(`result-${test.name}`);
+                    
+                    statusSpan.textContent = `✅ HTTP ${res.status}`;
+                    
+                    try {
+                        const data = await res.json();
+                        resultSpan.innerHTML = `<pre style="background:#f5f5f5;padding:10px;overflow-x:auto;font-size:11px;max-height:300px;overflow-y:auto;">${JSON.stringify(data, null, 2).substring(0, 1000)}</pre>`;
+                    } catch (e) {
+                        const text = await res.text();
+                        resultSpan.textContent = `文本響應: ${text.substring(0, 200)}`;
+                    }
+                } catch (error) {
+                    const statusSpan = document.getElementById(`status-${test.name}`);
+                    const resultSpan = document.getElementById(`result-${test.name}`);
+                    statusSpan.textContent = `❌ 連接失敗`;
+                    resultSpan.textContent = error.message;
+                }
+
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        testCorrectFormat();
+    </script>
+</body>
+</html>

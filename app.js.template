@@ -1,0 +1,103 @@
+// 部署完 Cloudflare Worker 後，用這段代碼替換 app.js 中的 searchMusic 函數
+
+async function searchMusic() {
+    const query = document.getElementById('music-search-input').value.trim();
+    if (!query) return alert('请输入搜索关键词');
+    
+    const results = document.getElementById('search-results');
+    results.innerHTML = '<div style="padding:20px;text-align:center">正在搜索...</div>';
+    
+    // ⚠️ 替換下面的 URL 為你的 Cloudflare Worker URL
+    const YOUR_WORKER_URL = 'https://music-api.你的用戶名.workers.dev';
+    
+    const apis = [
+        { 
+            name: 'My Worker', 
+            url: `${YOUR_WORKER_URL}?q=${encodeURIComponent(query)}`,
+            parse: (data) => {
+                if (data.code === 200 && data.data) {
+                    return data.data;
+                }
+                return [];
+            }
+        },
+        { 
+            name: 'Netease API', 
+            url: `https://netease-cloud-music-api-rouge-six.vercel.app/search?keywords=${encodeURIComponent(query)}&limit=10`,
+            parse: (data) => {
+                if (data.result && data.result.songs) {
+                    return data.result.songs.map(song => ({
+                        id: song.id,
+                        title: song.name,
+                        artist: song.artists.map(a => a.name).join('/'),
+                        url: `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`
+                    }));
+                }
+                return [];
+            }
+        },
+        { 
+            name: 'QQ Music API', 
+            url: `https://api.qq.jsososo.com/search?key=${encodeURIComponent(query)}&pageSize=10`,
+            parse: (data) => {
+                if (data.data && data.data.list) {
+                    return data.data.list.map(song => ({
+                        id: song.songmid,
+                        title: song.songname,
+                        artist: song.singer.map(s => s.name).join('/'),
+                        url: `https://api.qq.jsososo.com/song/url?id=${song.songmid}`
+                    }));
+                }
+                return [];
+            }
+        }
+    ];
+    
+    try {
+        let songs = [];
+        let successApi = null;
+        
+        for (const api of apis) {
+            try {
+                console.log(`嘗試 ${api.name}: ${api.url}`);
+                const res = await fetch(api.url, { method: 'GET', mode: 'cors' });
+                const data = await res.json();
+                songs = api.parse(data);
+                
+                if (songs.length > 0) {
+                    successApi = api.name;
+                    break;
+                }
+            } catch (e) {
+                console.error(`${api.name} 失敗:`, e);
+            }
+        }
+        
+        if (songs.length === 0) {
+            results.innerHTML = '<div style="padding:20px;text-align:center;color:#ff6b6b">所有 API 均無法訪問<br><br>建議：<br>1. 檢查網絡連接<br>2. 使用本地音樂文件<br>3. 手動輸入音樂 URL</div>';
+            return;
+        }
+        
+        console.log(`成功使用 ${successApi}，找到 ${songs.length} 首歌曲`);
+        
+        let html = '';
+        songs.forEach(song => {
+            html += `<div class="song-item" data-song='${JSON.stringify(song).replace(/'/g, "&apos;")}'>
+                <div style="font-weight:bold">${song.title}</div>
+                <div style="font-size:12px;color:#666">${song.artist}</div>
+            </div>`;
+        });
+        results.innerHTML = html;
+        
+        document.querySelectorAll('.song-item').forEach(el => {
+            el.onclick = () => {
+                const song = JSON.parse(el.dataset.song.replace(/&apos;/g, "'"));
+                playSong(song);
+                closeApp();
+            };
+        });
+    } catch (e) {
+        console.error('Search error:', e);
+        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失敗: ${e.message}<br><br>請嘗試：<br>1. 使用「添加音樂」功能上傳本地文件<br>2. 手動輸入音樂 URL</div>`;
+    }
+}

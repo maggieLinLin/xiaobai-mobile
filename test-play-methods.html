@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>測試不同播放方式</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        audio { width: 100%; margin-top: 10px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🎵 測試不同播放方式</h1>
+    
+    <div class="test">
+        <h3>方式1: 直接原始 URL</h3>
+        <p>ID: 2647102754 (七里香 女聲版)</p>
+        <p>URL: <code>https://music.163.com/song/media/outer/url?id=2647102754.mp3</code></p>
+        <audio id="audio1" controls></audio>
+        <button onclick="play1()">播放</button>
+        <p id="status1"></p>
+    </div>
+
+    <div class="test">
+        <h3>方式2: 使用代理 (Corsive)</h3>
+        <audio id="audio2" controls></audio>
+        <button onclick="play2()">播放</button>
+        <p id="status2"></p>
+    </div>
+
+    <div class="test">
+        <h3>方式3: 使用代理 (allorigins)</h3>
+        <audio id="audio3" controls></audio>
+        <button onclick="play3()">播放</button>
+        <p id="status3"></p>
+    </div>
+
+    <div class="test">
+        <h3>方式4: 查看控制台輸出</h3>
+        <p>按 F12 打開開發者工具，查看 Console 標籤的詳細錯誤信息</p>
+        <button onclick="testFetch()">測試 Fetch</button>
+        <p id="status4"></p>
+    </div>
+
+    <script>
+        const songId = '2647102754';
+        const originalUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+
+        function play1() {
+            const audio = document.getElementById('audio1');
+            audio.src = originalUrl;
+            audio.play().then(() => {
+                document.getElementById('status1').textContent = '✅ 播放中...';
+            }).catch(e => {
+                document.getElementById('status1').textContent = '❌ ' + e.message;
+                console.error('方式1 錯誤:', e);
+            });
+        }
+
+        function play2() {
+            const audio = document.getElementById('audio2');
+            // 使用 corsive 代理
+            const proxyUrl = `https://corsive.herokuapp.com/${encodeURIComponent(originalUrl)}`;
+            console.log('方式2 URL:', proxyUrl);
+            
+            audio.src = proxyUrl;
+            audio.play().then(() => {
+                document.getElementById('status2').textContent = '✅ 播放中...';
+            }).catch(e => {
+                document.getElementById('status2').textContent = '❌ ' + e.message;
+                console.error('方式2 錯誤:', e);
+            });
+        }
+
+        function play3() {
+            const audio = document.getElementById('audio3');
+            // 使用 allorigins 代理
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`;
+            console.log('方式3 URL:', proxyUrl);
+            
+            audio.src = proxyUrl;
+            audio.play().then(() => {
+                document.getElementById('status3').textContent = '✅ 播放中...';
+            }).catch(e => {
+                document.getElementById('status3').textContent = '❌ ' + e.message;
+                console.error('方式3 錯誤:', e);
+            });
+        }
+
+        async function testFetch() {
+            const statusDiv = document.getElementById('status4');
+            statusDiv.textContent = '⏳ 測試中...';
+            
+            try {
+                console.log('開始 fetch:', originalUrl);
+                const res = await fetch(originalUrl);
+                console.log('HTTP 狀態:', res.status);
+                console.log('Content-Type:', res.headers.get('content-type'));
+                
+                const blob = await res.blob();
+                console.log('Blob 大小:', blob.size, 'bytes');
+                console.log('Blob 類型:', blob.type);
+                
+                const blobUrl = URL.createObjectURL(blob);
+                document.getElementById('audio1').src = blobUrl;
+                
+                statusDiv.textContent = '✅ Blob 創建成功，已設置到方式1';
+            } catch (e) {
+                console.error('Fetch 測試錯誤:', e);
+                statusDiv.textContent = '❌ 錯誤: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

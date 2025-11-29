@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>測試播放鏈接</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        audio { width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>測試不同的播放方式</h1>
+    
+    <div class="test">
+        <h3>1️⃣ 直接播放 (網易雲原始 URL)</h3>
+        <p>ID: 2647102754</p>
+        <p>URL: <code>https://music.163.com/song/media/outer/url?id=2647102754.mp3</code></p>
+        <audio controls>
+            <source src="https://music.163.com/song/media/outer/url?id=2647102754.mp3" type="audio/mpeg">
+        </audio>
+        <p id="status1">⏳ 加載中...</p>
+    </div>
+
+    <div class="test">
+        <h3>2️⃣ 使用 Referer 頭 (通過代理)</h3>
+        <p>嘗試通過 CORS 代理播放</p>
+        <audio controls id="audio2"></audio>
+        <p id="status2">⏳ 準備中...</p>
+    </div>
+
+    <div class="test">
+        <h3>3️⃣ 測試其他代理服務</h3>
+        <p>嘗試第三方代理</p>
+        <audio controls id="audio3"></audio>
+        <p id="status3">⏳ 準備中...</p>
+    </div>
+
+    <script>
+        // 監聽第一個音頻
+        document.querySelectorAll('audio')[0].addEventListener('error', function() {
+            document.getElementById('status1').textContent = '❌ 無法播放 (可能被限制)';
+        });
+        document.querySelectorAll('audio')[0].addEventListener('canplay', function() {
+            document.getElementById('status1').textContent = '✅ 可以播放';
+        });
+
+        // 測試通過 CORS 代理
+        async function testProxy2() {
+            try {
+                // 直接設置 src
+                const audio2 = document.getElementById('audio2');
+                audio2.src = 'https://music.163.com/song/media/outer/url?id=2647102754.mp3';
+                document.getElementById('status2').textContent = '✅ 已設置源';
+            } catch (e) {
+                document.getElementById('status2').textContent = '❌ ' + e.message;
+            }
+        }
+
+        // 測試使用 NetEase API 代理
+        async function testProxy3() {
+            try {
+                // 嘗試調用 Meting API 的 type=song 端點
+                const res = await fetch('https://meting-api-alpha-gilt.vercel.app/api?type=song&id=2647102754');
+                const data = await res.json();
+                
+                const audio3 = document.getElementById('audio3');
+                if (data.url) {
+                    audio3.src = data.url;
+                    document.getElementById('status3').textContent = '✅ 已設置源: ' + data.url.substring(0, 50) + '...';
+                    
+                    audio3.addEventListener('error', function() {
+                        document.getElementById('status3').textContent = '❌ 無法播放';
+                    });
+                    audio3.addEventListener('canplay', function() {
+                        document.getElementById('status3').textContent = '✅ 可以播放';
+                    });
+                } else {
+                    document.getElementById('status3').textContent = '❌ 無法從 API 獲取 URL';
+                }
+            } catch (e) {
+                document.getElementById('status3').textContent = '❌ ' + e.message;
+            }
+        }
+
+        window.onload = function() {
+            testProxy2();
+            testProxy3();
+        };
+    </script>
+</body>
+</html>
