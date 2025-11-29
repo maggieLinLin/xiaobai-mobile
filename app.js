@@ -57,6 +57,56 @@ function initStatusBar() {
     updateBattery();
 }
 
+// ---------- 工具：格式化本地日期為 YYYY-MM-DD ----------
+function localDateKey(date = new Date()){
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// ---------- 儲存 / 讀取記事 ----------
+function saveNoteForDate(dateKey, content){
+  // 使用 localStorage，key 格式: note:YYYY-MM-DD
+  localStorage.setItem(`note:${dateKey}`, content || '');
+}
+
+function loadNoteForDate(dateKey){
+  return localStorage.getItem(`note:${dateKey}`) || '';
+}
+
+// ---------- 更新主頁任務框 ----------
+const taskBox = document.getElementById('today-memo-widget');
+
+function updateTaskBox(content){
+  if(!content || content.trim() === ''){
+    taskBox.value = '';
+    taskBox.placeholder = '今天没有任务';
+  } else {
+    taskBox.placeholder = '';
+    taskBox.value = content;
+  }
+  adjustTaskBoxHeight(); // 每次更新後調整高度
+}
+
+// ---------- 自適應高度 ----------
+function adjustTaskBoxHeight(){
+  const style = window.getComputedStyle(taskBox);
+  const lineHeightStr = style.lineHeight;
+  let lineHeightPx = parseFloat(lineHeightStr);
+  if(isNaN(lineHeightPx)){
+    const fontSize = parseFloat(style.fontSize) || 14;
+    lineHeightPx = fontSize * 1.2;
+  }
+  const maxLines = 5;
+  const maxHeight = lineHeightPx * maxLines;
+
+  taskBox.style.height = 'auto';
+  const needed = taskBox.scrollHeight;
+
+  taskBox.style.height = Math.min(needed, maxHeight) + 'px';
+}
+
 function updateTime() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
@@ -176,6 +226,18 @@ function initHomeScreen() {
     }
 
     renderMiniCalendar();
+    
+    // 初始化任务框
+    const todayMemoWidget = document.getElementById('today-memo-widget');
+    const todayKey = localDateKey(new Date());
+    const todayNote = loadNoteForDate(todayKey);
+    updateTaskBox(todayNote);
+    adjustTaskBoxHeight();
+    
+    // 添加自我适应高度事件
+    if (todayMemoWidget) {
+        todayMemoWidget.addEventListener('input', adjustTaskBoxHeight);
+    }
 }
 
 function renderMiniCalendar() {
@@ -187,7 +249,7 @@ function renderMiniCalendar() {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateKey(new Date()); // 使用本地日期
     
     let html = `<div style="padding:5px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -215,7 +277,11 @@ function renderMiniCalendar() {
     const todayMemoWidget = document.getElementById('today-memo-widget');
     if (todayMemoWidget) {
         const memo = state.memos[today];
-        todayMemoWidget.textContent = memo && memo.trim() ? memo : '今天没有任务';
+        if (memo && memo.trim()) {
+            updateTaskBox(memo);
+        } else {
+            updateTaskBox('');
+        }
     }
     
     const prevBtn = document.getElementById('cal-prev');
@@ -243,6 +309,8 @@ function renderMiniCalendar() {
         el.onclick = (e) => {
             e.stopPropagation();
             state.selectedDate = el.dataset.date;
+            const memo = loadNoteForDate(el.dataset.date);
+            updateTaskBox(memo || '');
             openApp('calendar-app');
             selectDate(el.dataset.date);
         };
@@ -951,7 +1019,7 @@ function renderFullCalendar() {
     const month = now.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const today = localDateKey(new Date()); // 使用本地時間格式
     
     let html = `<div style="padding:10px"><h3 style="margin-bottom:15px">${year}年${month + 1}月</h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">`;
     html += '<div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">日</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">一</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">二</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">三</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">四</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">五</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">六</div>';
@@ -961,7 +1029,8 @@ function renderFullCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = date === today;
-        const hasMemo = state.memos[date];
+        const note = loadNoteForDate(date); // 检查是否有記事
+        const hasMemo = note && note.trim();
         const classes = `calendar-day ${isToday ? 'today' : ''} ${hasMemo ? 'has-memo' : ''}`;
         html += `<div class="${classes}" data-date="${date}">${day}</div>`;
     }
@@ -981,7 +1050,7 @@ function selectDate(date) {
     const memoArea = document.getElementById('memo-area');
     
     if (memoTitle) memoTitle.textContent = `${date} 备忘录`;
-    if (memoInput) memoInput.value = state.memos[date] || '';
+    if (memoInput) memoInput.value = loadNoteForDate(date) || '';
     if (memoArea) memoArea.style.display = 'block';
     
     document.querySelectorAll('.calendar-day').forEach(el => {
@@ -991,10 +1060,14 @@ function selectDate(date) {
 }
 
 function saveMemo() {
-    const date = state.selectedDate || new Date().toISOString().split('T')[0];
+    const date = state.selectedDate || localDateKey(new Date());
     const text = document.getElementById('memo-input').value;
-    state.memos[date] = text;
-    saveState();
+    saveNoteForDate(date, text);
+    // 更新今日任务框如果保存的是今天
+    const todayKey = localDateKey(new Date());
+    if (date === todayKey) {
+        updateTaskBox(text);
+    }
     renderFullCalendar();
     renderMiniCalendar();
     alert('备忘录已保存');

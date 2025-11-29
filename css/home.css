@@ -26,7 +26,25 @@
 #calendar-widget{font-size:13px;height:160px;flex:1.5;overflow-y:auto;font-family:'MTWFHZ',sans-serif}
 .cal-day.today{background:#007AFF!important;color:white!important;font-weight:bold!important}
 .cal-day.has-memo{border:1px solid #FF9500!important}
-#today-memo-widget{background:rgba(255,255,255,0.4);backdrop-filter:blur(10px);border-radius:15px;padding:10px;margin-bottom:20px;font-size:14px;color:#333;text-align:center;min-height:40px;max-height:70px;display:block;font-family:'MTWFHZ',sans-serif}
+#today-memo-widget{
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5em;
+  max-height: calc(1.5em * 5);
+  min-height: 1.5em;
+  padding: .5em;
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  font-family: 'MTWFHZ', sans-serif;
+  border: none;
+  outline: none;
+}
 #time-widget{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px}
 #current-time{font-size:48px;font-weight:bold;font-family:'MTWFHZ',sans-serif}
 #current-date{font-size:18px;margin-top:5px;font-family:'MTWFHZ',sans-serif}
