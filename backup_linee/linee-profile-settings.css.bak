@@ -1,0 +1,318 @@
+/* Linee 個人設定頁樣式 */
+
+/* 調整 Linee App Header */
+.linee-app-header {
+    padding: 40px 20px 8px !important;
+    height: 48px !important;
+}
+
+.linee-app-header .back-btn {
+    font-size: 20px !important;
+}
+
+.linee-app-header h3 {
+    font-size: 16px !important;
+}
+
+/* 個人設定頁內容 */
+.linee-settings-content {
+    padding: 20px 15px 80px 15px;
+    overflow-y: auto;
+    height: calc(100% - 100px);
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FCFF 100%);
+}
+
+#linee-settings-header {
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #F5F5F5;
+    margin-top: 40px;
+}
+
+#linee-settings-header .linee-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #333;
+    letter-spacing: -0.5px;
+}
+
+#linee-settings-header .linee-icon-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+    width: 32px;
+    height: 32px;
+}
+
+#linee-settings-header .linee-icon-btn ion-icon {
+    --ionicon-stroke-width: 40px;
+}
+
+#linee-settings-header .linee-icon-btn:active {
+    background: #E8F6FA;
+}
+
+/* 編輯區 */
+.linee-settings-edit {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* 頭像區 */
+.linee-settings-avatar-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.linee-settings-avatar-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.linee-settings-avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #E8F6FA;
+}
+
+.linee-avatar-change-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #A0D8EF;
+    border: 2px solid #FFFFFF;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.linee-avatar-change-btn ion-icon {
+    --ionicon-stroke-width: 40px;
+}
+
+/* 輸入組 */
+.linee-settings-input-group {
+    margin-bottom: 16px;
+}
+
+.linee-settings-input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.linee-settings-input-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #E8F6FA;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #333;
+    background: #F8FCFF;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.linee-settings-input-group input:focus {
+    border-color: #A0D8EF;
+    background: #FFFFFF;
+}
+
+.linee-settings-input-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #E8F6FA;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #333;
+    background: #F8FCFF;
+    outline: none;
+    transition: all 0.2s;
+    resize: none;
+    overflow-y: auto;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.linee-settings-input-group textarea:focus {
+    border-color: #A0D8EF;
+    background: #FFFFFF;
+}
+
+/* 保存按鈕 */
+.linee-save-profile-btn {
+    width: 100%;
+    padding: 14px;
+    background: #A0D8EF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+}
+
+.linee-save-profile-btn:active {
+    transform: scale(0.98);
+    background: #8FCCE5;
+}
+
+/* 人物卡區 */
+.linee-persona-cards-section {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.linee-persona-cards-section h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.linee-persona-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 人物卡 */
+.linee-persona-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: #F8FCFF;
+    border: 2px solid #E8F6FA;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.linee-persona-card:active {
+    transform: scale(0.98);
+}
+
+.linee-persona-card.active {
+    border-color: #A0D8EF;
+    background: #E8F6FA;
+}
+
+.linee-persona-card.editing {
+    border-color: #FF9500;
+    border-width: 3px;
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
+}
+
+.linee-persona-card-avatar {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+}
+
+.linee-persona-card-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #FFFFFF;
+}
+
+.linee-persona-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.linee-persona-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.linee-persona-card-status {
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.linee-persona-card-active {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #A0D8EF;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.linee-persona-card.active .linee-persona-card-active {
+    opacity: 1;
+}
+
+/* 空卡槽 */
+.linee-persona-card-empty {
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+    border-style: dashed;
+}
+
+.linee-persona-card-empty-icon {
+    font-size: 32px;
+    color: #B8DFF2;
+    margin-bottom: 8px;
+}
+
+.linee-persona-card-empty-text {
+    font-size: 13px;
+    color: #999;
+}
+
+/* 個人資訊區可點擊提示 */
+#linee-profile-clickable:active {
+    background: rgba(160, 216, 239, 0.1);
+}

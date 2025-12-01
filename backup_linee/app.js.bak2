@@ -2179,13 +2179,7 @@ function openChatRoom(chatId, chatName) {
     document.getElementById('linee-chat-room').style.display = 'flex';
     document.getElementById('chat-room-name').textContent = chatName;
     
-    if (!chatMessages[chatId]) {
-        chatMessages[chatId] = [
-            { id: '1', text: '你好！', time: '12:00', isUser: false, type: 'text' },
-            { id: '2', text: '你好！有什么可以帮你的吗？', time: '12:01', isUser: true, type: 'text' },
-            { id: '3', text: '这个APP的界面设计很不错。', time: '12:02', isUser: false, type: 'text' }
-        ];
-    }
+    if (!chatMessages[chatId]) chatMessages[chatId] = [];
     renderChatMessages();
 }
 
@@ -2200,112 +2194,15 @@ function renderChatMessages() {
     if (!container || !currentChatId) return;
     
     const messages = chatMessages[currentChatId] || [];
-    container.innerHTML = messages.map(msg => {
-        const isUser = msg.isUser;
-        const bgColor = isUser ? '#A0D8EF' : '#FFFFFF';
-        const textColor = isUser ? '#1F2937' : '#1F2937';
-        const borderRadius = isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px';
-        const border = isUser ? '' : 'border: 1px solid #F3F4F6;';
-        
-        let content = '';
-        if (msg.type === 'image') {
-            content = `<div style="width: 160px; height: 160px; background: #E5E7EB; margin-bottom: 4px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #6B7280; font-size: 12px;">${msg.text}</div>`;
-        } else if (msg.type === 'audio') {
-            content = `<div style="display: flex; align-items: center; gap: 8px; min-width: 120px;"><ion-icon name="mic-outline" style="font-size: 16px;"></ion-icon><span>语音讯息</span></div>`;
-        } else {
-            content = msg.text;
-        }
-        
-        return `
-            <div style="display: flex; justify-content: ${isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 16px;">
-                <div style="max-width: 70%; padding: 10px 14px; border-radius: ${borderRadius}; background: ${bgColor}; color: ${textColor}; ${border} box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative;">
-                    <div style="font-size: 15px; line-height: 1.5;">${content}</div>
-                    <span style="font-size: 10px; color: #9CA3AF; display: block; text-align: right; margin-top: 4px; opacity: 0.7;">${msg.time}</span>
-                </div>
+    container.innerHTML = messages.map(msg => `
+        <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;">
+            <div style="max-width: 70%; padding: 10px 14px; border-radius: 16px; background: ${msg.isUser ? '#A0D8EF' : '#FFFFFF'}; color: ${msg.isUser ? '#FFFFFF' : '#333'}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                <div style="font-size: 14px; line-height: 1.4;">${msg.text}</div>
+                <div style="font-size: 10px; margin-top: 4px; opacity: 0.7;">${msg.time}</div>
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
     container.scrollTop = container.scrollHeight;
-}
-
-let promptType = null;
-
-function togglePlusMenu() {
-    const menu = document.getElementById('plus-menu');
-    const btn = document.getElementById('plus-menu-btn');
-    if (menu.style.display === 'none' || !menu.style.display) {
-        menu.style.display = 'grid';
-        btn.style.background = '#F3F4F6';
-        btn.style.color = '#A0D8EF';
-    } else {
-        menu.style.display = 'none';
-        btn.style.background = '';
-        btn.style.color = '';
-    }
-}
-
-function promptImageMessage() {
-    promptType = 'image';
-    document.getElementById('prompt-title').textContent = '描述图片内容';
-    document.getElementById('prompt-input').placeholder = '例如：一只在海边喝椰子的猫...';
-    document.getElementById('prompt-input').value = '';
-    document.getElementById('prompt-modal').style.display = 'flex';
-}
-
-function promptAudioMessage() {
-    promptType = 'audio';
-    document.getElementById('prompt-title').textContent = '输入语音内容';
-    document.getElementById('prompt-input').placeholder = '输入您想说的话...';
-    document.getElementById('prompt-input').value = '';
-    document.getElementById('prompt-modal').style.display = 'flex';
-}
-
-function closePromptModal() {
-    document.getElementById('prompt-modal').style.display = 'none';
-    promptType = null;
-}
-
-function submitPrompt() {
-    const input = document.getElementById('prompt-input');
-    const text = input.value.trim();
-    if (!text || !currentChatId) {
-        closePromptModal();
-        return;
-    }
-    
-    const now = new Date();
-    const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const messageText = promptType === 'image' ? `[图片] ${text}` : `[语音] ${text}`;
-    
-    chatMessages[currentChatId].push({ text: messageText, time, isUser: true, type: promptType });
-    renderChatMessages();
-    closePromptModal();
-}
-
-function handleAIRead() {
-    if (!currentChatId) return;
-    
-    const now = new Date();
-    const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const loadingId = 'loading_' + Date.now();
-    
-    chatMessages[currentChatId].push({ 
-        id: loadingId,
-        text: 'AI 正在阅读聊天记录并思考...', 
-        time, 
-        isUser: false,
-        type: 'text'
-    });
-    renderChatMessages();
-    
-    setTimeout(() => {
-        const messages = chatMessages[currentChatId];
-        const index = messages.findIndex(m => m.id === loadingId);
-        if (index !== -1) {
-            messages[index].text = '根据上下文，我觉得你们应该去吃火锅！🍲';
-        }
-        renderChatMessages();
-    }, 1500);
 }
 
 async function sendChatMessage() {
@@ -2316,12 +2213,12 @@ async function sendChatMessage() {
     const now = new Date();
     const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
     
-    chatMessages[currentChatId].push({ text, time, isUser: true, type: 'text' });
+    chatMessages[currentChatId].push({ text, time, isUser: true });
     input.value = '';
     renderChatMessages();
     
     if (!state.apiConfig.url || !state.apiConfig.key) {
-        chatMessages[currentChatId].push({ text: '请先在设置中配置 API', time, isUser: false, type: 'text' });
+        chatMessages[currentChatId].push({ text: '请先在设置中配置 API', time, isUser: false });
         renderChatMessages();
         return;
     }
@@ -2341,10 +2238,10 @@ async function sendChatMessage() {
         });
         const data = await res.json();
         const reply = data.choices[0].message.content;
-        chatMessages[currentChatId].push({ text: reply, time, isUser: false, type: 'text' });
+        chatMessages[currentChatId].push({ text: reply, time, isUser: false });
         renderChatMessages();
     } catch (e) {
-        chatMessages[currentChatId].push({ text: '发送失败: ' + e.message, time, isUser: false, type: 'text' });
+        chatMessages[currentChatId].push({ text: '发送失败: ' + e.message, time, isUser: false });
         renderChatMessages();
     }
 }
@@ -2352,12 +2249,6 @@ async function sendChatMessage() {
 window.openChatRoom = openChatRoom;
 window.closeChatRoom = closeChatRoom;
 window.sendChatMessage = sendChatMessage;
-window.togglePlusMenu = togglePlusMenu;
-window.promptImageMessage = promptImageMessage;
-window.promptAudioMessage = promptAudioMessage;
-window.closePromptModal = closePromptModal;
-window.submitPrompt = submitPrompt;
-window.handleAIRead = handleAIRead;
 
 // 工具函数
 function download(filename, text) {
