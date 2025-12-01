@@ -1,16 +1,9 @@
-/* Force Light Mode - 防止瀏覽器自動變色 */
+/* Force Light Mode - 全面禁止瀏覽器變色 */
 
-/* 1. 告知瀏覽器只支援 light 模式 */
+/* 1. 強制 light 模式 */
 :root {
-  color-scheme: light only;
-  --bg-main: #E8F6FA;
-  --bg-card: #FFFFFF;
-  --text-main: #222222;
-}
-
-/* 針對三星瀏覽器強制覆寫 */
-* {
-  -webkit-tap-highlight-color: transparent;
+  color-scheme: light only !important;
+  -webkit-color-scheme: light !important;
 }
 
 html {
@@ -18,92 +11,339 @@ html {
   -webkit-color-scheme: light !important;
 }
 
-/* 2. 強制基礎背景和文字顏色 */
+/* 2. 全局強制覆寫 - 禁止任何元素被變色 */
+* {
+  color-scheme: light !important;
+  -webkit-color-scheme: light !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 3. 基礎背景 */
 html, body {
   background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
   color: #222222 !important;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* 3. 手機模擬器主體 */
+/* 4. 手機模擬器 */
+#phone-container {
+  background: transparent !important;
+  filter: none !important;
+}
+
 #phone-frame {
   background: #E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover !important;
   color: #333333 !important;
-  filter: none !important;
-  -webkit-filter: none !important;
 }
 
-/* 4. Linee App 區域 */
+#notch {
+  background: #333333 !important;
+}
+
+#status-bar {
+  color: #333333 !important;
+}
+
+/* 5. 主頁元素 */
+#home-screen {
+  background: transparent !important;
+}
+
+.widget {
+  background: rgba(255,255,255,0.4) !important;
+  color: #333333 !important;
+}
+
+.music-full {
+  background: rgba(255,255,255,0.7) !important;
+  color: #333333 !important;
+}
+
+.music-title {
+  color: #333333 !important;
+}
+
+.music-artist {
+  color: #666666 !important;
+}
+
+.app-icon span {
+  color: #333333 !important;
+}
+
+/* 6. 設置頁面 */
+#settings-page {
+  background: rgba(255,255,255,0.98) !important;
+  color: #333333 !important;
+}
+
+.settings-header {
+  background: linear-gradient(135deg,#007AFF,#0051D5) !important;
+  color: #FFFFFF !important;
+}
+
+.settings-header h2 {
+  color: #FFFFFF !important;
+}
+
+#close-settings {
+  background: rgba(255,255,255,0.2) !important;
+  color: #FFFFFF !important;
+}
+
+.tab-btn {
+  color: #666666 !important;
+  background: transparent !important;
+}
+
+.tab-btn.active {
+  color: #007AFF !important;
+}
+
+.tab-content {
+  background: transparent !important;
+  color: #333333 !important;
+}
+
+.tab-content h3,
+.tab-content h4 {
+  color: #333333 !important;
+}
+
+.tab-content input,
+.tab-content select,
+.tab-content textarea {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+  border-color: #e8e8e8 !important;
+}
+
+.tab-content button {
+  background: linear-gradient(135deg,#007AFF,#0051D5) !important;
+  color: #FFFFFF !important;
+}
+
+/* 7. 應用視窗 */
+.app-window {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+}
+
+.app-header {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+  border-bottom-color: #eeeeee !important;
+}
+
+.app-header h3 {
+  color: #333333 !important;
+}
+
+.back-btn {
+  color: #333333 !important;
+  background: transparent !important;
+}
+
+/* 8. 聊天界面 */
+#chat-messages {
+  background: #f5f5f5 !important;
+}
+
+.message.user .message-bubble {
+  background: #007AFF !important;
+  color: #FFFFFF !important;
+}
+
+.message.ai .message-bubble {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+}
+
+.chat-input-area {
+  background: #FFFFFF !important;
+}
+
+#chat-input {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+  border-color: #dddddd !important;
+}
+
+#send-btn {
+  background: #007AFF !important;
+  color: #FFFFFF !important;
+}
+
+/* 9. 日曆 */
+.calendar-day {
+  background: #f5f5f5 !important;
+  color: #333333 !important;
+}
+
+.calendar-day.today {
+  background: #007AFF !important;
+  color: #FFFFFF !important;
+}
+
+#memo-input {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+  border-color: #dddddd !important;
+}
+
+/* 10. Linee App 完整覆寫 */
 #linee-app-content {
   background: #FFFFFF !important;
   color: #222222 !important;
+}
+
+#linee-app-content .linee-header {
+  background: #FFFFFF !important;
+  border-bottom-color: #F5F5F5 !important;
+}
+
+#linee-app-content .linee-title {
+  color: #333333 !important;
+}
+
+#linee-app-content .linee-icon-btn {
+  color: #333333 !important;
+  background: transparent !important;
+}
+
+#linee-app-content .linee-icon-btn:active {
+  background: #E8F6FA !important;
 }
 
 #linee-app-content .linee-main {
   background: linear-gradient(180deg, #FFFFFF 0%, #F8FCFF 100%) !important;
 }
 
-#linee-app-content .linee-header {
+#linee-app-content .linee-name {
+  color: #333333 !important;
+}
+
+#linee-app-content .linee-status {
+  color: #999999 !important;
+  background: transparent !important;
+}
+
+#linee-app-content .linee-card {
+  background: #E8F6FA !important;
+  color: #A0D8EF !important;
+}
+
+#linee-app-content .linee-card.active {
+  background: #A0D8EF !important;
+  color: #FFFFFF !important;
+}
+
+#linee-app-content .linee-search {
+  background: #FFFFFF !important;
+  border-color: #EEEEEE !important;
+}
+
+#linee-app-content .linee-search input {
+  background: transparent !important;
+  color: #333333 !important;
+}
+
+#linee-app-content .linee-list-group {
+  background: #FFFFFF !important;
+}
+
+#linee-app-content .linee-list-title {
+  color: #333333 !important;
+}
+
+#linee-app-content .linee-list-subtitle,
+#linee-app-content .linee-list-count {
+  color: #999999 !important;
+}
+
+#linee-app-content .linee-friend-avatar {
+  background: #E8F6FA !important;
+  color: #A0D8EF !important;
+}
+
+#linee-app-content .linee-friend-name {
+  color: #333333 !important;
+}
+
+#linee-app-content .linee-friend-status {
+  color: #999999 !important;
+}
+
+#linee-app-content .linee-nav {
+  background: #FFFFFF !important;
+  border-top-color: #F5F5F5 !important;
+}
+
+#linee-app-content .linee-nav-item {
+  color: #CCCCCC !important;
+}
+
+#linee-app-content .linee-nav-item.active {
+  color: #A0D8EF !important;
+}
+
+#linee-app-content .linee-popover {
+  background: #FFFFFF !important;
+  border-color: #E8F6FA !important;
+}
+
+#linee-app-content .linee-popover-item {
+  color: #333333 !important;
+  background: transparent !important;
+}
+
+#linee-app-content .linee-popover-item:active {
+  background: #E8F6FA !important;
+}
+
+#linee-app-content .linee-modal {
+  background: rgba(0,0,0,0.5) !important;
+}
+
+#linee-app-content .linee-modal-content {
   background: #FFFFFF !important;
   color: #333333 !important;
 }
 
-/* 5. 卡片和搜尋框 */
-.widget,
-.linee-card,
-.linee-search,
-.linee-list-group {
-  background-color: #FFFFFF !important;
-  color: #222222 !important;
-  filter: none !important;
-  -webkit-filter: none !important;
+#linee-app-content .linee-modal-content h3 {
+  color: #333333 !important;
 }
 
-.widget {
-  background: rgba(255,255,255,0.4) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+#linee-app-content .linee-modal-content input {
+  background: #FFFFFF !important;
+  color: #333333 !important;
+  border-color: #EEEEEE !important;
 }
 
-/* 6. 防止 Chrome/Samsung Force Dark 影響 */
+#linee-app-content .linee-btn-cancel {
+  background: #F0F0F0 !important;
+  color: #666666 !important;
+}
+
+#linee-app-content .linee-btn-confirm {
+  background: #A0D8EF !important;
+  color: #FFFFFF !important;
+}
+
+/* 11. Dark Mode 強制覆寫 */
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: light only !important;
+  * {
+    color-scheme: light !important;
+    filter: none !important;
   }
   
   html, body {
     background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
     color: #222222 !important;
-    filter: none !important;
   }
   
   #phone-frame {
     background: #E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover !important;
-    filter: none !important;
   }
-  
-  #linee-app-content {
-    background: #FFFFFF !important;
-    filter: none !important;
-  }
-}
-
-/* 7. 防止三星瀏覽器的 filter 反轉 */
-html, body, #phone-container, #phone-frame, #linee-app-content, .widget, .linee-card {
-  -webkit-filter: none !important;
-  filter: none !important;
-}
-
-/* 7. 確保文字顏色不被反轉 */
-.linee-list-title,
-.linee-friend-name,
-.music-title,
-.app-icon span {
-  color: #333333 !important;
-}
-
-.linee-list-subtitle,
-.linee-friend-status,
-.music-artist {
-  color: #666666 !important;
 }
