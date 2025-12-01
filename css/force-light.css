@@ -1,6 +1,6 @@
 /* Force Light Mode - 全面禁止瀏覽器變色 */
 
-/* 0. 最高優先級 - 在所有規則之前 */
+/* 0. 最高優先級 - 移除 filter 避免影響壁紙 */
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -16,9 +16,6 @@ menu, nav, output, ruby, section, summary,
 time, mark, audio, video, button, input, select, textarea {
   color-scheme: light only !important;
   -webkit-color-scheme: light !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-  -webkit-appearance: none !important;
 }
 
 /* 1. 強制 light 模式 */
@@ -33,12 +30,10 @@ html {
   background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
 }
 
-/* 2. 全局強制覆寫 - 禁止任何元素被變色 */
+/* 2. 全局強制覆寫 */
 * {
-  color-scheme: light !important;
+  color-scheme: light only !important;
   -webkit-color-scheme: light !important;
-  filter: none !important;
-  -webkit-filter: none !important;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -48,14 +43,17 @@ html, body {
   color: #222222 !important;
 }
 
-/* 4. 手機模擬器 */
+/* 4. 手機模擬器 - 使用純色背景避免加載問題 */
 #phone-container {
   background: transparent !important;
-  filter: none !important;
 }
 
 #phone-frame {
-  background: #E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover !important;
+  background: #E0F4FF !important;
+  background-image: url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
   color: #333333 !important;
 }
 
@@ -356,8 +354,7 @@ html, body {
 /* 11. Dark Mode 強制覆寫 */
 @media (prefers-color-scheme: dark) {
   * {
-    color-scheme: light !important;
-    filter: none !important;
+    color-scheme: light only !important;
   }
   
   html, body {
@@ -366,6 +363,9 @@ html, body {
   }
   
   #phone-frame {
-    background: #E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover !important;
+    background: #E0F4FF !important;
+    background-image: url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
   }
 }
