@@ -1910,10 +1910,22 @@ function initLineeApp() {
             // Switch tabs
             document.getElementById('linee-tab-home').style.display = tab === 'home' ? 'block' : 'none';
             document.getElementById('linee-tab-chats').style.display = tab === 'chats' ? 'block' : 'none';
+            document.getElementById('linee-tab-steps').style.display = tab === 'steps' ? 'block' : 'none';
             
             if (tab === 'chats') renderChatList();
+            if (tab === 'steps') {
+                if (!window.stepsInitialized) {
+                    initStepsApp();
+                    window.stepsInitialized = true;
+                }
+                navigateSteps('home');
+            }
         };
     });
+    
+    // Initialize Steps app
+    initStepsApp();
+    window.stepsInitialized = true;
 }
 
 function renderLineeFriends() {
@@ -2172,6 +2184,818 @@ window.closeLineeProfileSettings = closeLineeProfileSettings;
 window.changeLineeAvatar = changeLineeAvatar;
 window.saveLineeProfile = saveLineeProfile;
 window.selectPersonaCard = selectPersonaCard;
+
+/* ========== Steps (足跡) App Functions ========== */
+let stepsState = {
+    view: 'home',
+    worlds: [],
+    selectedWorldId: null,
+    selectedCharId: null,
+    deleteMode: false,
+    selectedDeleteIds: new Set()
+};
+
+let stepsDB = null;
+
+function initStepsDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('StepsDatabase', 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            stepsDB = request.result;
+            resolve(stepsDB);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('maps')) {
+                db.createObjectStore('maps', { keyPath: 'worldId' });
+            }
+            if (!db.objectStoreNames.contains('footprints')) {
+                db.createObjectStore('footprints', { keyPath: 'id' });
+            }
+        };
+    });
+}
+
+function saveMapToDB(worldId, mapSvg) {
+    if (!stepsDB) return;
+    const transaction = stepsDB.transaction(['maps'], 'readwrite');
+    const store = transaction.objectStore('maps');
+    store.put({ worldId, mapSvg, timestamp: Date.now() });
+}
+
+function getMapFromDB(worldId) {
+    return new Promise((resolve) => {
+        if (!stepsDB) return resolve(null);
+        const transaction = stepsDB.transaction(['maps'], 'readonly');
+        const store = transaction.objectStore('maps');
+        const request = store.get(worldId);
+        request.onsuccess = () => resolve(request.result?.mapSvg || null);
+        request.onerror = () => resolve(null);
+    });
+}
+
+function saveFootprintToDB(charId, footprintData) {
+    if (!stepsDB) return;
+    const transaction = stepsDB.transaction(['footprints'], 'readwrite');
+    const store = transaction.objectStore('footprints');
+    store.put({ id: charId, ...footprintData });
+}
+
+function getFootprintFromDB(charId) {
+    return new Promise((resolve) => {
+        if (!stepsDB) return resolve(null);
+        const transaction = stepsDB.transaction(['footprints'], 'readonly');
+        const store = transaction.objectStore('footprints');
+        const request = store.get(charId);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => resolve(null);
+    });
+}
+
+async function initStepsApp() {
+    await initStepsDB();
+    
+    const saved = localStorage.getItem('steps-worlds');
+    if (saved) {
+        stepsState.worlds = JSON.parse(saved);
+    }
+    
+    // Event listeners
+    const addBtn = document.getElementById('steps-add-btn');
+    if (addBtn) addBtn.onclick = () => navigateSteps('create_world');
+    document.getElementById('steps-delete-btn').onclick = toggleStepsDeleteMode;
+    document.getElementById('create-back-btn').onclick = () => navigateSteps('home');
+    document.getElementById('create-save-btn').onclick = saveWorld;
+    document.getElementById('create-generate-btn').onclick = generateMap;
+    document.getElementById('charlist-back-btn').onclick = () => navigateSteps('home');
+    document.getElementById('charlist-menu-btn').onclick = toggleCharlistMenu;
+    document.getElementById('chardetail-back-btn').onclick = () => navigateSteps('char_list', stepsState.selectedWorldId);
+    
+    // Input validation
+    document.getElementById('create-name').oninput = validateCreateForm;
+    document.getElementById('create-desc').oninput = validateCreateForm;
+    document.getElementById('create-landmarks').oninput = validateCreateForm;
+    
+    renderStepsHome();
+}
+
+function navigateSteps(view, worldId = null, charId = null) {
+    stepsState.view = view;
+    stepsState.selectedWorldId = worldId;
+    stepsState.selectedCharId = charId;
+    
+    document.getElementById('steps-home-view').style.display = view === 'home' ? 'flex' : 'none';
+    document.getElementById('steps-create-view').style.display = view === 'create_world' ? 'flex' : 'none';
+    document.getElementById('steps-charlist-view').style.display = view === 'char_list' ? 'flex' : 'none';
+    document.getElementById('steps-chardetail-view').style.display = view === 'char_detail' ? 'flex' : 'none';
+    
+    if (view === 'home') renderStepsHome();
+    else if (view === 'create_world') resetCreateForm();
+    else if (view === 'char_list') renderCharList();
+    else if (view === 'char_detail') renderCharDetail();
+}
+
+function renderStepsHome() {
+    const container = document.getElementById('steps-worlds-container');
+    const hint = document.getElementById('steps-hint');
+    const deleteBtn = document.getElementById('steps-delete-btn');
+    const addBtn = document.getElementById('steps-add-btn');
+    const header = document.querySelector('#steps-home-view > div:first-child');
+    
+    if (stepsState.deleteMode) {
+        header.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <button onclick="toggleStepsDeleteMode()" style="color: #6B7280; font-weight: 600; font-size: 14px; background: none; border: none; cursor: pointer;">取消</button>
+                <span style="font-weight: 800; color: #333; font-size: 20px;">已选择 ${stepsState.selectedDeleteIds.size} 项</span>
+                <button onclick="confirmDeleteWorlds()" style="color: #EF4444; font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer; ${stepsState.selectedDeleteIds.size === 0 ? 'opacity: 0.5;' : ''}" ${stepsState.selectedDeleteIds.size === 0 ? 'disabled' : ''}>删除</button>
+            </div>
+        `;
+        hint.textContent = '点击卡片进行多选';
+    } else {
+        header.innerHTML = `
+            <h1 id="steps-header-title" style="font-size: 20px; font-weight: 800; color: #333; letter-spacing: -0.5px;">足迹</h1>
+            <div style="display: flex; gap: 12px;">
+                <button id="steps-delete-btn" class="linee-icon-btn" style="color: ${stepsState.worlds.length === 0 ? '#D1D5DB' : '#9CA3AF'};" ${stepsState.worlds.length === 0 ? 'disabled' : ''} onclick="toggleStepsDeleteMode()"><ion-icon name="trash-outline"></ion-icon></button>
+                <button id="steps-add-btn" class="linee-icon-btn" style="background: rgba(160,216,239,0.1); color: #A0D8EF;" onclick="navigateSteps('create_world')"><ion-icon name="add" style="--ionicon-stroke-width: 60px;"></ion-icon></button>
+            </div>
+        `;
+        hint.textContent = stepsState.worlds.length > 0 ? '← 滑动选择世界观 →' : '';
+    }
+    
+    if (stepsState.worlds.length === 0) {
+        container.innerHTML = '<div style="width: 100%; text-align: center; color: #9CA3AF; padding: 40px 0;">暂无世界观，点击右上角 + 新增</div>';
+        return;
+    }
+    
+    container.innerHTML = stepsState.worlds.map(world => {
+        const isSelected = stepsState.selectedDeleteIds.has(world.id);
+        return `
+            <div onclick="handleWorldCardClick('${world.id}')" style="scroll-snap-align: center; flex-shrink: 0; width: 280px; height: 420px; background: #FFFFFF; border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border: ${isSelected ? '2px solid #A0D8EF' : '1px solid #F3F4F6'}; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: all 0.2s; position: relative; ${stepsState.deleteMode ? 'transform: scale(0.95);' : ''}">
+                ${stepsState.deleteMode ? `<div style="position: absolute; top: 16px; right: 16px; z-index: 10; width: 24px; height: 24px; border-radius: 50%; border: 2px solid ${isSelected ? '#A0D8EF' : '#9CA3AF'}; background: ${isSelected ? '#A0D8EF' : '#FFFFFF'}; display: flex; align-items: center; justify-content: center;">${isSelected ? '<ion-icon name="checkmark" style="font-size: 14px; color: #FFFFFF; --ionicon-stroke-width: 80px;"></ion-icon>' : ''}</div>` : ''}
+                <div style="height: 240px; background: #F3F4F6; position: relative;">
+                    <img src="${world.mapImage}" alt="${world.name}" style="width: 100%; height: 100%; object-fit: cover; opacity: ${stepsState.deleteMode ? '0.8' : '0.9'};" />
+                    ${!stepsState.deleteMode ? `<div style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); padding: 4px 12px; border-radius: 16px; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #6B7280;"><ion-icon name="map-outline" style="font-size: 12px;"></ion-icon><span>${world.landmarks.length} 地标</span></div>` : ''}
+                </div>
+                <div style="flex: 1; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; background: #FFFFFF; position: relative;">
+                    <div style="margin-top: -40px; margin-bottom: 8px;">
+                        <div style="background: #FFFFFF; padding: 4px; border-radius: 16px; display: inline-block; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="width: 48px; height: 48px; background: #A0D8EF; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-weight: 700; font-size: 20px;">${world.name.substring(0, 1)}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 20px; font-weight: 700; color: #1F2937; margin-bottom: 4px;">${world.name}</h3>
+                        <p style="font-size: 14px; color: #6B7280; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${world.description}</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 16px;">
+                        ${world.characters.length > 0 ? `
+                            <div style="display: flex; margin-left: -12px;">
+                                ${world.characters.slice(0, 4).map((char, i) => `<img src="${char.avatar}" alt="${char.name}" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #FFFFFF; object-fit: cover; margin-left: -12px;" />`).join('')}
+                                ${world.characters.length > 4 ? `<div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #FFFFFF; background: #F3F4F6; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #6B7280; font-weight: 600; margin-left: -12px;">+${world.characters.length - 4}</div>` : ''}
+                            </div>
+                        ` : '<span style="font-size: 12px; color: #9CA3AF;">暂无角色</span>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('') + '<div style="width: 8px; flex-shrink: 0;"></div>';
+}
+
+function handleWorldCardClick(worldId) {
+    if (stepsState.deleteMode) {
+        if (stepsState.selectedDeleteIds.has(worldId)) {
+            stepsState.selectedDeleteIds.delete(worldId);
+        } else {
+            stepsState.selectedDeleteIds.add(worldId);
+        }
+        renderStepsHome();
+    } else {
+        navigateSteps('char_list', worldId);
+    }
+}
+
+function toggleStepsDeleteMode() {
+    stepsState.deleteMode = !stepsState.deleteMode;
+    stepsState.selectedDeleteIds.clear();
+    renderStepsHome();
+}
+
+function confirmDeleteWorlds() {
+    if (stepsState.selectedDeleteIds.size === 0) return;
+    if (!confirm(`确定删除 ${stepsState.selectedDeleteIds.size} 个世界观？`)) return;
+    
+    stepsState.worlds = stepsState.worlds.filter(w => !stepsState.selectedDeleteIds.has(w.id));
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    stepsState.deleteMode = false;
+    stepsState.selectedDeleteIds.clear();
+    renderStepsHome();
+}
+
+function resetCreateForm() {
+    document.getElementById('create-name').value = '';
+    document.getElementById('create-desc').value = '';
+    document.getElementById('create-landmarks').value = '';
+    document.getElementById('create-map-preview').innerHTML = `
+        <p style="color: #9CA3AF; font-size: 14px; margin-bottom: 16px;">填写完毕后点击生成</p>
+        <button id="create-generate-btn" onclick="generateMap()" style="background: #A0D8EF; color: #FFFFFF; padding: 10px 24px; border-radius: 24px; font-weight: 600; box-shadow: 0 2px 8px rgba(160,216,239,0.3); border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;"><ion-icon name="refresh-outline"></ion-icon><span>生成地图</span></button>
+    `;
+    validateCreateForm();
+}
+
+function validateCreateForm() {
+    const name = document.getElementById('create-name').value.trim();
+    const saveBtn = document.getElementById('create-save-btn');
+    
+    if (name) {
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+    } else {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+    }
+}
+
+function generateMap() {
+    const preview = document.getElementById('create-map-preview');
+    const worldName = document.getElementById('create-name').value.trim();
+    const landmarksInput = document.getElementById('create-landmarks').value.trim();
+    const landmarks = landmarksInput ? landmarksInput.split(',').map(l => l.trim()).filter(l => l) : [];
+    
+    preview.innerHTML = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #6B7280; font-size: 14px;">生成中...</div>';
+    
+    setTimeout(() => {
+        const mapSvg = generateSimpleMapSVG(worldName, landmarks);
+        preview.innerHTML = `
+            ${mapSvg}
+            <div style="position: absolute; bottom: 16px; right: 16px; display: flex; gap: 8px;">
+                <button onclick="generateMap()" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); color: #374151; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;"><ion-icon name="refresh-outline" style="font-size: 12px;"></ion-icon>重新生成</button>
+            </div>
+        `;
+    }, 1500);
+}
+
+function generateSimpleMapSVG(worldName = '', landmarks = []) {
+    const areas = [
+        {name: '中央街区', type: 'urban', x: 50, y: 50, w: 150, h: 120, color: '#F3F4F6'},
+        {name: '绿地公园', type: 'park', x: 220, y: 80, w: 130, h: 100, color: '#D1FAE5'},
+        {name: '水域', type: 'water', x: 80, y: 200, w: 100, h: 80, color: '#DBEAFE'}
+    ];
+    
+    const roads = [
+        {from: [0, 150], to: [400, 150], width: 4, color: '#E5E7EB'},
+        {from: [150, 0], to: [150, 400], width: 4, color: '#E5E7EB'},
+        {from: [0, 250], to: [400, 250], width: 2, color: '#F3F4F6'},
+        {from: [250, 0], to: [250, 400], width: 2, color: '#F3F4F6'}
+    ];
+    
+    const defaultLandmarks = landmarks.length > 0 ? landmarks.slice(0, 5).map((lm, i) => {
+        const positions = [{x: 100, y: 120}, {x: 280, y: 140}, {x: 130, y: 240}, {x: 300, y: 280}, {x: 180, y: 180}];
+        return {name: lm, ...positions[i], icon: '📍'};
+    }) : [
+        {name: '中央广场', x: 100, y: 120, icon: '🏛️'},
+        {name: '湖畔咖啡厅', x: 280, y: 140, icon: '☕'},
+        {name: '旧书街', x: 130, y: 240, icon: '📚'}
+    ];
+    
+    return `
+        <svg width="100%" height="100%" viewBox="0 0 400 400" style="background: #E8EAED;">
+            ${areas.map(a => `<rect x="${a.x}" y="${a.y}" width="${a.w}" height="${a.h}" fill="${a.color}" opacity="0.8" rx="4"/>`).join('')}
+            ${roads.map(r => `<line x1="${r.from[0]}" y1="${r.from[1]}" x2="${r.to[0]}" y2="${r.to[1]}" stroke="${r.color}" stroke-width="${r.width}"/>`).join('')}
+            ${defaultLandmarks.map(lm => `
+                <g>
+                    <circle cx="${lm.x}" cy="${lm.y}" r="16" fill="#EF4444" opacity="0.9"/>
+                    <circle cx="${lm.x}" cy="${lm.y}" r="6" fill="#FFFFFF"/>
+                    <rect x="${lm.x - 35}" y="${lm.y + 20}" width="70" height="20" rx="10" fill="rgba(255,255,255,0.95)" stroke="#D1D5DB" stroke-width="1"/>
+                    <text x="${lm.x}" y="${lm.y + 33}" text-anchor="middle" font-size="11" fill="#374151" font-weight="500">${lm.name}</text>
+                </g>
+            `).join('')}
+        </svg>
+    `;
+}
+
+function saveWorld() {
+    const name = document.getElementById('create-name').value.trim();
+    if (!name) return;
+    
+    const desc = document.getElementById('create-desc').value.trim();
+    const landmarks = document.getElementById('create-landmarks').value.split(',').map(l => l.trim()).filter(l => l);
+    const mapSvg = generateSimpleMapSVG(name, landmarks);
+    
+    const newWorld = {
+        id: 'w' + Date.now(),
+        name,
+        description: desc || '暂无描述',
+        mapImage: mapSvg,
+        landmarks,
+        characters: []
+    };
+    
+    saveMapToDB(newWorld.id, mapSvg);
+    
+    stepsState.worlds.push(newWorld);
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    navigateSteps('home');
+}
+
+function renderCharList() {
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) {
+        navigateSteps('home');
+        return;
+    }
+    
+    const header = document.querySelector('#steps-charlist-view > div:first-child');
+    const grid = document.getElementById('charlist-grid');
+    
+    if (charDeleteMode) {
+        header.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 12px; height: 60px; border-bottom: 1px solid #F5F5F5; background: #FFFFFF; margin-top: 32px;">
+                <button onclick="toggleCharDeleteMode()" style="color: #6B7280; font-weight: 600; font-size: 14px; background: none; border: none; cursor: pointer;">取消</button>
+                <span style="font-weight: 700; color: #333;">已选择 ${selectedCharIds.size} 项</span>
+                <button onclick="confirmDeleteChars()" style="color: #EF4444; font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer; ${selectedCharIds.size === 0 ? 'opacity: 0.5;' : ''}" ${selectedCharIds.size === 0 ? 'disabled' : ''}>删除</button>
+            </div>
+        `;
+    } else {
+        header.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="charlist-back-btn" class="linee-icon-btn" onclick="navigateSteps('home')"><ion-icon name="chevron-back-outline"></ion-icon></button>
+                <div>
+                    <div class="linee-title" id="charlist-world-name" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${world.name}</div>
+                    <p style="font-size: 10px; color: #9CA3AF;">角色列表</p>
+                </div>
+            </div>
+            <div style="position: relative;">
+                <button id="charlist-menu-btn" class="linee-icon-btn" onclick="toggleCharlistMenu()"><ion-icon name="ellipsis-vertical"></ion-icon></button>
+                <div id="charlist-menu" class="linee-popover hidden" style="right: 0; top: 50px; width: 160px;">
+                    <div class="linee-popover-item" onclick="openAddCharModal()"><ion-icon name="person-add-outline"></ion-icon> 新增角色</div>
+                    <div class="linee-popover-item" onclick="toggleCharDeleteMode()"><ion-icon name="trash-outline"></ion-icon> 删除角色</div>
+                    <div style="height: 1px; background: #F5F5F5; margin: 4px 0;"></div>
+                    <div class="linee-popover-item" onclick="openMapRefreshModal()"><ion-icon name="map-outline"></ion-icon> 地图刷新</div>
+                    <div class="linee-popover-item" onclick="openFootprintSettingsModal()"><ion-icon name="settings-outline"></ion-icon> 足迹设定</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    grid.innerHTML = world.characters.map(char => {
+        const isSelected = selectedCharIds.has(char.id);
+        const clickHandler = charDeleteMode ? `toggleCharSelection('${char.id}')` : `navigateSteps('char_detail', '${world.id}', '${char.id}')`;
+        return `
+        <div onclick="${clickHandler}" style="background: ${isSelected ? 'rgba(160,216,239,0.05)' : '#FFFFFF'}; border: ${isSelected ? '2px solid #A0D8EF' : '1px solid #F3F4F6'}; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; position: relative;">
+            ${charDeleteMode ? `<div style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid ${isSelected ? '#A0D8EF' : '#D1D5DB'}; background: ${isSelected ? '#A0D8EF' : '#FFFFFF'}; display: flex; align-items: center; justify-content: center;">${isSelected ? '<ion-icon name="checkmark" style="font-size: 12px; color: #FFFFFF; --ionicon-stroke-width: 80px;"></ion-icon>' : ''}</div>` : ''}
+            <div style="position: relative;">
+                <img src="${char.avatar}" alt="${char.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 4px solid #F9FAFB;" />
+                ${char.hasFootprints && !charDeleteMode ? '<div style="position: absolute; bottom: 0; right: 0; background: #A0D8EF; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">👣</div>' : ''}
+            </div>
+            <div style="text-align: center; width: 100%;">
+                <h3 style="font-size: 14px; font-weight: 700; color: #1F2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${char.name}</h3>
+                <div style="margin-top: 8px; height: 64px; background: #F9FAFB; border-radius: 8px; padding: 8px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 10px; color: ${char.hasFootprints ? '#6B7280' : '#D1D5DB'}; line-height: 1.4; text-align: center;">${char.hasFootprints ? '已生成今日足迹<br/>点击查看详情' : '暂无足迹'}</span>
+                </div>
+            </div>
+        </div>
+    `}).join('') + (!charDeleteMode ? `
+        <div onclick="openAddCharModal()" style="background: #F9FAFB; border: 2px dashed #D1D5DB; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s; height: 218px;">
+            <div style="width: 48px; height: 48px; background: #E5E7EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #9CA3AF;"><ion-icon name="add" style="font-size: 24px;"></ion-icon></div>
+            <span style="font-size: 12px; color: #9CA3AF; font-weight: 600;">添加新角色</span>
+        </div>
+    ` : '');
+}
+
+function toggleCharSelection(charId) {
+    if (selectedCharIds.has(charId)) {
+        selectedCharIds.delete(charId);
+    } else {
+        selectedCharIds.add(charId);
+    }
+    renderCharList();
+}
+
+function confirmDeleteChars() {
+    if (selectedCharIds.size === 0) return;
+    if (!confirm(`确定删除 ${selectedCharIds.size} 个角色？`)) return;
+    
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) return;
+    
+    world.characters = world.characters.filter(c => !selectedCharIds.has(c.id));
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    
+    charDeleteMode = false;
+    selectedCharIds.clear();
+    navigateSteps('char_list', stepsState.selectedWorldId);
+}
+
+function addCharacter() {
+    const name = prompt('输入角色名称：');
+    if (!name || !name.trim()) return;
+    
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) return;
+    
+    const newChar = {
+        id: 'c' + Date.now(),
+        name: name.trim(),
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name + Date.now()}`,
+        hasFootprints: false,
+        timeline: []
+    };
+    
+    world.characters.push(newChar);
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    renderCharList();
+}
+
+let charDeleteMode = false;
+let selectedCharIds = new Set();
+
+function toggleCharlistMenu() {
+    const menu = document.getElementById('charlist-menu');
+    menu.classList.toggle('hidden');
+    
+    document.addEventListener('click', function closeMenu(e) {
+        if (!e.target.closest('#charlist-menu-btn') && !e.target.closest('#charlist-menu')) {
+            menu.classList.add('hidden');
+            document.removeEventListener('click', closeMenu);
+        }
+    });
+}
+
+function openAddCharModal() {
+    document.getElementById('charlist-menu').classList.add('hidden');
+    const modal = document.getElementById('steps-modal-add-char');
+    const friendList = document.getElementById('steps-friend-list');
+    
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    const existingCharNames = world ? world.characters.map(c => c.name) : [];
+    
+    friendList.innerHTML = lineeFriends.filter(f => !existingCharNames.includes(f.name)).map(friend => `
+        <div onclick="addCharFromFriend('${friend.name}', '${friend.avatar}')" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #F9FAFB; border-radius: 10px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s;" onmouseover="this.style.background='#E8F6FA'" onmouseout="this.style.background='#F9FAFB'">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #E8F6FA; display: flex; align-items: center; justify-content: center; color: #A0D8EF; font-weight: 700; font-size: 16px;">${friend.avatar}</div>
+            <div style="flex: 1;">
+                <div style="font-size: 14px; font-weight: 600; color: #333;">${friend.name}</div>
+                <div style="font-size: 11px; color: #9CA3AF;">${friend.status}</div>
+            </div>
+            <ion-icon name="add-circle-outline" style="font-size: 24px; color: #A0D8EF;"></ion-icon>
+        </div>
+    `).join('');
+    
+    if (friendList.innerHTML === '') {
+        friendList.innerHTML = '<div style="text-align: center; color: #9CA3AF; padding: 20px; font-size: 13px;">所有好友已添加</div>';
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function addCharFromFriend(name, avatar) {
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) return;
+    
+    const newChar = {
+        id: 'c' + Date.now(),
+        name: name,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+        hasFootprints: false,
+        timeline: []
+    };
+    
+    world.characters.push(newChar);
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    closeStepsModal('steps-modal-add-char');
+    renderCharList();
+}
+
+function toggleCharDeleteMode() {
+    const menu = document.getElementById('charlist-menu');
+    if (menu) menu.classList.add('hidden');
+    charDeleteMode = !charDeleteMode;
+    selectedCharIds.clear();
+    renderCharList();
+}
+
+function openMapRefreshModal() {
+    document.getElementById('charlist-menu').classList.add('hidden');
+    document.getElementById('steps-modal-map-refresh').classList.remove('hidden');
+    document.getElementById('map-refresh-keyword').value = '';
+    document.getElementById('map-refresh-preview').innerHTML = '<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9CA3AF; font-size: 12px;">点击刷新按钮预览</div>';
+    document.getElementById('map-refresh-changelog').style.display = 'none';
+}
+
+function executeMapRefresh() {
+    const keyword = document.getElementById('map-refresh-keyword').value.trim();
+    const preview = document.getElementById('map-refresh-preview');
+    const changelog = document.getElementById('map-refresh-changelog');
+    const btn = document.getElementById('map-refresh-btn');
+    
+    btn.textContent = '生成中...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        const newMapUrl = 'https://images.unsplash.com/photo-1478860409698-8707f313ee8b?auto=format&fit=crop&q=80&w=600';
+        preview.innerHTML = `<img src="${newMapUrl}" style="width: 100%; height: 100%; object-fit: cover;" />`;
+        
+        const changes = keyword ? 
+            `基于关键词「${keyword}」调整了地图生成逻辑：<br/>• 新增：北部高地、迷雾森林<br/>• 移除：旧城区废墟<br/>• 地形变化：河流改道向东流淌` :
+            '• 随机重构了地图纹理<br/>• 更新了光照渲染<br/>• 调整了部分植被分布';
+        
+        changelog.innerHTML = changes;
+        changelog.style.display = 'block';
+        
+        btn.textContent = '保存并应用';
+        btn.disabled = false;
+        btn.onclick = () => {
+            const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+            if (world) {
+                world.mapImage = newMapUrl;
+                localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+            }
+            closeStepsModal('steps-modal-map-refresh');
+            alert('地图已更新！');
+        };
+    }, 1500);
+}
+
+function openFootprintSettingsModal() {
+    document.getElementById('charlist-menu').classList.add('hidden');
+    const modal = document.getElementById('steps-modal-footprint-settings');
+    const charList = document.getElementById('footprint-char-list');
+    
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) return;
+    
+    charList.innerHTML = world.characters.map(char => {
+        const canRegenerate = char.lastGenerated ? (Date.now() - char.lastGenerated) / 1000 / 60 >= 30 : false;
+        const buttonText = char.hasFootprints ? (canRegenerate ? '重新生成' : '已生成') : '生成';
+        
+        return `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #F9FAFB; border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="${char.avatar}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #E5E7EB; object-fit: cover;" />
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #333;">${char.name}</div>
+                    ${char.lastGenerated ? `<div style="font-size: 10px; color: #9CA3AF;">最后更新: ${new Date(char.lastGenerated).toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'})}</div>` : ''}
+                </div>
+            </div>
+            <button onclick="toggleCharFootprint('${char.id}')" style="padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; ${char.hasFootprints ? (canRegenerate ? 'background: #FEF3C7; color: #D97706;' : 'background: rgba(160,216,239,0.2); color: #A0D8EF;') : 'background: #FFFFFF; border: 1px solid #E5E7EB; color: #6B7280;'}">${buttonText}</button>
+        </div>
+    `}).join('');
+    
+    modal.classList.remove('hidden');
+}
+
+async function generateAllFootprints() {
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) return;
+    
+    for (const char of world.characters) {
+        const existingData = await getFootprintFromDB(char.id);
+        const existingTimeline = existingData?.timeline || char.timeline || [];
+        
+        char.hasFootprints = true;
+        char.timeline = generateRealtimeTimeline(char.name, world.landmarks, existingTimeline);
+        char.lastGenerated = Date.now();
+        
+        await saveFootprintToDB(char.id, {
+            timeline: char.timeline,
+            lastGenerated: char.lastGenerated
+        });
+    }
+    
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    closeStepsModal('steps-modal-footprint-settings');
+    renderCharList();
+    alert('全员足迹已生成！');
+}
+
+async function toggleCharFootprint(charId) {
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    if (!world) return;
+    
+    const char = world.characters.find(c => c.id === charId);
+    if (!char) return;
+    
+    if (!char.hasFootprints) {
+        char.hasFootprints = true;
+        char.timeline = generateRealtimeTimeline(char.name, world.landmarks, char.timeline || []);
+        char.lastGenerated = Date.now();
+        
+        await saveFootprintToDB(charId, {
+            timeline: char.timeline,
+            lastGenerated: char.lastGenerated
+        });
+    } else {
+        const existingData = await getFootprintFromDB(charId);
+        const existingTimeline = existingData?.timeline || char.timeline || [];
+        
+        char.timeline = generateRealtimeTimeline(char.name, world.landmarks, existingTimeline);
+        char.lastGenerated = Date.now();
+        
+        await saveFootprintToDB(charId, {
+            timeline: char.timeline,
+            lastGenerated: char.lastGenerated
+        });
+    }
+    
+    localStorage.setItem('steps-worlds', JSON.stringify(stepsState.worlds));
+    openFootprintSettingsModal();
+}
+
+function generateRealtimeTimeline(charName, landmarks, existingTimeline = []) {
+    const now = new Date();
+    const today = now.toDateString();
+    
+    const lastEvent = existingTimeline.length > 0 ? existingTimeline[existingTimeline.length - 1] : null;
+    let lastTime = null;
+    
+    if (lastEvent && lastEvent.date === today) {
+        const [hours, minutes] = lastEvent.time.split(':').map(Number);
+        lastTime = new Date();
+        lastTime.setHours(hours, minutes, 0, 0);
+        
+        const timeDiff = (now - lastTime) / 1000 / 60;
+        if (timeDiff < 30) {
+            return existingTimeline;
+        }
+    }
+    
+    const startTime = lastTime || new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const newEvents = [];
+    
+    const actions = [
+        '在这里开始了一天',
+        '遇到了一些有趣的事',
+        '在这里休息了一会',
+        '在这里停留了较长时间',
+        '继续前往下一个地点'
+    ];
+    
+    let currentTime = new Date(startTime);
+    let eventCount = 0;
+    const maxEvents = 5;
+    
+    while (currentTime < now && eventCount < maxEvents) {
+        const hourIncrement = Math.floor(Math.random() * 3) + 1;
+        currentTime.setHours(currentTime.getHours() + hourIncrement);
+        
+        if (currentTime > now) break;
+        
+        const timeStr = `${String(currentTime.getHours()).padStart(2, '0')}:${String(currentTime.getMinutes()).padStart(2, '0')}`;
+        const location = landmarks[eventCount % landmarks.length] || '未知地点';
+        
+        newEvents.push({
+            id: 'e' + Date.now() + eventCount,
+            time: timeStr,
+            date: today,
+            location: location,
+            description: `${charName}${actions[eventCount % actions.length]}。`,
+            relatedCharIds: []
+        });
+        
+        eventCount++;
+    }
+    
+    return [...existingTimeline, ...newEvents];
+}
+
+function closeStepsModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
+function renderCharDetail() {
+    const world = stepsState.worlds.find(w => w.id === stepsState.selectedWorldId);
+    const char = world?.characters.find(c => c.id === stepsState.selectedCharId);
+    
+    if (!world || !char) {
+        navigateSteps('char_list', stepsState.selectedWorldId);
+        return;
+    }
+    
+    document.getElementById('chardetail-char-name').textContent = char.name + ' 的足迹';
+    
+    const mapDiv = document.getElementById('chardetail-map');
+    const hasFootprints = char.hasFootprints && char.timeline && char.timeline.length > 0;
+    
+    if (hasFootprints) {
+        mapDiv.innerHTML = generateFootprintMapSVG(char, world);
+    } else {
+        mapDiv.innerHTML = `
+            ${generateSimpleMapSVG(world.name, world.landmarks)}
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;"><div style="background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 12px; color: #FFFFFF; font-size: 14px;">尚未生成今日足迹</div></div>
+        `;
+    }
+    
+    const timelineDiv = document.getElementById('chardetail-timeline');
+    
+    if (!hasFootprints) {
+        timelineDiv.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #9CA3AF; gap: 16px;">
+                <ion-icon name="time-outline" style="font-size: 48px; opacity: 0.5;"></ion-icon>
+                <p style="font-size: 14px;">时间线是空的</p>
+                <p style="font-size: 12px; text-align: center; max-width: 200px; line-height: 1.5;">请返回角色列表，在管理选单中点击「足迹设定」或「一键刷新」来生成。</p>
+            </div>
+        `;
+    } else {
+        timelineDiv.innerHTML = `
+            <div style="position: relative; padding-left: 16px; display: flex; flex-direction: column; gap: 32px; padding-bottom: 40px;">
+                <div style="position: absolute; left: 7px; top: 8px; bottom: 0; width: 2px; background: rgba(160,216,239,0.3);"></div>
+                ${char.timeline.map(event => `
+                    <div style="position: relative; padding-left: 24px;">
+                        <div style="position: absolute; left: 0; top: 6px; width: 16px; height: 16px; background: #FFFFFF; border: 2px solid #A0D8EF; border-radius: 50%; z-index: 10;"></div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: #A0D8EF; font-weight: 700; font-size: 14px; font-family: monospace;">${event.time}</span>
+                                <span style="color: #9CA3AF; font-size: 12px; display: flex; align-items: center; gap: 4px; background: #F9FAFB; padding: 2px 8px; border-radius: 12px;"><ion-icon name="location-outline" style="font-size: 10px;"></ion-icon>${event.location}</span>
+                            </div>
+                            <p style="color: #1F2937; font-size: 14px; line-height: 1.6; background: #F9FAFB; padding: 12px; border-radius: 12px; border-top-left-radius: 0; margin-top: 4px;">${event.description}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+}
+
+window.initStepsApp = initStepsApp;
+window.navigateSteps = navigateSteps;
+window.handleWorldCardClick = handleWorldCardClick;
+window.toggleStepsDeleteMode = toggleStepsDeleteMode;
+window.confirmDeleteWorlds = confirmDeleteWorlds;
+window.generateMap = generateMap;
+window.saveWorld = saveWorld;
+window.addCharacter = addCharacter;
+window.toggleCharlistMenu = toggleCharlistMenu;
+window.validateCreateForm = validateCreateForm;
+window.openAddCharModal = openAddCharModal;
+window.addCharFromFriend = addCharFromFriend;
+window.toggleCharDeleteMode = toggleCharDeleteMode;
+window.openMapRefreshModal = openMapRefreshModal;
+window.executeMapRefresh = executeMapRefresh;
+window.openFootprintSettingsModal = openFootprintSettingsModal;
+window.generateAllFootprints = generateAllFootprints;
+window.toggleCharFootprint = toggleCharFootprint;
+window.closeStepsModal = closeStepsModal;
+window.toggleCharSelection = toggleCharSelection;
+window.confirmDeleteChars = confirmDeleteChars;
+window.generateSimpleMapSVG = generateSimpleMapSVG;
+
+function generateFootprintMapSVG(char, world) {
+    const timeline = char.timeline || [];
+    const positions = [
+        {x: 100, y: 120},
+        {x: 280, y: 140},
+        {x: 130, y: 240},
+        {x: 300, y: 280}
+    ];
+    
+    const areas = [
+        {x: 50, y: 50, w: 150, h: 120, color: '#F3F4F6'},
+        {x: 220, y: 80, w: 130, h: 100, color: '#D1FAE5'},
+        {x: 80, y: 200, w: 100, h: 80, color: '#DBEAFE'}
+    ];
+    
+    const roads = [
+        {from: [0, 150], to: [400, 150], width: 4, color: '#E5E7EB'},
+        {from: [150, 0], to: [150, 400], width: 4, color: '#E5E7EB'},
+        {from: [0, 250], to: [400, 250], width: 2, color: '#F3F4F6'},
+        {from: [250, 0], to: [250, 400], width: 2, color: '#F3F4F6'}
+    ];
+    
+    let pathD = '';
+    if (timeline.length > 0) {
+        pathD = `M ${positions[0].x} ${positions[0].y}`;
+        for (let i = 1; i < Math.min(timeline.length, positions.length); i++) {
+            pathD += ` L ${positions[i].x} ${positions[i].y}`;
+        }
+    }
+    
+    const markers = timeline.slice(0, positions.length).map((event, i) => {
+        const pos = positions[i];
+        const relatedChars = event.relatedCharIds || [];
+        return `
+            <g>
+                <circle cx="${pos.x}" cy="${pos.y}" r="24" fill="#FFFFFF" stroke="#A0D8EF" stroke-width="3" opacity="0.95"/>
+                <circle cx="${pos.x}" cy="${pos.y}" r="18" fill="#A0D8EF" opacity="0.3"/>
+                <text x="${pos.x}" y="${pos.y + 5}" text-anchor="middle" font-size="16" fill="#FFFFFF" font-weight="700">${i + 1}</text>
+                ${relatedChars.length > 0 ? `<circle cx="${pos.x + 16}" cy="${pos.y - 16}" r="10" fill="#10B981" stroke="#FFFFFF" stroke-width="2"/>` : ''}
+                <rect x="${pos.x - 40}" y="${pos.y + 30}" width="80" height="22" rx="11" fill="rgba(255,255,255,0.98)" stroke="#D1D5DB" stroke-width="1"/>
+                <text x="${pos.x}" y="${pos.y + 45}" text-anchor="middle" font-size="11" fill="#374151" font-weight="600">${event.location}</text>
+            </g>
+        `;
+    }).join('');
+    
+    return `
+        <svg width="100%" height="100%" viewBox="0 0 400 400" style="background: #E8EAED;">
+            ${areas.map(a => `<rect x="${a.x}" y="${a.y}" width="${a.w}" height="${a.h}" fill="${a.color}" opacity="0.8" rx="4"/>`).join('')}
+            ${roads.map(r => `<line x1="${r.from[0]}" y1="${r.from[1]}" x2="${r.to[0]}" y2="${r.to[1]}" stroke="${r.color}" stroke-width="${r.width}"/>`).join('')}
+            ${pathD ? `<path d="${pathD}" fill="none" stroke="#A0D8EF" stroke-width="4" stroke-dasharray="8,4" opacity="0.8"/>` : ''}
+            ${markers}
+        </svg>
+    `;
+}
+
+window.generateFootprintMapSVG = generateFootprintMapSVG;
 
 function openChatRoom(chatId, chatName) {
     currentChatId = chatId;
