@@ -1,5 +1,26 @@
 /* Force Light Mode - 全面禁止瀏覽器變色 */
 
+/* 0. 最高優先級 - 在所有規則之前 */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video, button, input, select, textarea {
+  color-scheme: light only !important;
+  -webkit-color-scheme: light !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  -webkit-appearance: none !important;
+}
+
 /* 1. 強制 light 模式 */
 :root {
   color-scheme: light only !important;
@@ -7,8 +28,9 @@
 }
 
 html {
-  color-scheme: light !important;
+  color-scheme: light only !important;
   -webkit-color-scheme: light !important;
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
 }
 
 /* 2. 全局強制覆寫 - 禁止任何元素被變色 */

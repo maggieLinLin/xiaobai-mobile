@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
+    <style>
+        html{color-scheme:light only!important;-webkit-color-scheme:light!important}
+        *{color-scheme:light only!important;filter:none!important;-webkit-filter:none!important}
+    </style>
+    <script>
+        (function(){document.documentElement.style.colorScheme='light';document.documentElement.style.webkitColorScheme='light';})();
+    </script>
     <title>小白机</title>
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/phone.css">
