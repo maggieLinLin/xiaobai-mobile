@@ -10,9 +10,6 @@
     <link rel="stylesheet" href="css/settings.css">
     <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/apps.css">
-    <link rel="stylesheet" href="css/linee-app.css">
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
     <div id="phone-container">
@@ -221,165 +218,12 @@
                     <button class="back-btn">←</button>
                     <h3>Linee</h3>
                 </div>
-                <div id="linee-app-content">
-                    <!-- Linee Header -->
-                    <div class="linee-header">
-                        <div class="linee-title">LINEE</div>
-                        <div class="linee-actions">
-                            <button class="linee-icon-btn" id="linee-btn-favorites"><ion-icon name="star-outline"></ion-icon></button>
-                            <button class="linee-icon-btn" id="linee-btn-notifications"><ion-icon name="notifications-outline"></ion-icon></button>
-                            <div style="position:relative;">
-                                <button class="linee-icon-btn" id="linee-btn-add"><ion-icon name="person-add-outline"></ion-icon></button>
-                                <div class="linee-popover hidden" id="linee-add-popover">
-                                    <div class="linee-popover-item" id="linee-opt-add-friend">
-                                        <ion-icon name="person-outline"></ion-icon> 加入好友
-                                    </div>
-                                    <div class="linee-popover-item" id="linee-opt-add-group">
-                                        <ion-icon name="people-outline"></ion-icon> 建立群组
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="linee-icon-btn" id="linee-btn-settings"><ion-icon name="settings-outline"></ion-icon></button>
-                        </div>
-                    </div>
-
-                    <!-- Main Content -->
-                    <div class="linee-main">
-                        <!-- Profile Section -->
-                        <div class="linee-profile">
-                            <div class="linee-profile-row">
-                                <div class="linee-profile-info">
-                                    <div class="linee-name">我的名字</div>
-                                    <div class="linee-status" contenteditable="true">设定状态消息...</div>
-                                </div>
-                                <div class="linee-avatar">
-                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar">
-                                    <div class="linee-edit-badge">✏️</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Persona Cards -->
-                            <div class="linee-cards">
-                                <div class="linee-card active">日常</div>
-                                <div class="linee-card">工作</div>
-                                <div class="linee-card">休闲</div>
-                            </div>
-                        </div>
-
-                        <!-- Search Bar -->
-                        <div class="linee-search-section">
-                            <div class="linee-search">
-                                <ion-icon name="search-outline" class="linee-search-icon"></ion-icon>
-                                <input type="text" placeholder="搜索好友、群组" id="linee-search-input">
-                            </div>
-                        </div>
-
-                        <!-- Lists -->
-                        <div class="linee-lists">
-                            <!-- Birthdays -->
-                            <div class="linee-list-group" id="linee-group-birthdays">
-                                <div class="linee-list-header">
-                                    <div class="linee-header-text">
-                                        <span class="linee-list-title">当月寿星</span>
-                                        <span class="linee-list-subtitle">小明, Amy, Jason...</span>
-                                    </div>
-                                    <ion-icon name="chevron-forward-outline" class="linee-arrow"></ion-icon>
-                                </div>
-                            </div>
-
-                            <!-- Favorites -->
-                            <div class="linee-list-group" id="linee-group-favorites">
-                                <div class="linee-list-header">
-                                    <div class="linee-header-text">
-                                        <span class="linee-list-title">我的最爱</span>
-                                        <span class="linee-list-subtitle">妈妈, 老板, Bestie...</span>
-                                    </div>
-                                    <ion-icon name="chevron-forward-outline" class="linee-arrow"></ion-icon>
-                                </div>
-                            </div>
-
-                            <!-- Friends -->
-                            <div class="linee-list-group expanded" id="linee-group-friends">
-                                <div class="linee-list-header" onclick="toggleLineeList('linee-friends-list', this)">
-                                    <div class="linee-header-text">
-                                        <span class="linee-list-title">好友</span>
-                                        <span class="linee-list-count" id="linee-friend-count">(5)</span>
-                                    </div>
-                                    <ion-icon name="chevron-forward-outline" class="linee-arrow"></ion-icon>
-                                </div>
-                                <div class="linee-list-content" id="linee-friends-list">
-                                    <!-- Dynamic Friend Items -->
-                                </div>
-                            </div>
-
-                            <!-- Groups -->
-                            <div class="linee-list-group" id="linee-group-groups">
-                                <div class="linee-list-header" onclick="toggleLineeList('linee-groups-list', this)">
-                                    <div class="linee-header-text">
-                                        <span class="linee-list-title">群组</span>
-                                        <span class="linee-list-count" id="linee-group-count">(2)</span>
-                                    </div>
-                                    <ion-icon name="chevron-forward-outline" class="linee-arrow"></ion-icon>
-                                </div>
-                                <div class="linee-list-content hidden" id="linee-groups-list">
-                                    <!-- Dynamic Group Items -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Nav -->
-                    <div class="linee-nav">
-                        <div class="linee-nav-item active" data-tab="home">
-                            <ion-icon name="home-outline" class="linee-nav-icon"></ion-icon>
-                            <span>主页</span>
-                        </div>
-                        <div class="linee-nav-item" data-tab="chats">
-                            <ion-icon name="chatbubble-ellipses-outline" class="linee-nav-icon"></ion-icon>
-                            <span>聊天</span>
-                        </div>
-                        <div class="linee-nav-item" data-tab="steps">
-                            <ion-icon name="footsteps-outline" class="linee-nav-icon"></ion-icon>
-                            <span>足迹</span>
-                        </div>
-                        <div class="linee-nav-item" data-tab="diary">
-                            <ion-icon name="journal-outline" class="linee-nav-icon"></ion-icon>
-                            <span>日记</span>
-                        </div>
-                        <div class="linee-nav-item" data-tab="wallet">
-                            <ion-icon name="wallet-outline" class="linee-nav-icon"></ion-icon>
-                            <span>钱包</span>
-                        </div>
-                    </div>
-
-                    <!-- Modals -->
-                    <div id="linee-modal-add-friend" class="linee-modal hidden">
-                        <div class="linee-modal-content">
-                            <h3>添加好友</h3>
-                            <input type="text" id="linee-new-friend-name" placeholder="输入好友名字">
-                            <div class="linee-modal-actions">
-                                <button class="linee-btn-cancel" onclick="closeLineeModal('linee-modal-add-friend')">取消</button>
-                                <button class="linee-btn-confirm" onclick="confirmLineeAddFriend()">添加</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="linee-modal-add-group" class="linee-modal hidden">
-                        <div class="linee-modal-content">
-                            <h3>建立群组</h3>
-                            <div class="linee-avatar-upload">
-                                <div class="linee-circle-preview">G</div>
-                                <span class="linee-upload-hint">更换头像</span>
-                            </div>
-                            <input type="text" id="linee-new-group-name" placeholder="群组名称">
-                            <div class="linee-checkbox-container">
-                                <input type="checkbox" id="linee-check-join" checked>
-                                <span>我也加入此群组</span>
-                            </div>
-                            <div class="linee-modal-actions">
-                                <button class="linee-btn-cancel" onclick="closeLineeModal('linee-modal-add-group')">取消</button>
-                                <button class="linee-btn-confirm" onclick="confirmLineeAddGroup()">建立</button>
-                            </div>
+                <div id="chat-list" class="chat-list">
+                    <div class="chat-item" data-chat="ai-assistant">
+                        <div class="chat-avatar">🤖</div>
+                        <div class="chat-info">
+                            <div class="chat-name">AI 助手</div>
+                            <div class="chat-preview">开始聊天吧~</div>
                         </div>
                     </div>
                 </div>

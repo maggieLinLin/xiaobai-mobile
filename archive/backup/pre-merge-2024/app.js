@@ -1047,7 +1047,6 @@ function initApps() {
                 alert('功能开发中...');
             } else if (app === 'linee') {
                 openApp('linee-app');
-                initLineeApp();
             }
         };
     });
@@ -1071,6 +1070,12 @@ function initApps() {
             closeApp();
         };
     });
+    
+    // Linee 聊天
+    document.querySelector('.chat-item').onclick = () => {
+        document.getElementById('linee-app').classList.add('hidden');
+        document.getElementById('chat-window').classList.remove('hidden');
+    };
     
     document.getElementById('send-btn').onclick = sendMessage;
     document.getElementById('chat-input').onkeypress = e => {
@@ -1790,167 +1795,10 @@ window.addEventListener('storage', (ev) => {
   }
 });
 
-/* ---------- Linee App Functions ---------- */
-let lineeInitialized = false;
-const lineeFriends = [
-    { name: "Alice", status: "Work hard, play hard", avatar: "A" },
-    { name: "Bob", status: "Available", avatar: "B" },
-    { name: "Charlie", status: "At the gym", avatar: "C" },
-    { name: "David", status: "Sleeping...", avatar: "D" },
-    { name: "Eve", status: "Coding LINEE", avatar: "E" }
-];
-
-const lineeGroups = [
-    { name: "Family", count: 4, avatar: "F" },
-    { name: "Work Team", count: 12, avatar: "W" }
-];
-
-function initLineeApp() {
-    if (lineeInitialized) return;
-    lineeInitialized = true;
-
-    // Render friends and groups
-    renderLineeFriends();
-    renderLineeGroups();
-
-    // Add button popover
-    const btnAdd = document.getElementById('linee-btn-add');
-    const popover = document.getElementById('linee-add-popover');
-    
-    if (btnAdd && popover) {
-        btnAdd.onclick = (e) => {
-            e.stopPropagation();
-            popover.classList.toggle('hidden');
-        };
-
-        document.addEventListener('click', (e) => {
-            if (!btnAdd.contains(e.target) && !popover.contains(e.target)) {
-                popover.classList.add('hidden');
-            }
-        });
-    }
-
-    // Modal triggers
-    const optAddFriend = document.getElementById('linee-opt-add-friend');
-    const optAddGroup = document.getElementById('linee-opt-add-group');
-    
-    if (optAddFriend) {
-        optAddFriend.onclick = () => {
-            popover.classList.add('hidden');
-            document.getElementById('linee-modal-add-friend').classList.remove('hidden');
-        };
-    }
-
-    if (optAddGroup) {
-        optAddGroup.onclick = () => {
-            popover.classList.add('hidden');
-            document.getElementById('linee-modal-add-group').classList.remove('hidden');
-        };
-    }
-
-    // Persona cards
-    document.querySelectorAll('#linee-app-content .linee-card').forEach(card => {
-        card.onclick = () => {
-            document.querySelectorAll('#linee-app-content .linee-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-        };
-    });
-
-    // Nav items
-    document.querySelectorAll('#linee-app-content .linee-nav-item').forEach(item => {
-        item.onclick = () => {
-            document.querySelectorAll('#linee-app-content .linee-nav-item').forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
-        };
-    });
-}
-
-function renderLineeFriends() {
-    const list = document.getElementById('linee-friends-list');
-    const count = document.getElementById('linee-friend-count');
-    if (!list || !count) return;
-    
-    list.innerHTML = '';
-    lineeFriends.forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'linee-friend-item';
-        item.innerHTML = `
-            <div class="linee-friend-avatar">${f.avatar}</div>
-            <div class="linee-friend-info">
-                <div class="linee-friend-name">${f.name}</div>
-                <div class="linee-friend-status">${f.status}</div>
-            </div>
-        `;
-        list.appendChild(item);
-    });
-    count.textContent = `(${lineeFriends.length})`;
-}
-
-function renderLineeGroups() {
-    const list = document.getElementById('linee-groups-list');
-    const count = document.getElementById('linee-group-count');
-    if (!list || !count) return;
-    
-    list.innerHTML = '';
-    lineeGroups.forEach(g => {
-        const item = document.createElement('div');
-        item.className = 'linee-friend-item';
-        item.innerHTML = `
-            <div class="linee-friend-avatar" style="background:#E8F6FA;color:#A0D8EF;">${g.avatar}</div>
-            <div class="linee-friend-info">
-                <div class="linee-friend-name">${g.name}</div>
-                <div class="linee-friend-status">${g.count} users</div>
-            </div>
-        `;
-        list.appendChild(item);
-    });
-    count.textContent = `(${lineeGroups.length})`;
-}
-
-function toggleLineeList(listId, header) {
-    const list = document.getElementById(listId);
-    const group = header.parentElement;
-    
-    list.classList.toggle('hidden');
-    group.classList.toggle('expanded');
-}
-
-function closeLineeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-}
-
-function confirmLineeAddFriend() {
-    const input = document.getElementById('linee-new-friend-name');
-    const name = input.value.trim();
-    if (name) {
-        lineeFriends.push({ name, status: "New Friend", avatar: name[0].toUpperCase() });
-        renderLineeFriends();
-        input.value = '';
-        closeLineeModal('linee-modal-add-friend');
-    }
-}
-
-function confirmLineeAddGroup() {
-    const input = document.getElementById('linee-new-group-name');
-    const name = input.value.trim();
-    if (name) {
-        lineeGroups.push({ name, count: 1, avatar: name[0].toUpperCase() });
-        renderLineeGroups();
-        input.value = '';
-        closeLineeModal('linee-modal-add-group');
-    }
-}
-
 /* ---------- 最後啟動 ---------- */
 document.addEventListener('DOMContentLoaded', () => {
     // 加入同步機制但不初始化所有函数，因為已經在其他地方初始化了
 });
-
-// Make functions global for onclick handlers
-window.toggleLineeList = toggleLineeList;
-window.closeLineeModal = closeLineeModal;
-window.confirmLineeAddFriend = confirmLineeAddFriend;
-window.confirmLineeAddGroup = confirmLineeAddGroup;
 
 // 工具函数
 function download(filename, text) {

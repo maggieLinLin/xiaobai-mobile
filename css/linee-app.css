@@ -1,0 +1,504 @@
+/* Linee App - Integrated into Phone Simulator */
+#linee-app-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    overflow: hidden;
+}
+
+/* Linee Header */
+#linee-app-content .linee-header {
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #F5F5F5;
+    margin-top: -8px;
+}
+
+#linee-app-content .linee-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #333;
+    letter-spacing: -0.5px;
+}
+
+#linee-app-content .linee-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+#linee-app-content .linee-icon-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+    width: 32px;
+    height: 32px;
+}
+
+#linee-app-content .linee-icon-btn ion-icon {
+    --ionicon-stroke-width: 40px;
+}
+
+#linee-app-content .linee-icon-btn:active {
+    background: #E8F6FA;
+}
+
+/* Main Content */
+#linee-app-content .linee-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 12px 70px 12px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FCFF 100%);
+}
+
+/* Profile Section */
+#linee-app-content .linee-profile {
+    margin-bottom: 16px;
+}
+
+#linee-app-content .linee-profile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 12px;
+}
+
+#linee-app-content .linee-profile-info {
+    flex: 1;
+}
+
+#linee-app-content .linee-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+#linee-app-content .linee-status {
+    font-size: 12px;
+    color: #999;
+    border: 1px dashed transparent;
+    padding: 2px 4px;
+    border-radius: 6px;
+    display: inline-block;
+    outline: none;
+}
+
+#linee-app-content .linee-status:focus {
+    border-color: #A0D8EF;
+    background: #FFFFFF;
+}
+
+#linee-app-content .linee-avatar {
+    position: relative;
+    width: 50px;
+    height: 50px;
+}
+
+#linee-app-content .linee-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #E8F6FA;
+}
+
+#linee-app-content .linee-edit-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #A0D8EF;
+    color: #FFF;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+/* Persona Cards */
+#linee-app-content .linee-cards {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+#linee-app-content .linee-cards::-webkit-scrollbar {
+    display: none;
+}
+
+#linee-app-content .linee-card {
+    min-width: 70px;
+    height: 32px;
+    background: #E8F6FA;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #A0D8EF;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+}
+
+#linee-app-content .linee-card.active {
+    background: #A0D8EF;
+    color: #FFF;
+    box-shadow: 0 2px 4px rgba(160, 216, 239, 0.3);
+}
+
+/* Search Bar */
+#linee-app-content .linee-search-section {
+    margin-bottom: 16px;
+}
+
+#linee-app-content .linee-search {
+    background: #FFF;
+    border: 1px solid #EEE;
+    border-radius: 20px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+#linee-app-content .linee-search-icon {
+    color: #999;
+    font-size: 18px;
+}
+
+#linee-app-content .linee-search-icon {
+    --ionicon-stroke-width: 40px;
+}
+
+#linee-app-content .linee-search input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    flex: 1;
+    color: #333;
+    background: transparent;
+}
+
+/* Lists */
+#linee-app-content .linee-lists {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#linee-app-content .linee-list-group {
+    background: #FFF;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#linee-app-content .linee-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    cursor: pointer;
+}
+
+#linee-app-content .linee-list-header:active {
+    background: #FAFAFA;
+}
+
+#linee-app-content .linee-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#linee-app-content .linee-list-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+#linee-app-content .linee-list-subtitle,
+#linee-app-content .linee-list-count {
+    font-size: 11px;
+    color: #999;
+}
+
+#linee-app-content .linee-arrow {
+    color: #CCC;
+    font-size: 20px;
+    transition: transform 0.3s;
+}
+
+#linee-app-content .linee-arrow {
+    --ionicon-stroke-width: 40px;
+}
+
+#linee-app-content .linee-list-group.expanded .linee-arrow {
+    transform: rotate(90deg);
+}
+
+#linee-app-content .linee-list-content {
+    padding: 0 12px 12px 12px;
+    animation: slideDown 0.3s ease-out;
+}
+
+#linee-app-content .linee-list-content.hidden {
+    display: none;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Friend Items */
+#linee-app-content .linee-friend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #F5F5F5;
+}
+
+#linee-app-content .linee-friend-item:last-child {
+    border-bottom: none;
+}
+
+#linee-app-content .linee-friend-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #E8F6FA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #A0D8EF;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+#linee-app-content .linee-friend-info {
+    flex: 1;
+    min-width: 0;
+}
+
+#linee-app-content .linee-friend-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+#linee-app-content .linee-friend-status {
+    font-size: 11px;
+    color: #999;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Bottom Nav */
+#linee-app-content .linee-nav {
+    height: 60px;
+    background: #FFF;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 15px 8px 15px;
+    border-top: 1px solid #F5F5F5;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+}
+
+#linee-app-content .linee-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: #CCC;
+    font-size: 9px;
+    cursor: pointer;
+    transition: color 0.2s;
+    flex: 1;
+}
+
+#linee-app-content .linee-nav-icon {
+    font-size: 24px;
+}
+
+#linee-app-content .linee-nav-icon {
+    --ionicon-stroke-width: 40px;
+}
+
+#linee-app-content .linee-nav-item.active {
+    color: #A0D8EF;
+}
+
+/* Popover */
+#linee-app-content .linee-popover {
+    position: absolute;
+    top: 50px;
+    right: 12px;
+    background: #FFF;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    width: 140px;
+    overflow: hidden;
+    z-index: 200;
+    border: 1px solid #E8F6FA;
+}
+
+#linee-app-content .linee-popover.hidden {
+    display: none;
+}
+
+#linee-app-content .linee-popover-item {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #333;
+}
+
+#linee-app-content .linee-popover-item:active {
+    background: #E8F6FA;
+}
+
+#linee-app-content .linee-popover-item ion-icon {
+    font-size: 18px;
+    --ionicon-stroke-width: 40px;
+}
+
+/* Modal */
+#linee-app-content .linee-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#linee-app-content .linee-modal.hidden {
+    display: none;
+}
+
+#linee-app-content .linee-modal-content {
+    background: #FFF;
+    width: 80%;
+    max-width: 300px;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+#linee-app-content .linee-modal-content h3 {
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 16px;
+}
+
+#linee-app-content .linee-modal-content input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #EEE;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    outline: none;
+    font-size: 14px;
+}
+
+#linee-app-content .linee-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+#linee-app-content .linee-modal-actions button {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#linee-app-content .linee-btn-cancel {
+    background: #F0F0F0;
+    color: #666;
+}
+
+#linee-app-content .linee-btn-confirm {
+    background: #A0D8EF;
+    color: #FFF;
+}
+
+#linee-app-content .linee-avatar-upload {
+    margin-bottom: 12px;
+}
+
+#linee-app-content .linee-circle-preview {
+    width: 50px;
+    height: 50px;
+    background: #E8F6FA;
+    border-radius: 50%;
+    margin: 0 auto 5px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #A0D8EF;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#linee-app-content .linee-upload-hint {
+    font-size: 11px;
+    color: #A0D8EF;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#linee-app-content .linee-checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #666;
+}

@@ -41,8 +41,6 @@ function loadState() {
     if (saved) {
         Object.assign(state, JSON.parse(saved));
     }
-    // 确保日历显示当前月
-    state.calendarDate = null;
 }
 
 // 保存状态
@@ -55,166 +53,6 @@ function initStatusBar() {
     updateTime();
     setInterval(updateTime, 1000);
     updateBattery();
-}
-
-// ---------- 工具：格式化本地日期為 YYYY-MM-DD ----------
-function localDateKey(date = new Date()){
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-/* ---------- localStorage key helper ---------- */
-function noteKey(dateKey){
-  return `note:${dateKey}`;
-}
-
-/* ---------- 鑑別 helpers ---------- */
-function parseStoredNote(raw){
-  try{ return JSON.parse(raw); } catch(e){ return null; }
-}
-
-/* ---------- 儲存 / 讀取記事（強一致性版） ----------
-   存入 JSON: { content: string, updatedAt: number }
-   刪除時 removeItem。所有讀取都直接從 localStorage 讀取（無 memory cache）。
------------------------------------------------------------------- */
-/* 強化 save: 寫入 payload 並立即 dispatch event + set indicator */
-function saveNoteForDate(dateKey, content){
-  const trimmed = (content || '').trim();
-  const key = noteKey(dateKey);
-  if(trimmed === ''){
-    localStorage.removeItem(key);
-    const info = { dateKey, action:'remove', updatedAt: Date.now() };
-    localStorage.setItem('_last_note_update', JSON.stringify(info));
-    // quick cleanup
-    setTimeout(()=> localStorage.removeItem('_last_note_update'), 50);
-    window.dispatchEvent(new CustomEvent('notes-updated', {detail: info}));
-    // 立即 process to update UI (synchronous)
-    processNoteUpdate(dateKey);
-    return;
-  }
-  const payload = { content, updatedAt: Date.now() };
-  localStorage.setItem(key, JSON.stringify(payload));
-  const info = { dateKey, action:'save', updatedAt: payload.updatedAt };
-  localStorage.setItem('_last_note_update', JSON.stringify(info));
-  setTimeout(()=> localStorage.removeItem('_last_note_update'), 50);
-  window.dispatchEvent(new CustomEvent('notes-updated', {detail: info}));
-  // 立即 process to ensure UI sync (avoid waiting for event loop scheduling)
-  processNoteUpdate(dateKey);
-}
-
-function loadNoteForDate(dateKey, raw = false){
-  const s = localStorage.getItem(noteKey(dateKey));
-  if(!s) return raw ? null : '';
-  const obj = parseStoredNote(s);
-  if(!obj) return raw ? null : '';
-  return raw ? obj : (obj.content || '');
-}
-
-/* ---------- applyHasNoteClass: 根據 localStorage 實際資料決定 day 是否有記事 ---------- */
-function applyHasNoteClass(dateKey){
-  const el = document.querySelector(`#calendar .day[data-date="${dateKey}"]`);
-  if(!el) return;
-  const has = !!loadNoteForDate(dateKey); // 直接從 localStorage 讀取
-  el.classList.toggle('has-note', has);
-}
-
-/* ---------- 儲存按鈕（或 blur 時） ---------- */
-/* ---------- 儲存按鈕（或 blur 時） ---------- */
-let currentEditingDate = localDateKey(new Date()); // current editing target
-
-/* ---------- 自動保存（debounce）: 若使用者停止輸入 X ms 後自動儲存，避免每鍵入都寫入 */
-let autoSaveTimer = null;
-const AUTO_SAVE_DELAY = 800; // ms
-
-function scheduleAutoSave(){
-  if(autoSaveTimer) clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(() => {
-    if(currentEditingDate){
-      // 在儲存前取得目前 textarea 的最新值
-      saveNoteForDate(currentEditingDate, taskBox.value);
-    }
-    autoSaveTimer = null;
-  }, AUTO_SAVE_DELAY);
-}
-
-/* ---------- 更新主頁任務框（空內容時要顯示 placeholder） ---------- */
-const taskBox = document.getElementById('today-memo-widget');
-
-/* ---------- 強制把內容寫入 task box（絕對同步顯示） ---------- */
-function forceUpdateTaskBox(content){
-  // 直接操作 DOM，避免舊記憶體或 render 覆蓋
-  const normalized = (content || '').trim();
-  if(normalized === ''){
-    taskBox.value = '';
-    taskBox.placeholder = '今天沒有任務';
-  } else {
-    taskBox.placeholder = '';
-    taskBox.value = content;
-  }
-
-  // 立即調整高度（並保證沒有垂直捲軸）
-  adjustTaskBoxHeight();
-
-  // 確保瀏覽器已經套用 DOM 變更（防止下一步 render 覆蓋時看不到）
-  // 用 microtask 與 rAF 做雙保險：先 microtask，再一個 rAF
-  Promise.resolve().then(() => {
-    requestAnimationFrame(() => {
-      // 重新觸發任何需要被同步的 UI handler（例如 has-note 樣式）
-      // 如果有需要，也可以 dispatch 一個輕量事件給其他模組
-      window.dispatchEvent(new CustomEvent('taskbox-updated', {detail:{value: taskBox.value}}));
-    });
-  });
-}
-
-function updateTaskBox(content){
-  const trimmed = (content || '').trim();
-  if(trimmed === ''){
-    taskBox.value = '';
-    taskBox.placeholder = '今天没有任务';
-  } else {
-    taskBox.placeholder = '';
-    taskBox.value = content;
-  }
-  // 立即調整高度（且確保不出現滾動）
-  adjustTaskBoxHeight();
-}
-
-/* ---------- 自適應高度（最多 5 行；絕對不顯示垂直捲軸） ---------- */
-function adjustTaskBoxHeight(){
-  // 強制隱藏垂直捲軸（視覺上絕不出現）
-  taskBox.style.overflowY = 'hidden';
-
-  const style = window.getComputedStyle(taskBox);
-  let lineHeightPx = parseFloat(style.lineHeight);
-  if(isNaN(lineHeightPx)){
-    const fontSize = parseFloat(style.fontSize) || 14;
-    lineHeightPx = fontSize * 1.2;
-  }
-  const maxLines = 5;
-  const maxHeight = lineHeightPx * maxLines + parseFloat(style.paddingTop || 0) + parseFloat(style.paddingBottom || 0);
-
-  // 先讓高度自適（避免因為固定高度而拿不到 scrollHeight）
-  taskBox.style.height = 'auto';
-  const needed = taskBox.scrollHeight;
-
-  // 設定高度為需要或最大值（但不顯示捲軸）
-  taskBox.style.height = Math.min(needed, maxHeight) + 'px';
-}
-
-/* ---------- 計算 textarea 行數（用以判斷是否阻止換行） ---------- */
-function countLinesInTextarea(t){
-  // using scrollHeight / lineHeight to approximate lines
-  const style = window.getComputedStyle(t);
-  let lineHeightPx = parseFloat(style.lineHeight);
-  if(isNaN(lineHeightPx)){
-    const fontSize = parseFloat(style.fontSize) || 14;
-    lineHeightPx = fontSize * 1.2;
-  }
-  const padding = (parseFloat(style.paddingTop || 0) + parseFloat(style.paddingBottom || 0));
-  const lines = Math.round((t.scrollHeight - padding) / lineHeightPx);
-  return lines;
 }
 
 function updateTime() {
@@ -336,43 +174,6 @@ function initHomeScreen() {
     }
 
     renderMiniCalendar();
-    
-    // 初始化任务框
-    const todayMemoWidget = document.getElementById('today-memo-widget');
-    const todayKey = localDateKey(new Date());
-    const todayNote = loadNoteForDate(todayKey);
-    updateTaskBox(todayNote);
-    adjustTaskBoxHeight();
-    
-    // 保存按鈕與事件綁定
-    const saveTaskButton = document.getElementById('save-task');
-    if (saveTaskButton) {
-        saveTaskButton.addEventListener('click', () => {
-            saveNoteForDate(currentEditingDate, taskBox.value);
-        });
-    }
-
-    // 添加自我适应高度，阻止超過5行的換行，自動保存
-    if (todayMemoWidget) {
-        todayMemoWidget.addEventListener('input', () => {
-            adjustTaskBoxHeight();
-            scheduleAutoSave(); // 自動保存（debounce 800ms）
-        });
-        todayMemoWidget.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter'){
-                const lines = countLinesInTextarea(todayMemoWidget);
-                if(lines >= 5){
-                    e.preventDefault();
-                }
-            }
-        });
-        // 失去焦點時保存
-        todayMemoWidget.addEventListener('blur', () => {
-            if(currentEditingDate){
-                saveNoteForDate(currentEditingDate, taskBox.value);
-            }
-        });
-    }
 }
 
 function renderMiniCalendar() {
@@ -384,13 +185,8 @@ function renderMiniCalendar() {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = localDateKey(new Date()); // 使用本地日期
-
-    // 🔒 關鍵：渲染前先保護當前任務欄的實時狀態
-    // 獲取當前任務欄的最新值（來自localStorage）
-    const todayKey = localDateKey(new Date());
-    const currentTask = loadNoteForDate(todayKey, true); // 獲取payload
-
+    const today = new Date().toISOString().split('T')[0];
+    
     let html = `<div style="padding:5px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <button id="cal-prev" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px">◀</button>
@@ -399,9 +195,9 @@ function renderMiniCalendar() {
         </div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:8px;text-align:center">
             <div style="font-weight:bold">S</div><div style="font-weight:bold">M</div><div style="font-weight:bold">T</div><div style="font-weight:bold">W</div><div style="font-weight:bold">T</div><div style="font-weight:bold">F</div><div style="font-weight:bold">S</div>`;
-
+    
     for (let i = 0; i < firstDay; i++) html += '<div></div>';
-
+    
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === today;
@@ -410,60 +206,45 @@ function renderMiniCalendar() {
         const border = hasMemo ? 'border:1px solid #FF9500;' : '';
         html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border}" class="cal-day" data-date="${dateStr}">${day}</div>`;
     }
-
+    
     html += '</div></div>';
     widget.innerHTML = html;
-
-    // 🚫 移除導致覆蓋的舊邏輯
-    // const todayMemoWidget = document.getElementById('today-memo-widget');
-    // if (todayMemoWidget) {
-    //     const memo = state.memos[today];
-    //     if (memo && memo.trim()) {
-    //         updateTaskBox(memo);
-    //     } else {
-    //         updateTaskBox('');
-    //     }
-    // }
-
+    
+    const todayMemoWidget = document.getElementById('today-memo-widget');
+    if (todayMemoWidget) {
+        const memo = state.memos[today];
+        todayMemoWidget.textContent = memo && memo.trim() ? memo : '今天没有任务';
+    }
+    
     const prevBtn = document.getElementById('cal-prev');
     const nextBtn = document.getElementById('cal-next');
-
+    
     if (prevBtn) {
         prevBtn.onclick = (e) => {
             e.stopPropagation();
             state.calendarDate = new Date(date.setMonth(date.getMonth() - 1));
             renderMiniCalendar();
             saveState();
-            // 渲染後立即恢復任務欄狀態（防覆蓋）
-            forceUpdateTaskBox(currentTask ? currentTask.content : '');
         };
     }
-
+    
     if (nextBtn) {
         nextBtn.onclick = (e) => {
             e.stopPropagation();
             state.calendarDate = new Date(date.setMonth(date.getMonth() + 1));
             renderMiniCalendar();
             saveState();
-            // 渲染後立即恢復任務欄狀態（防覆蓋）
-            forceUpdateTaskBox(currentTask ? currentTask.content : '');
         };
     }
-
+    
     widget.querySelectorAll('.cal-day').forEach(el => {
         el.onclick = (e) => {
             e.stopPropagation();
             state.selectedDate = el.dataset.date;
-            const memo = loadNoteForDate(el.dataset.date);
-            updateTaskBox(memo || '');
             openApp('calendar-app');
             selectDate(el.dataset.date);
         };
     });
-
-    // 🔒 渲染完後立即強制同步當前任務欄（確保補償任何覆蓋）
-    // 使用微任務確保在所有同步DOM操作完成後執行
-    Promise.resolve().then(() => forceUpdateTaskBox(currentTask ? currentTask.content : ''));
 }
 
 // 设置页面
@@ -1047,7 +828,6 @@ function initApps() {
                 alert('功能开发中...');
             } else if (app === 'linee') {
                 openApp('linee-app');
-                initLineeApp();
             }
         };
     });
@@ -1071,6 +851,12 @@ function initApps() {
             closeApp();
         };
     });
+    
+    // Linee 聊天
+    document.querySelector('.chat-item').onclick = () => {
+        document.getElementById('linee-app').classList.add('hidden');
+        document.getElementById('chat-window').classList.remove('hidden');
+    };
     
     document.getElementById('send-btn').onclick = sendMessage;
     document.getElementById('chat-input').onkeypress = e => {
@@ -1096,27 +882,14 @@ function openApp(appId) {
 
 function closeApp() {
     console.log('closeApp called');
-
-    // 檢查是否有日曆應用正在關閉，如果是，恢復任務欄
-    const calendarApp = document.getElementById('calendar-app');
-    const isClosingCalendar = calendarApp && !calendarApp.classList.contains('hidden');
-
     document.querySelectorAll('.app-window').forEach(w => {
         w.classList.add('hidden');
         console.log('Hiding:', w.id);
     });
-
     const homeScreen = document.getElementById('home-screen');
     if (homeScreen) {
         homeScreen.style.display = 'block';
         console.log('Home screen shown');
-
-        // 如果剛剛關閉了日曆應用，強制恢復今天的任務欄狀態
-        if (isClosingCalendar) {
-            console.log('📅 日曆應用已關閉，強制恢復任務欄狀態');
-            const todayKey = localDateKey(new Date());
-            processNoteUpdate(todayKey);
-        }
     }
 }
 
@@ -1176,7 +949,7 @@ function renderFullCalendar() {
     const month = now.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = localDateKey(new Date()); // 使用本地時間格式
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
     let html = `<div style="padding:10px"><h3 style="margin-bottom:15px">${year}年${month + 1}月</h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">`;
     html += '<div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">日</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">一</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">二</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">三</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">四</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">五</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">六</div>';
@@ -1186,8 +959,7 @@ function renderFullCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = date === today;
-        const note = loadNoteForDate(date); // 检查是否有記事
-        const hasMemo = note && note.trim();
+        const hasMemo = state.memos[date];
         const classes = `calendar-day ${isToday ? 'today' : ''} ${hasMemo ? 'has-memo' : ''}`;
         html += `<div class="${classes}" data-date="${date}">${day}</div>`;
     }
@@ -1207,7 +979,7 @@ function selectDate(date) {
     const memoArea = document.getElementById('memo-area');
     
     if (memoTitle) memoTitle.textContent = `${date} 备忘录`;
-    if (memoInput) memoInput.value = loadNoteForDate(date) || '';
+    if (memoInput) memoInput.value = state.memos[date] || '';
     if (memoArea) memoArea.style.display = 'block';
     
     document.querySelectorAll('.calendar-day').forEach(el => {
@@ -1217,14 +989,10 @@ function selectDate(date) {
 }
 
 function saveMemo() {
-    const date = state.selectedDate || localDateKey(new Date());
+    const date = state.selectedDate || new Date().toISOString().split('T')[0];
     const text = document.getElementById('memo-input').value;
-    saveNoteForDate(date, text);
-    // 更新今日任务框如果保存的是今天
-    const todayKey = localDateKey(new Date());
-    if (date === todayKey) {
-        updateTaskBox(text);
-    }
+    state.memos[date] = text;
+    saveState();
     renderFullCalendar();
     renderMiniCalendar();
     alert('备忘录已保存');
@@ -1235,6 +1003,7 @@ function initMusic() {
     const musicPlay = document.getElementById('music-play');
     const musicPrev = document.getElementById('music-prev');
     const musicNext = document.getElementById('music-next');
+    const musicFav = document.getElementById('music-fav');
     const musicAdd = document.getElementById('music-add');
     const musicSearch = document.getElementById('music-search');
     const musicList = document.getElementById('music-list');
@@ -1246,9 +1015,10 @@ function initMusic() {
     if (musicPlay) musicPlay.onclick = (e) => { e.stopPropagation(); e.preventDefault(); togglePlay(); };
     if (musicPrev) musicPrev.onclick = (e) => { e.stopPropagation(); e.preventDefault(); prevSong(); };
     if (musicNext) musicNext.onclick = (e) => { e.stopPropagation(); e.preventDefault(); nextSong(); };
+    if (musicFav) musicFav.onclick = (e) => { e.stopPropagation(); e.preventDefault(); toggleFavorite(); };
     if (musicAdd) musicAdd.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('add-music-modal'); };
     if (musicSearch) musicSearch.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('music-search-modal'); };
-    if (musicList) musicList.onclick = (e) => { e.stopPropagation(); e.preventDefault(); showPlaylist(); };
+    if (musicList) musicList.onclick = (e) => { e.stopPropagation(); e.preventDefault(); openApp('music-fav-modal'); };
     if (doSearch) doSearch.onclick = searchMusic;
     if (confirmAdd) confirmAdd.onclick = addCustomMusic;
     if (searchInput) searchInput.onkeypress = e => { if (e.key === 'Enter') searchMusic(); };
@@ -1366,29 +1136,17 @@ function nextSong() {
     playSong(next);
 }
 
-function showPlaylist() {
-    openApp('music-fav-modal');
-    const list = document.getElementById('fav-list');
-    if (state.music.playlist.length === 0) {
-        list.innerHTML = '<div style="padding:20px;text-align:center;color:#999">歌單為空<br><br>使用搜索或添加功能來添加歌曲</div>';
-        return;
+function toggleFavorite() {
+    if (!state.music.current) return;
+    const idx = state.music.favorites.findIndex(s => s.id === state.music.current.id);
+    if (idx >= 0) {
+        state.music.favorites.splice(idx, 1);
+        document.getElementById('music-fav').textContent = '\u2661';
+    } else {
+        state.music.favorites.push(state.music.current);
+        document.getElementById('music-fav').textContent = '\u2665';
     }
-    let html = '';
-    state.music.playlist.forEach((song, idx) => {
-        const isPlaying = state.music.current && state.music.current.id === song.id;
-        html += `<div class="song-item" style="${isPlaying ? 'background:rgba(102,126,234,0.1);' : ''}" data-idx="${idx}">
-            <div style="font-weight:bold">${song.title} ${isPlaying ? '🎵' : ''}</div>
-            <div style="font-size:12px;color:#666">${song.artist}</div>
-        </div>`;
-    });
-    list.innerHTML = html;
-    document.querySelectorAll('#fav-list .song-item').forEach(el => {
-        el.onclick = () => {
-            const idx = parseInt(el.dataset.idx);
-            playSong(state.music.playlist[idx]);
-            closeApp();
-        };
-    });
+    saveState();
 }
 
 function toggleLyric() {
@@ -1397,203 +1155,32 @@ function toggleLyric() {
 }
 
 async function searchMusic() {
-    const query = document.getElementById('music-search-input').value.trim();
+    const query = document.getElementById('music-search-input').value;
+    const platform = document.getElementById('music-platform').value;
     if (!query) return alert('请输入搜索关键词');
     
     const results = document.getElementById('search-results');
     results.innerHTML = '<div style="padding:20px;text-align:center">正在搜索...</div>';
     
-    // 優先使用 Meting API 反代 /api 端點格式，支援更好的搜索結果
-    const apis = [
-        {
-            name: 'Meting API 反代 - NetEase',
-            url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}`,
-            parse: (data) => {
-                try {
-                    // 處理標準 Meting API 響應格式
-                    let songs = [];
-                    if (data && Array.isArray(data)) {
-                        // 如果數據是直接的歌曲數組
-                        songs = data;
-                    } else if (data && data.data && Array.isArray(data.data)) {
-                        // 如果數據在 data 字段中
-                        songs = data.data;
-                    } else if (data && data.results && Array.isArray(data.results)) {
-                        // 如果數據在 results 字段中
-                        songs = data.results;
-                    } else {
-                        console.error('未知的數據格式:', data);
-                        return [];
-                    }
-
-                    return songs.filter(song => song && song.name).map(song => ({
-                        title: song.name || '未知歌曲',
-                        artist: song.artist || '未知歌手',
-                        url: song.url || '',
-                        id: song.id || '',
-                        pic: song.pic || '',
-                        lyric_id: song.lyric_id || ''  // 支持歌詞 ID
-                    }));
-                } catch (e) {
-                    console.error('NetEase 解析錯誤:', e);
-                }
-                return [];
-            }
-        },
-        {
-            name: 'Meting API 反代 - 擴展搜索',
-            url: `https://meting-api-alpha-gilt.vercel.app/api?server=netease&type=search&s=${encodeURIComponent(query)}&limit=50&quality=high`,
-            parse: (data) => {
-                try {
-                    // 同樣處理標準格式，但增加更高品質搜索
-                    let songs = [];
-                    if (data && Array.isArray(data)) {
-                        songs = data;
-                    } else if (data && data.data && Array.isArray(data.data)) {
-                        songs = data.data;
-                    } else if (data && data.results && Array.isArray(data.results)) {
-                        songs = data.results;
-                    } else {
-                        console.error('擴展搜索未知數據格式:', data);
-                        return [];
-                    }
-
-                    return songs.filter(song => song && song.name).map(song => ({
-                        title: song.name || '未知歌曲',
-                        artist: song.artist || '未知歌手',
-                        url: song.url || '',
-                        id: song.id || '',
-                        pic: song.pic || '',
-                        lyric_id: song.lyric_id || ''
-                    }));
-                } catch (e) {
-                    console.error('NetEase 擴展搜索解析錯誤:', e);
-                }
-                return [];
-            }
-        },
-        {
-            name: 'YesPlayMusic API - 網易',
-            url: `https://music-api.vercel.app/search?keywords=${encodeURIComponent(query)}&limit=40`,
-            parse: (data) => {
-                try {
-                    // 處理 YesPlayMusic 格式
-                    if (data && data.result && data.result.songs && Array.isArray(data.result.songs)) {
-                        return data.result.songs.map(song => ({
-                            title: song.name || '未知歌曲',
-                            artist: song.artists?.map(a => a.name).join(' / ') || '未知歌手',
-                            url: '',  // YesPlayMusic 需要單獨獲取
-                            id: song.id || '',
-                            pic: song.album?.picUrl || '',
-                            lyric_id: ''
-                        }));
-                    }
-                } catch (e) {
-                    console.error('YesPlayMusic 解析錯誤:', e);
-                }
-                return [];
-            }
-        },
-        {
-            name: 'A Player API - 備用',
-            url: `https://api.a-player.net/search?term=${encodeURIComponent(query)}&limit=30`,
-            parse: (data) => {
-                try {
-                    // 處理 A Player 格式作為最終備用
-                    if (data && data.songs && Array.isArray(data.songs)) {
-                        return data.songs.map(song => ({
-                            title: song.title || '未知歌曲',
-                            artist: song.artist || '未知歌手',
-                            url: song.url || '',
-                            id: song.id || Date.now().toString(),
-                            pic: song.cover || '',
-                            lyric_id: ''
-                        }));
-                    }
-                } catch (e) {
-                    console.error('A Player 解析錯誤:', e);
-                }
-                return [];
-            }
-        }
-    ];
-    
     try {
         let songs = [];
-        let successApi = null;
-        let errorMessages = [];
         
-        for (const api of apis) {
-            try {
-                console.log(`🔍 嘗試 ${api.name}: ${api.url}`);
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 增加到 15 秒
-                
-                const res = await fetch(api.url, { 
-                    method: 'GET', 
-                    mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json',
-                        'User-Agent': 'Mozilla/5.0'
-                    },
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                
-                console.log(`📊 ${api.name} 響應狀態: ${res.status}`);
-                
-                if (!res.ok && res.status !== 200) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-                
-                let data;
-                try {
-                    data = await res.json();
-                } catch (jsonErr) {
-                    console.error(`❌ JSON 解析失敗: ${api.name}`);
-                    throw new Error(`JSON 解析失敗`);
-                }
-                
-                console.log(`📦 ${api.name} 數據:`, data);
-                
-                if (data) {
-                    songs = api.parse(data);
-                    console.log(`✅ ${api.name} 解析結果: ${songs.length} 首歌曲`);
-                }
-                
-                if (songs && songs.length > 0) {
-                    successApi = api.name;
-                    console.log(`🎉 成功: ${api.name} 找到 ${songs.length} 首歌曲`);
-                    break;
-                }
-            } catch (e) {
-                const errorMsg = `${api.name}: ${e.message}`;
-                errorMessages.push(errorMsg);
-                console.error(`❌ ${errorMsg}`);
+        try {
+            const res = await fetch(`https://web-production-b3dd5.up.railway.app/music?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            if (data.code === 200 && data.data) {
+                songs = data.data;
             }
+        } catch (e) {
+            console.error('Music API error:', e);
         }
         
         if (songs.length === 0) {
-            console.error(`❌ 所有 API 均失敗:`, errorMessages);
-            results.innerHTML = `<div style="padding:20px;text-align:center;color:#ff6b6b">
-                <div style="margin-bottom:10px">所有 API 均無法訪問</div>
-                <div style="font-size:12px;color:#999;margin-bottom:15px">
-                    ${errorMessages.map(e => `• ${e}`).join('<br>')}
-                </div>
-                <div style="border-top:1px solid #f0f0f0;padding-top:15px">
-                    <div style="margin-bottom:8px"><strong>建議：</strong></div>
-                    1. 檢查網絡連接<br>
-                    2. 使用「添加音樂」功能上傳本地文件<br>
-                    3. 手動輸入音樂 URL<br>
-                    4. 稍後重試（API 可能暫時不可用）
-                </div>
-            </div>`;
+            results.innerHTML = '<div style="padding:20px;text-align:center">未找到结果</div>';
             return;
         }
         
-        console.log(`✅ 成功使用 ${successApi}，找到 ${songs.length} 首歌曲`);
-        
-        let html = `<div style="padding:10px;font-size:11px;color:#999;text-align:right">數據來源: ${successApi}</div>`;
+        let html = '';
         songs.forEach(song => {
             html += `<div class="song-item" data-song='${JSON.stringify(song).replace(/'/g, "&apos;")}'>
                 <div style="font-weight:bold">${song.title}</div>
@@ -1603,354 +1190,44 @@ async function searchMusic() {
         results.innerHTML = html;
         
         document.querySelectorAll('.song-item').forEach(el => {
-            el.onclick = async () => {
+            el.onclick = () => {
                 const song = JSON.parse(el.dataset.song.replace(/&apos;/g, "'"));
-                await playSong(song);
+                playSong(song);
                 closeApp();
             };
         });
     } catch (e) {
         console.error('Search error:', e);
-        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失敗: ${e.message}<br><br>請嘗試：<br>1. 使用「添加音樂」功能上傳本地文件<br>2. 手動輸入音樂 URL<br>3. 重新搜索</div>`;
+        results.innerHTML = `<div style="padding:20px;text-align:center;color:red">搜索失败: ${e.message}<br>请检查网络连接或尝试其他平台</div>`;
     }
 }
 
-async function playSong(song) {
+function playSong(song) {
     state.music.current = song;
     document.querySelector('.music-title').textContent = song.title;
     document.querySelector('.music-artist').textContent = song.artist;
     document.getElementById('lyric-text').textContent = song.title + ' - ' + song.artist;
     
     const player = document.getElementById('music-player');
-    
-    try {
-        // 如果沒有 URL，需要調用 API 獲取播放鏈接
-        if (!song.url || song.url.trim() === '') {
-            console.log('🔍 動態獲取播放鏈接...');
-            
-            // 使用 type=song 獲取完整歌曲信息（包含播放鏈接）
-            const url = `https://meting-api-alpha-gilt.vercel.app/api?type=song&id=${song.id}`;
-            console.log('📡 獲取歌曲信息:', url);
-            
-            const res = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0'
-                }
-            });
-            
-            if (!res.ok) {
-                throw new Error(`無法獲取播放鏈接: HTTP ${res.status}`);
-            }
-            
-            const data = await res.json();
-            console.log('📦 歌曲數據:', data);
-            
-            // 從響應中提取播放鏈接
-            if (data && data.url) {
-                song.url = data.url;
-                console.log('✅ 獲得播放鏈接:', song.url);
-            } else {
-                throw new Error('響應中找不到播放鏈接');
-            }
-            
-            if (!song.url) {
-                throw new Error('無法找到有效的播放鏈接');
-            }
-        }
-        
-        // 現在有 URL，開始播放
-        if (song.url) {
-            console.log('🎵 開始播放:', song.url);
-            
-            // 嘗試多種方式播放
-            let playSuccess = false;
-            
-            // 方式1: 直接設置 src
-            player.src = song.url;
-            
-            // 方式2: 使用 blob 和 createObjectURL (如果方式1失敗)
-            const tryBlobPlay = async () => {
-                if (playSuccess) return;
-                
-                try {
-                    console.log('嘗試 blob 播放方式...');
-                    const res = await fetch(song.url, {
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0',
-                            'Referer': 'https://music.163.com/'
-                        }
-                    });
-                    
-                    if (!res.ok) {
-                        console.log('fetch 失敗: HTTP ' + res.status);
-                        return;
-                    }
-                    
-                    const blob = await res.blob();
-                    console.log('✅ 獲得 blob:', blob.size, 'bytes');
-                    
-                    const blobUrl = URL.createObjectURL(blob);
-                    player.src = blobUrl;
-                    
-                    player.play().then(() => {
-                        console.log('✅ blob 播放成功');
-                        playSuccess = true;
-                        document.getElementById('music-play').textContent = '\u23f8';
-                        state.music.isPlaying = true;
-                    }).catch(e => {
-                        console.error('blob 播放失敗:', e);
-                    });
-                } catch (e) {
-                    console.error('blob 方式出錯:', e);
-                }
-            };
-            
-            // 監聽播放器事件
-            const canplayHandler = () => {
-                console.log('✅ 可以播放');
-                playSuccess = true;
-                player.removeEventListener('error', errorHandler);
-                document.getElementById('music-play').textContent = '\u23f8';
-                state.music.isPlaying = true;
-            };
-            
-            const errorHandler = () => {
-                console.error('播放器錯誤:', player.error?.code);
-                player.removeEventListener('canplay', canplayHandler);
-                
-                // 錯誤時，延遲後嘗試 blob 方式
-                setTimeout(() => tryBlobPlay(), 500);
-            };
-            
-            player.addEventListener('canplay', canplayHandler, { once: true });
-            player.addEventListener('error', errorHandler, { once: true });
-            
-            // 嘗試播放
-            const playPromise = player.play();
-            if (playPromise) {
-                playPromise.then(() => {
-                    console.log('✅ 播放開始');
-                    playSuccess = true;
-                    player.removeEventListener('error', errorHandler);
-                }).catch(e => {
-                    console.error('play() 失敗:', e);
-                    // 自動降級到 blob 方式
-                    setTimeout(() => tryBlobPlay(), 500);
-                });
-            }
-        } else {
-            alert('無法獲取播放鏈接，請稍後重試');
-        }
-    } catch (e) {
-        console.error('獲取播放鏈接出錯:', e);
-        alert('獲取播放鏈接失敗: ' + e.message + '\n\n請稍後重試');
+    if (song.url) {
+        player.src = song.url;
+        player.play().then(() => {
+            document.getElementById('music-play').textContent = '\u23f8';
+            state.music.isPlaying = true;
+        }).catch(e => {
+            alert('播放失败: ' + e.message);
+        });
     }
     
     if (!state.music.playlist.some(s => s.id === song.id)) {
         state.music.playlist.push(song);
     }
     
+    const isFav = state.music.favorites.some(s => s.id === song.id);
+    document.getElementById('music-fav').textContent = isFav ? '\u2665' : '\u2661';
+    
     saveState();
 }
-
-/* processNoteUpdate: 所有事件統一呼叫這裡以確保立即同步 UI */
-function processNoteUpdate(dateKey){
-  // 直接讀 localStorage（不要用 memory cache）
-  const payload = loadNoteForDate(dateKey, true); // payload 或 null
-  // 更新 calendar 樣式
-  applyHasNoteClass(dateKey);
-  // 如果是當前編輯日或今天，強制更新主頁
-  const todayKey = localDateKey(new Date());
-  if(dateKey === currentEditingDate || dateKey === todayKey){
-    // 若 payload 為 null => empty => show placeholder（使用強制同步版本）
-    forceUpdateTaskBox(payload ? payload.content : '');
-  }
-}
-
-/* 同分頁監聽（來自 dispatchEvent）*/
-window.addEventListener('notes-updated', (e) => {
-  try{
-    const info = e.detail || {};
-    if(!info.dateKey) return;
-    // process immediately
-    processNoteUpdate(info.dateKey);
-  }catch(err){ console.warn('notes-updated handler err', err); }
-});
-
-/* 跨分頁監聽（storage event）*/
-window.addEventListener('storage', (ev) => {
-  if(!ev) return;
-  if(ev.key === '_last_note_update' && ev.newValue){
-    try{
-      const info = JSON.parse(ev.newValue);
-      if(info && info.dateKey){
-        processNoteUpdate(info.dateKey);
-      }
-    } catch(e){ console.warn('storage parse err', e); }
-  }
-});
-
-/* ---------- Linee App Functions ---------- */
-let lineeInitialized = false;
-const lineeFriends = [
-    { name: "Alice", status: "Work hard, play hard", avatar: "A" },
-    { name: "Bob", status: "Available", avatar: "B" },
-    { name: "Charlie", status: "At the gym", avatar: "C" },
-    { name: "David", status: "Sleeping...", avatar: "D" },
-    { name: "Eve", status: "Coding LINEE", avatar: "E" }
-];
-
-const lineeGroups = [
-    { name: "Family", count: 4, avatar: "F" },
-    { name: "Work Team", count: 12, avatar: "W" }
-];
-
-function initLineeApp() {
-    if (lineeInitialized) return;
-    lineeInitialized = true;
-
-    // Render friends and groups
-    renderLineeFriends();
-    renderLineeGroups();
-
-    // Add button popover
-    const btnAdd = document.getElementById('linee-btn-add');
-    const popover = document.getElementById('linee-add-popover');
-    
-    if (btnAdd && popover) {
-        btnAdd.onclick = (e) => {
-            e.stopPropagation();
-            popover.classList.toggle('hidden');
-        };
-
-        document.addEventListener('click', (e) => {
-            if (!btnAdd.contains(e.target) && !popover.contains(e.target)) {
-                popover.classList.add('hidden');
-            }
-        });
-    }
-
-    // Modal triggers
-    const optAddFriend = document.getElementById('linee-opt-add-friend');
-    const optAddGroup = document.getElementById('linee-opt-add-group');
-    
-    if (optAddFriend) {
-        optAddFriend.onclick = () => {
-            popover.classList.add('hidden');
-            document.getElementById('linee-modal-add-friend').classList.remove('hidden');
-        };
-    }
-
-    if (optAddGroup) {
-        optAddGroup.onclick = () => {
-            popover.classList.add('hidden');
-            document.getElementById('linee-modal-add-group').classList.remove('hidden');
-        };
-    }
-
-    // Persona cards
-    document.querySelectorAll('#linee-app-content .linee-card').forEach(card => {
-        card.onclick = () => {
-            document.querySelectorAll('#linee-app-content .linee-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-        };
-    });
-
-    // Nav items
-    document.querySelectorAll('#linee-app-content .linee-nav-item').forEach(item => {
-        item.onclick = () => {
-            document.querySelectorAll('#linee-app-content .linee-nav-item').forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
-        };
-    });
-}
-
-function renderLineeFriends() {
-    const list = document.getElementById('linee-friends-list');
-    const count = document.getElementById('linee-friend-count');
-    if (!list || !count) return;
-    
-    list.innerHTML = '';
-    lineeFriends.forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'linee-friend-item';
-        item.innerHTML = `
-            <div class="linee-friend-avatar">${f.avatar}</div>
-            <div class="linee-friend-info">
-                <div class="linee-friend-name">${f.name}</div>
-                <div class="linee-friend-status">${f.status}</div>
-            </div>
-        `;
-        list.appendChild(item);
-    });
-    count.textContent = `(${lineeFriends.length})`;
-}
-
-function renderLineeGroups() {
-    const list = document.getElementById('linee-groups-list');
-    const count = document.getElementById('linee-group-count');
-    if (!list || !count) return;
-    
-    list.innerHTML = '';
-    lineeGroups.forEach(g => {
-        const item = document.createElement('div');
-        item.className = 'linee-friend-item';
-        item.innerHTML = `
-            <div class="linee-friend-avatar" style="background:#E8F6FA;color:#A0D8EF;">${g.avatar}</div>
-            <div class="linee-friend-info">
-                <div class="linee-friend-name">${g.name}</div>
-                <div class="linee-friend-status">${g.count} users</div>
-            </div>
-        `;
-        list.appendChild(item);
-    });
-    count.textContent = `(${lineeGroups.length})`;
-}
-
-function toggleLineeList(listId, header) {
-    const list = document.getElementById(listId);
-    const group = header.parentElement;
-    
-    list.classList.toggle('hidden');
-    group.classList.toggle('expanded');
-}
-
-function closeLineeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-}
-
-function confirmLineeAddFriend() {
-    const input = document.getElementById('linee-new-friend-name');
-    const name = input.value.trim();
-    if (name) {
-        lineeFriends.push({ name, status: "New Friend", avatar: name[0].toUpperCase() });
-        renderLineeFriends();
-        input.value = '';
-        closeLineeModal('linee-modal-add-friend');
-    }
-}
-
-function confirmLineeAddGroup() {
-    const input = document.getElementById('linee-new-group-name');
-    const name = input.value.trim();
-    if (name) {
-        lineeGroups.push({ name, count: 1, avatar: name[0].toUpperCase() });
-        renderLineeGroups();
-        input.value = '';
-        closeLineeModal('linee-modal-add-group');
-    }
-}
-
-/* ---------- 最後啟動 ---------- */
-document.addEventListener('DOMContentLoaded', () => {
-    // 加入同步機制但不初始化所有函数，因為已經在其他地方初始化了
-});
-
-// Make functions global for onclick handlers
-window.toggleLineeList = toggleLineeList;
-window.closeLineeModal = closeLineeModal;
-window.confirmLineeAddFriend = confirmLineeAddFriend;
-window.confirmLineeAddGroup = confirmLineeAddGroup;
 
 // 工具函数
 function download(filename, text) {
