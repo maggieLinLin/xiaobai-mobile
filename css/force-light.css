@@ -4,20 +4,33 @@
 :root {
   color-scheme: light only;
   --bg-main: #E8F6FA;
-  --bg-card: rgba(255,255,255,0.90);
+  --bg-card: #FFFFFF;
   --text-main: #222222;
+}
+
+/* 針對三星瀏覽器強制覆寫 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  color-scheme: light !important;
+  -webkit-color-scheme: light !important;
 }
 
 /* 2. 強制基礎背景和文字顏色 */
 html, body {
-  background-color: var(--bg-main) !important;
-  color: var(--text-main) !important;
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
+  color: #222222 !important;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* 3. 手機模擬器主體 */
 #phone-frame {
-  background-color: #E0F4FF !important;
+  background: #E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover !important;
   color: #333333 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 /* 4. Linee App 區域 */
@@ -40,20 +53,45 @@ html, body {
 .linee-card,
 .linee-search,
 .linee-list-group {
-  background-color: var(--bg-card) !important;
-  color: var(--text-main) !important;
+  background-color: #FFFFFF !important;
+  color: #222222 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
-/* 6. 防止 Chrome Force Dark 影響 */
+.widget {
+  background: rgba(255,255,255,0.4) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* 6. 防止 Chrome/Samsung Force Dark 影響 */
 @media (prefers-color-scheme: dark) {
   :root {
-    color-scheme: light only;
+    color-scheme: light only !important;
   }
   
-  html, body, #phone-frame, #linee-app-content {
-    background-color: var(--bg-main) !important;
-    color: var(--text-main) !important;
+  html, body {
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%) !important;
+    color: #222222 !important;
+    filter: none !important;
   }
+  
+  #phone-frame {
+    background: #E0F4FF url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') center/cover !important;
+    filter: none !important;
+  }
+  
+  #linee-app-content {
+    background: #FFFFFF !important;
+    filter: none !important;
+  }
+}
+
+/* 7. 防止三星瀏覽器的 filter 反轉 */
+html, body, #phone-container, #phone-frame, #linee-app-content, .widget, .linee-card {
+  -webkit-filter: none !important;
+  filter: none !important;
 }
 
 /* 7. 確保文字顏色不被反轉 */
