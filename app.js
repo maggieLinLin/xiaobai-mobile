@@ -32,18 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 应用保存的壁纸
     setTimeout(() => {
-        if (state.wallpaper) {
-            const homeScreen = document.getElementById('home-screen');
-            if (homeScreen) {
-                homeScreen.style.backgroundImage = `url("${state.wallpaper}")`;
-                homeScreen.style.backgroundSize = 'cover';
-                homeScreen.style.backgroundPosition = 'center';
-                console.log('壁紙已加载:', state.wallpaper);
-            }
-        } else {
-            console.log('没有保存的壁紙');
+        const homeScreen = document.getElementById('home-screen');
+        if (state.wallpaper && homeScreen) {
+            homeScreen.style.setProperty('background-image', `url("${state.wallpaper}")`, 'important');
+            homeScreen.style.backgroundSize = 'cover';
+            homeScreen.style.backgroundPosition = 'center';
         }
-    }, 100);
+    }, 50);
 });
 
 // 加载保存的状态
@@ -1002,13 +997,13 @@ function applyWallpaperUrl() {
     const homeScreen = document.getElementById('home-screen');
     
     if (homeScreen) {
-        homeScreen.style.backgroundImage = `url("${url}")`;
+        homeScreen.style.setProperty('background-image', `url("${url}")`, 'important');
         homeScreen.style.backgroundSize = 'cover';
         homeScreen.style.backgroundPosition = 'center';
     }
     
     saveState();
-    alert('壁紙已保存，請刷新頁面');
+    alert('壁紙已保存');
 }
 
 function uploadWallpaper(e) {
@@ -1019,12 +1014,11 @@ function uploadWallpaper(e) {
         state.wallpaper = ev.target.result;
         const homeScreen = document.getElementById('home-screen');
         if (homeScreen) {
-            homeScreen.style.backgroundImage = `url("${state.wallpaper}")`;
+            homeScreen.style.setProperty('background-image', `url("${state.wallpaper}")`, 'important');
             homeScreen.style.backgroundSize = 'cover';
             homeScreen.style.backgroundPosition = 'center';
         }
         saveState();
-        alert('壁紙已上傳');
     };
     reader.readAsDataURL(file);
 }

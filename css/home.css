@@ -1,4 +1,4 @@
-#home-screen{position:absolute;top:40px;width:100%;height:calc(100% - 40px);overflow:hidden;background:#E0F4FF center/cover no-repeat}
+#home-screen{position:absolute;top:40px;width:100%;height:calc(100% - 40px);overflow:hidden;background:#E0F4FF}
 #home-pages{display:flex;width:200%;height:100%;transition:transform 0.3s ease}
 .home-page{width:50%;padding:20px;position:relative}
 .widget-row{display:flex;gap:10px;margin-bottom:25px;align-items:flex-start}
@@ -23,15 +23,17 @@
 .action-btn{width:28px;height:28px;border:none;background:rgba(255,255,255,0.8);border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
 .action-btn:hover{background:rgba(255,255,255,1);transform:translateY(-1px)}
 .action-btn:active{transform:translateY(0)}
-#calendar-widget{font-size:13px;width:140px;height:160px;top:120px;right:20px;overflow-y:auto;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+#calendar-widget{font-size:13px;width:37%;max-width:140px;height:27%;max-height:160px;top:20%;right:5%;overflow-y:auto;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 .cal-day.today{background:#007AFF!important;color:white!important;font-weight:bold!important}
 .cal-day.has-memo{border:1px solid #FF9500!important}
 #today-memo-widget{
   position: absolute;
-  left: 20px;
-  bottom: 220px;
-  width: 160px;
-  height: 100px;
+  left: 5%;
+  bottom: 37%;
+  width: 43%;
+  max-width: 160px;
+  height: 17%;
+  max-height: 100px;
   box-sizing: border-box;
   resize: none;
   overflow-y: auto;
@@ -47,7 +49,7 @@
   outline: none;
   font-family: 'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif;
 }
-#time-widget{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:180px;height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:15px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+#time-widget{position:absolute;top:2%;left:50%;transform:translateX(-50%);width:48%;max-width:180px;height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:15px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 #current-time{font-size:52px;font-weight:bold;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 #current-date{font-size:14px;margin-top:5px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 .app-grid{display:flex;justify-content:space-around;padding:0 20px;box-sizing:border-box}
@@ -65,12 +67,12 @@
 .home-page:first-child .app-icon-4{position:absolute}
 
 /* 左上水平排列：Linee和世界书（日历左侧） */
-.app-icon-1{left:20px;top:180px}
-.app-icon-2{left:100px;top:180px}
+.app-icon-1{left:5%;top:30%}
+.app-icon-2{left:27%;top:30%}
 
 /* 右下水平排列：小红书和IM */
-.app-icon-3{right:100px;bottom:80px}
-.app-icon-4{right:20px;bottom:80px}
+.app-icon-3{right:27%;bottom:13%}
+.app-icon-4{right:5%;bottom:13%}
 #page-indicator{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
 .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.3);transition:all 0.3s}
 .dot.active{background:rgba(0,0,0,0.7);width:20px;border-radius:4px}
