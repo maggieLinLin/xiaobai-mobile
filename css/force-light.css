@@ -49,11 +49,7 @@ html, body {
 }
 
 #phone-frame {
-  background: #E0F4FF !important;
-  background-image: url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
+  background: #FFFFFF !important;
   color: #333333 !important;
 }
 
@@ -65,10 +61,7 @@ html, body {
   color: #333333 !important;
 }
 
-/* 5. 主頁元素 */
-#home-screen {
-  background: transparent !important;
-}
+/* 5. 主頁元素 - 背景由 home.css 控制 */
 
 .widget {
   background: rgba(255,255,255,0.4) !important;
@@ -363,9 +356,6 @@ html, body {
   }
   
   #phone-frame {
-    background: #E0F4FF !important;
-    background-image: url('https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg') !important;
-    background-size: cover !important;
-    background-position: center !important;
+    background: #FFFFFF !important;
   }
 }
