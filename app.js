@@ -29,9 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initApps();
     initCalendar();
     initMusic();
-    if (!state.wallpaper) {
-        applyTheme(state.currentTheme);
-    }
+    // 不自動應用主題，保持 CSS 中設定的壁紙
 
 });
 
@@ -41,6 +39,8 @@ function loadState() {
     if (saved) {
         Object.assign(state, JSON.parse(saved));
     }
+    // 清除舊壁紙，使用 CSS 默認壁紙
+    state.wallpaper = '';
     // 确保日历显示当前月
     state.calendarDate = null;
 }
@@ -571,10 +571,16 @@ function initSettings() {
     
     // 美化
     const wallpaperUpload = document.getElementById('wallpaper-upload');
+    const wallpaperUrl = document.getElementById('wallpaper-url');
+    const applyWallpaperUrlBtn = document.getElementById('apply-wallpaper-url');
     const frameColor = document.getElementById('frame-color');
     const fontStyle = document.getElementById('font-style');
     
     if (wallpaperUpload) wallpaperUpload.onchange = uploadWallpaper;
+    if (wallpaperUrl && applyWallpaperUrlBtn) {
+        wallpaperUrl.value = state.wallpaper && state.wallpaper.startsWith('http') ? state.wallpaper : '';
+        applyWallpaperUrlBtn.onclick = applyWallpaperUrl;
+    }
     if (frameColor) {
         frameColor.value = state.frameColor;
         frameColor.onchange = e => {
@@ -605,13 +611,12 @@ function initSettings() {
 }
 
 function clearBeautyData() {
-    if (!confirm('确定清除所有美化数据？\n\n将恢复为默认主题和壁纸')) return;
+    if (!confirm('确定清除所有美化数据？\n\n将恢复为默认设置')) return;
     state.wallpaper = '';
     state.frameColor = '#78B9DC';
     state.customCSS = '';
     state.customFont = '';
     state.customFontFormat = '';
-    state.currentTheme = 'cinnamoroll';
     saveState();
     alert('美化数据已清除，即将刷新页面');
     location.reload();
@@ -878,37 +883,29 @@ function applyTheme(theme) {
     const themes = {
         cinnamoroll: { 
             colors: ['#E0F4FF', '#ACD6EC', '#78B9DC'],
-            wallpaper: 'https://img.heliar.top/file/1764165229742_Screenshot_20251126_214520_rednote.jpg',
+            wallpaper: '',
             borderColor: '#78B9DC'
         },
         hellokitty: { 
             colors: ['#FFFFFF', '#F0BDCC', '#EE5D5E'],
-            wallpaper: 'https://img.heliar.top/file/1764165426446_Screenshot_20251126_215642_rednote.jpg',
+            wallpaper: '',
             borderColor: '#EE5D5E'
         },
         kuromi: { 
             colors: ['#DCC9FF', '#B399E1', '#8C63C0'],
-            wallpaper: 'https://img.heliar.top/file/1764165640672_Screenshot_20251126_220027_rednote.jpg',
+            wallpaper: '',
             borderColor: '#8C63C0'
         },
         mymelody: { 
             colors: ['#FCD4E2', '#F4ABC3', '#EB88AA'],
-            wallpaper: 'https://img.heliar.top/file/1764165501686_Screenshot_20251126_215741_rednote.jpg',
+            wallpaper: '',
             borderColor: '#EB88AA'
         }
     };
     const frame = document.getElementById('phone-frame');
     const t = themes[theme];
     
-    if (t.wallpaper) {
-        frame.style.background = `url('${t.wallpaper}') center/cover`;
-        frame.style.backgroundImage = `url('${t.wallpaper}')`;
-        frame.style.backgroundSize = 'cover';
-        frame.style.backgroundPosition = 'center';
-    } else {
-        frame.style.background = `linear-gradient(135deg, ${t.colors[0]}, ${t.colors[1]}, ${t.colors[2]})`;
-        frame.style.backgroundImage = '';
-    }
+    // 不再設置 phone-frame 背景，保持 CSS 默認
     
     frame.style.borderColor = t.borderColor;
     state.frameColor = t.borderColor;
@@ -981,13 +978,39 @@ function resetFont() {
     alert('已恢复默认字体');
 }
 
+function applyWallpaperUrl() {
+    const urlInput = document.getElementById('wallpaper-url');
+    const url = urlInput.value.trim();
+    
+    if (!url) {
+        alert('請輸入壁紙 URL');
+        return;
+    }
+    
+    state.wallpaper = url;
+    const homeScreen = document.getElementById('home-screen');
+    
+    if (homeScreen) {
+        homeScreen.style.backgroundImage = `url(${url})`;
+        homeScreen.style.backgroundSize = 'cover';
+        homeScreen.style.backgroundPosition = 'center';
+    }
+    
+    saveState();
+    alert('壁紙已保存');
+}
+
 function uploadWallpaper(e) {
     const file = e.target.files[0];
     const reader = new FileReader();
     reader.onload = ev => {
         state.wallpaper = ev.target.result;
-        document.getElementById('phone-frame').style.backgroundImage = `url(${state.wallpaper})`;
-        document.getElementById('phone-frame').style.backgroundSize = 'cover';
+        const homeScreen = document.getElementById('home-screen');
+        if (homeScreen) {
+            homeScreen.style.backgroundImage = `url(${state.wallpaper})`;
+            homeScreen.style.backgroundSize = 'cover';
+            homeScreen.style.backgroundPosition = 'center';
+        }
         saveState();
     };
     reader.readAsDataURL(file);

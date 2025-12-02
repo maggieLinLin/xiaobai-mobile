@@ -37,7 +37,7 @@
                     <span id="battery-icon">🔋</span>
                 </span>
             </div>
-            <div id="pull-hint">⬇ 下拉打开设置 / 点击灵动岛 ⬆</div>
+            <div id="pull-hint" style="background:transparent;display:none">⬇ 下拉打开设置 / 点击灵动岛 ⬆</div>
 
             <div id="settings-page" class="hidden">
                 <div class="settings-header">
@@ -133,7 +133,10 @@
                             <button class="theme-btn" data-theme="mymelody">美乐蒂</button>
                         </div>
                         <h3 style="margin-top:20px">✨ 自定义</h3>
-                        <label>壁纸: <input type="file" id="wallpaper-upload" accept="image/*"></label>
+                        <label>壁纸 URL:</label>
+                        <input type="text" id="wallpaper-url" placeholder="输入壁纸图片 URL">
+                        <button id="apply-wallpaper-url">保存壁纸</button>
+                        <label style="margin-top:10px">本地壁纸: <input type="file" id="wallpaper-upload" accept="image/*"></label>
                         <label>边框颜色: <input type="color" id="frame-color"></label>
                         <button id="toggle-fullscreen">强制全屏</button>
                         <h3 style="margin-top:20px">💅 CSS</h3>
@@ -152,6 +155,38 @@
             <div id="home-screen">
                 <div id="home-pages">
                     <div class="home-page active">
+                        <!-- 时间组件 - 顶部中央 -->
+                        <div id="time-widget" class="widget">
+                            <div id="current-time"></div>
+                            <input type="text" id="current-date" placeholder="欢迎使用小白机" style="border:none;background:transparent;text-align:center;outline:none;cursor:text;font-size:12px;width:100%;color:#333">
+                        </div>
+                        
+                        <!-- 日历组件 - 右上角 -->
+                        <div id="calendar-widget" class="widget"></div>
+                        
+                        <!-- 任务栏 - 左下角 -->
+                        <textarea id="today-memo-widget" placeholder="今天没有任务" rows="1"></textarea>
+                        
+                        <!-- 应用图标 - 对角线排列 -->
+                        <div class="app-icon app-icon-1" data-app="linee">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23A0D8EF'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EL%3C/text%3E%3C/svg%3E">
+                            <span>Linee</span>
+                        </div>
+                        <div class="app-icon app-icon-2" data-app="developing">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%234A90E2'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E🌍%3C/text%3E%3C/svg%3E">
+                            <span>世界书</span>
+                        </div>
+                        <div class="app-icon app-icon-3" data-app="developing">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23FF2442'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E小%3C/text%3E%3C/svg%3E">
+                            <span>小红书</span>
+                        </div>
+                        <div class="app-icon app-icon-4" data-app="developing">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%2307C160'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EIM%3C/text%3E%3C/svg%3E">
+                            <span>IM</span>
+                        </div>
+                    </div>
+                    <div class="home-page">
+                        <!-- 音乐组件 - 第二页最上方 -->
                         <div id="music-widget" class="widget music-full">
                             <div class="music-cover-art">
                                 <div class="music-vinyl">🎵</div>
@@ -174,34 +209,6 @@
                                 <button id="music-list" class="action-btn" title="我的歌单">☰</button>
                             </div>
                         </div>
-                        <div class="widget-row">
-                            <div id="calendar-widget" class="widget"></div>
-                            <div id="time-widget" class="widget">
-                                <div id="current-time"></div>
-                                <input type="text" id="current-date" placeholder="欢迎使用小白机" style="border:none;background:transparent;text-align:center;outline:none;cursor:text;font-size:12px;width:100%;color:#333">
-                            </div>
-                        </div>
-                        <textarea id="today-memo-widget" placeholder="今天没有任务" rows="1"></textarea>
-                        <div class="app-grid">
-                            <div class="app-icon" data-app="linee">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23A0D8EF'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EL%3C/text%3E%3C/svg%3E">
-                                <span>Linee</span>
-                            </div>
-                            <div class="app-icon" data-app="developing">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%234A90E2'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E🌍%3C/text%3E%3C/svg%3E">
-                                <span>世界书</span>
-                            </div>
-                            <div class="app-icon" data-app="developing">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23FF2442'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E小%3C/text%3E%3C/svg%3E">
-                                <span>小红书</span>
-                            </div>
-                            <div class="app-icon" data-app="developing">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%2307C160'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EIM%3C/text%3E%3C/svg%3E">
-                                <span>IM</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="home-page">
                         <div class="app-grid">
                             <div class="app-icon developing">
                                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23999'/%3E%3Ctext x='22' y='28' font-size='16' text-anchor='middle' fill='white'%3E开发中%3C/text%3E%3C/svg%3E">
