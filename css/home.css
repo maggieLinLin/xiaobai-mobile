@@ -1,59 +1,76 @@
-#home-screen{position:absolute;top:40px;width:100%;height:calc(100% - 40px);overflow:hidden}
+#home-screen{position:absolute;top:40px;left:0;right:0;bottom:0;overflow:hidden;background:url("https://img.heliar.top/file/1764692988022_Screenshot_20251203_002046_rednote.jpg") center/cover no-repeat}
 #home-pages{display:flex;width:200%;height:100%;transition:transform 0.3s ease}
-.home-page{width:50%;padding:25px 20px;position:relative}
+.home-page{width:50%;padding:20px;position:relative;min-height:100%}
 .widget-row{display:flex;gap:10px;margin-bottom:25px;align-items:flex-start}
-.widget{flex:1;background:rgba(255,255,255,0.4);backdrop-filter:blur(10px);border-radius:20px;padding:15px;color:#333;overflow:hidden;position:relative}
-.music-full{width:100%;height:100px;margin-bottom:20px;display:flex;align-items:center;gap:12px;padding:12px;position:relative;z-index:1;background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.widget{background:rgba(255,255,255,0.4);backdrop-filter:blur(10px);border-radius:20px;padding:15px;color:#333;overflow:hidden;position:absolute}
+.music-full{width:calc(100% - 40px);height:auto;min-height:110px;margin:20px;display:flex;align-items:center;gap:clamp(8px, 2vw, 12px);padding:clamp(12px, 3vw, 15px);position:relative;z-index:1;background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);border-radius:15px;box-shadow:0 4px 20px rgba(0,0,0,0.08);flex-wrap:wrap}
 .music-cover-art{flex-shrink:0}
-.music-vinyl{width:50px;height:50px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 3px 10px rgba(102,126,234,0.3);animation:rotate 3s linear infinite paused}
+.music-vinyl{width:clamp(40px, 12vw, 50px);height:clamp(40px, 12vw, 50px);background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(18px, 5vw, 24px);box-shadow:0 3px 10px rgba(102,126,234,0.3);animation:rotate 3s linear infinite paused}
 .music-vinyl.playing{animation-play-state:running}
 @keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .music-info{flex:1;min-width:0}
-.music-title{font-size:14px;font-weight:bold;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;font-family:'MTWFHZ',sans-serif}
-.music-artist{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;font-family:'MTWFHZ',sans-serif}
+.music-title{font-size:clamp(12px, 3vw, 14px);font-weight:bold;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+.music-artist{font-size:clamp(10px, 2.5vw, 12px);color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 .progress-bar{width:100%;height:3px;background:rgba(0,0,0,0.1);border-radius:2px;overflow:hidden}
 .progress-fill{height:100%;background:linear-gradient(90deg,#667eea 0%,#764ba2 100%);width:0%;transition:width 0.3s ease}
 .music-time{display:none}
 .music-controls{display:flex;gap:8px;flex-shrink:0}
-.control-btn{width:32px;height:32px;border:none;background:rgba(255,255,255,0.9);border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);transition:all 0.2s ease}
+.control-btn{width:clamp(28px, 8vw, 32px);height:clamp(28px, 8vw, 32px);border:none;background:rgba(255,255,255,0.9);border-radius:50%;font-size:clamp(12px, 3vw, 14px);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);transition:all 0.2s ease}
 .control-btn:hover{transform:scale(1.05)}
 .control-btn:active{transform:scale(0.95)}
-.play-btn{width:36px;height:36px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;font-size:16px}
+.play-btn{width:clamp(32px, 9vw, 36px);height:clamp(32px, 9vw, 36px);background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;font-size:clamp(14px, 4vw, 16px)}
 .music-actions{display:flex;gap:6px;flex-shrink:0}
-.action-btn{width:28px;height:28px;border:none;background:rgba(255,255,255,0.8);border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
+.action-btn{width:clamp(24px, 7vw, 28px);height:clamp(24px, 7vw, 28px);border:none;background:rgba(255,255,255,0.8);border-radius:50%;font-size:clamp(10px, 2.5vw, 12px);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
 .action-btn:hover{background:rgba(255,255,255,1);transform:translateY(-1px)}
 .action-btn:active{transform:translateY(0)}
-#calendar-widget{font-size:13px;height:160px;flex:1.5;overflow-y:auto;font-family:'MTWFHZ',sans-serif}
+#calendar-widget{font-size:clamp(11px, 2.5vw, 13px);width:clamp(120px, 35vw, 140px);height:clamp(140px, 40vw, 160px);top:clamp(100px, 25vw, 120px);right:20px;overflow-y:auto;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 .cal-day.today{background:#007AFF!important;color:white!important;font-weight:bold!important}
 .cal-day.has-memo{border:1px solid #FF9500!important}
 #today-memo-widget{
-  width: 100%;
+  position: absolute;
+  left: 20px;
+  bottom: clamp(180px, 35vw, 220px);
+  width: clamp(140px, 40vw, 160px);
+  height: clamp(80px, 20vw, 100px);
   box-sizing: border-box;
   resize: none;
-  overflow-y: hidden; /* 强制隐藏滚动条，不显示 */
+  overflow-y: auto;
   line-height: 1.5em;
-  max-height: calc(1.5em * 5);
-  min-height: 1.5em;
-  padding: .5em;
-  font-size: 14px;
+  padding: 12px;
+  font-size: clamp(11px, 2.5vw, 13px);
   color: #333;
-  text-align: center;
+  text-align: left;
   background: rgba(255,255,255,0.4);
   backdrop-filter: blur(10px);
   border-radius: 15px;
-  font-family: 'MTWFHZ', sans-serif;
   border: none;
   outline: none;
+  font-family: 'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif;
 }
-#time-widget{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px}
-#current-time{font-size:48px;font-weight:bold;font-family:'MTWFHZ',sans-serif}
-#current-date{font-size:18px;margin-top:5px;font-family:'MTWFHZ',sans-serif}
+#time-widget{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:180px;max-width:calc(100% - 40px);height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:15px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+#current-time{font-size:clamp(36px, 10vw, 52px);font-weight:bold;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+#current-date{font-size:clamp(12px, 3vw, 14px);margin-top:5px;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 .app-grid{display:flex;justify-content:space-around;padding:0 20px;box-sizing:border-box}
-.home-page .app-grid{position:absolute;bottom:60px;left:0;width:100%}
+.home-page:nth-child(2) .app-grid{position:absolute;bottom:60px;left:0;width:100%}
+.home-page:nth-child(2) .app-icon{position:relative}
 .app-icon{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s}
 .app-icon:active{transform:scale(0.9)}
-.app-icon img{width:60px;height:60px;border-radius:20px;margin-bottom:5px}
-.app-icon span{font-size:14px;text-align:center;color:#333;font-family:'MTWFHZ',sans-serif}
+.app-icon img{width:clamp(50px, 14vw, 60px);height:clamp(50px, 14vw, 60px);border-radius:clamp(15px, 4vw, 20px);margin-bottom:5px}
+.app-icon span{font-size:clamp(12px, 3vw, 14px);text-align:center;color:#333;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+
+/* 第一页应用图标固定位置 */
+.home-page:first-child .app-icon-1,
+.home-page:first-child .app-icon-2,
+.home-page:first-child .app-icon-3,
+.home-page:first-child .app-icon-4{position:absolute}
+
+/* 左上水平排列：Linee和世界书（日历左侧） */
+.app-icon-1{left:20px;top:clamp(160px, 40vw, 180px)}
+.app-icon-2{left:clamp(90px, 25vw, 100px);top:clamp(160px, 40vw, 180px)}
+
+/* 右下水平排列：小红书和IM */
+.app-icon-3{right:clamp(90px, 25vw, 100px);bottom:clamp(70px, 18vw, 80px)}
+.app-icon-4{right:20px;bottom:clamp(70px, 18vw, 80px)}
 #page-indicator{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
 .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.3);transition:all 0.3s}
 .dot.active{background:rgba(0,0,0,0.7);width:20px;border-radius:4px}
