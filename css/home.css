@@ -1,4 +1,4 @@
-#home-screen{position:absolute;top:40px;width:100%;height:calc(100% - 40px);overflow:hidden;background:url("https://img.heliar.top/file/1764692988022_Screenshot_20251203_002046_rednote.jpg") center/cover no-repeat}
+#home-screen{position:absolute;top:40px;width:100%;height:calc(100% - 40px);overflow:hidden;background:#E0F4FF center/cover no-repeat}
 #home-pages{display:flex;width:200%;height:100%;transition:transform 0.3s ease}
 .home-page{width:50%;padding:20px;position:relative}
 .widget-row{display:flex;gap:10px;margin-bottom:25px;align-items:flex-start}

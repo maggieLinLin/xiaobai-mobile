@@ -31,14 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
     initMusic();
     
     // 应用保存的壁纸
-    if (state.wallpaper) {
-        const homeScreen = document.getElementById('home-screen');
-        if (homeScreen) {
-            homeScreen.style.backgroundImage = `url(${state.wallpaper})`;
-            homeScreen.style.backgroundSize = 'cover';
-            homeScreen.style.backgroundPosition = 'center';
+    setTimeout(() => {
+        if (state.wallpaper) {
+            const homeScreen = document.getElementById('home-screen');
+            if (homeScreen) {
+                homeScreen.style.backgroundImage = `url("${state.wallpaper}")`;
+                homeScreen.style.backgroundSize = 'cover';
+                homeScreen.style.backgroundPosition = 'center';
+                console.log('壁紙已加载:', state.wallpaper);
+            }
+        } else {
+            console.log('没有保存的壁紙');
         }
-    }
+    }, 100);
 });
 
 // 加载保存的状态
@@ -997,27 +1002,29 @@ function applyWallpaperUrl() {
     const homeScreen = document.getElementById('home-screen');
     
     if (homeScreen) {
-        homeScreen.style.backgroundImage = `url(${url})`;
+        homeScreen.style.backgroundImage = `url("${url}")`;
         homeScreen.style.backgroundSize = 'cover';
         homeScreen.style.backgroundPosition = 'center';
     }
     
     saveState();
-    alert('壁紙已保存');
+    alert('壁紙已保存，請刷新頁面');
 }
 
 function uploadWallpaper(e) {
     const file = e.target.files[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
         state.wallpaper = ev.target.result;
         const homeScreen = document.getElementById('home-screen');
         if (homeScreen) {
-            homeScreen.style.backgroundImage = `url(${state.wallpaper})`;
+            homeScreen.style.backgroundImage = `url("${state.wallpaper}")`;
             homeScreen.style.backgroundSize = 'cover';
             homeScreen.style.backgroundPosition = 'center';
         }
         saveState();
+        alert('壁紙已上傳');
     };
     reader.readAsDataURL(file);
 }
