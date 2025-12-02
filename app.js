@@ -29,8 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
     initApps();
     initCalendar();
     initMusic();
-    // 不自動應用主題，保持 CSS 中設定的壁紙
-
+    
+    // 应用保存的壁纸
+    if (state.wallpaper) {
+        const homeScreen = document.getElementById('home-screen');
+        if (homeScreen) {
+            homeScreen.style.backgroundImage = `url(${state.wallpaper})`;
+            homeScreen.style.backgroundSize = 'cover';
+            homeScreen.style.backgroundPosition = 'center';
+        }
+    }
 });
 
 // 加载保存的状态
@@ -39,8 +47,6 @@ function loadState() {
     if (saved) {
         Object.assign(state, JSON.parse(saved));
     }
-    // 清除舊壁紙，使用 CSS 默認壁紙
-    state.wallpaper = '';
     // 确保日历显示当前月
     state.calendarDate = null;
 }
