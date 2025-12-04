@@ -268,11 +268,11 @@ function renderChatMessages() {
         container.style.background = '#fff5f7';
         container.style.color = '#000';
         
-        container.innerHTML = messages.map(msg => {
+        container.innerHTML = messages.map((msg, index) => {
             if (msg.isUser) {
                 // 用户消息：简洁样式，右对齐，黑色文字
                 return `
-                    <div style="display: flex; justify-content: flex-end; margin: 16px 0;">
+                    <div style="display: flex; justify-content: flex-end; margin: 16px 0;" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)">
                         <div style="max-width: 80%; padding: 12px 16px; background: #ffd4e5; border-radius: 12px; border-left: 3px solid #ff9ec7;">
                             <div style="font-size: 18px; line-height: 1.6; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif;">${msg.text}</div>
                             <div style="font-size: 13px; color: #666; margin-top: 6px; text-align: right;">${msg.time}</div>
@@ -282,7 +282,7 @@ function renderChatMessages() {
             } else {
                 // AI 回复：酒馆粉色卡片格式，黑色文字
                 return `
-                    <div style="margin: 20px 0; padding: 16px; background: #ffffff; border-radius: 8px; border: 1px solid #ffcce0; box-shadow: 0 2px 8px rgba(255, 158, 199, 0.1);">
+                    <div style="margin: 20px 0; padding: 16px; background: #ffffff; border-radius: 8px; border: 1px solid #ffcce0; box-shadow: 0 2px 8px rgba(255, 158, 199, 0.1);" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)">
                         <div style="font-size: 19px; line-height: 1.8; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif; letter-spacing: 0.3px;">
                             ${msg.text}
                         </div>
@@ -298,8 +298,8 @@ function renderChatMessages() {
         container.style.padding = '16px';
         container.style.background = '#FFFFFF';
         
-        container.innerHTML = messages.map(msg => `
-            <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;">
+        container.innerHTML = messages.map((msg, index) => `
+            <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)">
                 ${!msg.isUser ? '<div style="width:32px;height:32px;background:#eee;border-radius:50%;margin-right:8px;overflow:hidden;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed='+ currentChatId +'" style="width:100%;"></div>' : ''}
                 <div style="max-width: 70%; padding: 10px 14px; border-radius: 16px; background: ${msg.isUser ? '#A0D8EF' : '#FFFFFF'}; color: ${msg.isUser ? '#FFFFFF' : '#333'}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                     <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${msg.text}</div>
@@ -387,8 +387,8 @@ async function sendChatMessage() {
         return;
     }
 
-    // 显示 "对方正在输入..." 
-    const typingMsg = { text: '正在输入...', time, isUser: false, isTyping: true };
+    // 显示对方气泡 "输入中..."
+    const typingMsg = { text: '输入中...', time, isUser: false, isTyping: true };
     chatMessages[currentChatId].push(typingMsg);
     renderChatMessages();
     
@@ -1715,9 +1715,89 @@ function promptAudioMessage() {
     openPromptModal('发送语音', '输入你想说的语音内容...');
 }
 
-function handleAIRead() {
+async function handleAIRead() {
     if (!currentChatId) return;
-    alert("AI 正在阅读并分析当前对话上下文...");
+    
+    const currentChat = mockChats.find(c => c.id === currentChatId);
+    if (!currentChat || !currentChat.isAI) {
+        alert('当前聊天不是 AI 角色');
+        return;
+    }
+    
+    // 手动触发 AI 回复（即使自动回复关闭也生成）
+    const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    
+    // 检查 API 配置
+    if (!state.apiConfig || !state.apiConfig.url || !state.apiConfig.key) {
+        alert('请先在设置中配置 API');
+        return;
+    }
+    
+    // 获取 AI 角色
+    const aiChar = aiCharacters[currentChat.aiCharacterId];
+    if (!aiChar) {
+        alert('找不到 AI 角色数据');
+        return;
+    }
+    
+    // 显示 "正在输入..." 气泡
+    const typingMsg = { text: '正在输入...', time, isUser: false, isTyping: true };
+    chatMessages[currentChatId].push(typingMsg);
+    renderChatMessages();
+    
+    try {
+        // 获取历史记录
+        const allHistory = chatMessages[currentChatId] || [];
+        const recentHistory = allHistory.filter(m => !m.isTyping).slice(-10);
+        
+        const currentMode = chatSettings.offlineMode ? "OFFLINE" : "ONLINE";
+        
+        // 调用 AI 核心
+        const responseText = await AICore.chatSystem.generateResponse(
+            aiChar,
+            "（继续之前的对话）",  // 提示词
+            recentHistory,
+            currentMode,
+            state.apiConfig
+        );
+        
+        // 移除打字提示
+        chatMessages[currentChatId] = chatMessages[currentChatId].filter(m => !m.isTyping);
+        
+        // 添加真实回复
+        chatMessages[currentChatId].push({ text: responseText, time, isUser: false });
+        renderChatMessages();
+        
+        // 更新列表最后一条消息
+        currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
+        renderChatList();
+        
+        // 更新好感度
+        try {
+            const relationshipChange = await AICore.relationshipSystem.calculateChange(
+                "（继续对话）",
+                responseText,
+                state.apiConfig
+            );
+            
+            if (relationshipChange !== 0) {
+                aiChar.relationship.updateScore(relationshipChange);
+                aiCharacters[currentChat.aiCharacterId] = aiChar;
+                saveLineeData();
+                console.log(`💖 好感度变化: ${relationshipChange > 0 ? '+' : ''}${relationshipChange}, 当前: ${aiChar.relationship.score} (${aiChar.relationship.level})`);
+            }
+        } catch (e) {
+            console.error('好感度更新失败:', e);
+        }
+        
+        saveLineeData();
+        
+    } catch (e) {
+        console.error('AI 生成失败:', e);
+        chatMessages[currentChatId] = chatMessages[currentChatId].filter(m => !m.isTyping);
+        chatMessages[currentChatId].push({ text: '❌ 生成失败: ' + e.message, time, isUser: false });
+        renderChatMessages();
+    }
 }
 
 function openPromptModal(title, placeholder) {
@@ -1757,6 +1837,126 @@ function submitPrompt() {
         }
     }
     closePromptModal();
+}
+
+function deleteChatHistory() {
+    if (!currentChatId) {
+        alert('请先打开聊天室');
+        return;
+    }
+    
+    if (confirm('确定要清空当前聊天记录吗？此操作无法撤销。')) {
+        chatMessages[currentChatId] = [];
+        renderChatMessages();
+        
+        // 更新聊天列表的最后一条消息
+        const currentChat = mockChats.find(c => c.id === currentChatId);
+        if (currentChat) {
+            currentChat.lastMessage = '';
+            renderChatList();
+        }
+        
+        saveLineeData();
+        alert('✅ 聊天记录已清空');
+    }
+}
+
+// 消息长按功能
+let longPressTimer = null;
+let longPressTarget = null;
+
+function handleTouchStart(event, msgIndex) {
+    longPressTarget = msgIndex;
+    longPressTimer = setTimeout(() => {
+        showMessageMenu(event, msgIndex);
+    }, 500);
+}
+
+function handleTouchEnd(event) {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+}
+
+function showMessageMenu(event, msgIndex) {
+    event.preventDefault();
+    
+    const existingMenu = document.getElementById('message-context-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    const msg = chatMessages[currentChatId][msgIndex];
+    if (!msg) return;
+    
+    const menu = document.createElement('div');
+    menu.id = 'message-context-menu';
+    menu.style.cssText = `position: fixed; background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 8px 0; z-index: 10000; min-width: 150px;`;
+    
+    const menuItems = [];
+    
+    if (msg.isUser) {
+        menuItems.push({ icon: 'refresh-outline', text: '重新发送', action: () => resendMessage(msgIndex) });
+        menuItems.push({ icon: 'return-up-back-outline', text: '撤回', action: () => recallMessage(msgIndex) });
+    }
+    
+    menuItems.push({ icon: 'copy-outline', text: '复制', action: () => copyMessage(msgIndex) });
+    menuItems.push({ icon: 'trash-outline', text: '删除', color: '#DC2626', action: () => deleteMessage(msgIndex) });
+    
+    menuItems.forEach(item => {
+        const menuItem = document.createElement('div');
+        menuItem.style.cssText = `padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: ${item.color || '#333'}; font-size: 15px; transition: background 0.2s;`;
+        menuItem.innerHTML = `<ion-icon name="${item.icon}" style="font-size: 20px;"></ion-icon><span>${item.text}</span>`;
+        menuItem.onmouseover = () => menuItem.style.background = '#F3F4F6';
+        menuItem.onmouseout = () => menuItem.style.background = 'transparent';
+        menuItem.onclick = () => { item.action(); menu.remove(); };
+        menu.appendChild(menuItem);
+    });
+    
+    const x = event.clientX || event.touches?.[0]?.clientX || 0;
+    const y = event.clientY || event.touches?.[0]?.clientY || 0;
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    
+    document.body.appendChild(menu);
+    
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu() {
+            menu.remove();
+            document.removeEventListener('click', closeMenu);
+        });
+    }, 100);
+}
+
+function resendMessage(msgIndex) {
+    const msg = chatMessages[currentChatId][msgIndex];
+    if (!msg || !msg.isUser) return;
+    const input = document.getElementById('chat-input-field');
+    if (input) {
+        input.value = msg.text;
+        sendChatMessage();
+    }
+}
+
+function recallMessage(msgIndex) {
+    const msg = chatMessages[currentChatId][msgIndex];
+    if (!msg || !msg.isUser) return;
+    chatMessages[currentChatId][msgIndex] = { text: '你撤回了一条消息', time: msg.time, isUser: false, isRecalled: true };
+    renderChatMessages();
+    saveLineeData();
+}
+
+function copyMessage(msgIndex) {
+    const msg = chatMessages[currentChatId][msgIndex];
+    if (!msg) return;
+    navigator.clipboard.writeText(msg.text).then(() => alert('✅ 已复制')).catch(() => alert('❌ 复制失败'));
+}
+
+function deleteMessage(msgIndex) {
+    if (confirm('确定要删除这条消息吗？')) {
+        chatMessages[currentChatId].splice(msgIndex, 1);
+        renderChatMessages();
+        saveLineeData();
+    }
 }
 
 // === 足迹 (Steps) 系统 ===

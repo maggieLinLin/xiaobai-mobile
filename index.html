@@ -305,9 +305,12 @@
                                 <div class="linee-list-header">
                                     <div class="linee-header-text">
                                         <span class="linee-list-title">当月寿星</span>
-                                        <span class="linee-list-subtitle">小明, Amy, Jason...</span>
+                                        <span class="linee-list-subtitle" id="linee-birthdays-subtitle">长按好友添加</span>
                                     </div>
                                     <ion-icon name="chevron-forward-outline" class="linee-arrow"></ion-icon>
+                                </div>
+                                <div class="linee-list-content hidden" id="linee-birthdays-list">
+                                    <!-- Dynamic Birthday Friends -->
                                 </div>
                             </div>
 
@@ -316,9 +319,12 @@
                                 <div class="linee-list-header">
                                     <div class="linee-header-text">
                                         <span class="linee-list-title">我的最爱</span>
-                                        <span class="linee-list-subtitle">妈妈, 老板, Bestie...</span>
+                                        <span class="linee-list-subtitle" id="linee-favorites-subtitle">长按好友添加</span>
                                     </div>
                                     <ion-icon name="chevron-forward-outline" class="linee-arrow"></ion-icon>
+                                </div>
+                                <div class="linee-list-content hidden" id="linee-favorites-list">
+                                    <!-- Dynamic Favorite Friends -->
                                 </div>
                             </div>
 
@@ -1039,7 +1045,7 @@
                                 </div>
                                 
                                 <!-- Allow Calls -->
-                                <div style="padding: 14px 16px;">
+                                <div style="padding: 14px 16px; border-bottom: 1px solid #F3F4F6;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                                         <div style="display: flex; align-items: center; gap: 12px;">
                                             <ion-icon name="call-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
@@ -1051,6 +1057,14 @@
                                         </label>
                                     </div>
                                     <p style="margin: 0; padding-left: 32px; font-size: 12px; color: #9CA3AF;">允许角色主动发起语音或视讯请求</p>
+                                </div>
+                                
+                                <!-- Delete Chat History -->
+                                <div style="padding: 14px 16px;">
+                                    <button onclick="deleteChatHistory()" style="width: 100%; padding: 12px; background: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 8px; color: #DC2626; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                                        <ion-icon name="trash-outline" style="font-size: 18px;"></ion-icon>
+                                        <span>清空聊天记录</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

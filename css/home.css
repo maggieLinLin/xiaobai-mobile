@@ -142,8 +142,8 @@
 .home-page:nth-child(2) .app-icon{position:relative}
 .app-icon{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s}
 .app-icon:active{transform:scale(0.9)}
-.app-icon img{width:60px;height:60px;border-radius:20px;margin-bottom:5px}
-.app-icon span{font-size:14px;text-align:center;color:#333;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
+.app-icon img{width:68px;height:68px;border-radius:22px;margin-bottom:6px}
+.app-icon span{font-size:16px;text-align:center;color:#333;font-family:'Source Han Sans CN','Noto Sans CJK SC','Microsoft YaHei',sans-serif}
 
 /* 第一页应用图标 - 底部 Dock 栏布局 */
 .home-page:first-child .app-icon-1,
@@ -163,14 +163,14 @@
 
 /* 统一应用图标样式 */
 .app-icon img {
-    width: 54px;
-    height: 54px;
-    border-radius: 18px;
+    width: 62px;
+    height: 62px;
+    border-radius: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin-bottom: 8px;
 }
 .app-icon span {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: #444;
     text-shadow: 0 1px 2px rgba(255,255,255,0.8);
