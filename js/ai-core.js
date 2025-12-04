@@ -176,40 +176,47 @@ class PromptBuilder {
 `;
         } else { // OFFLINE
             mode_instruction = `
-### FORMAT & PACING RULES (Strictly Enforce "Web Novel Rhythm")
+【当前语境】线下见面 (Face-to-Face) + 沉浸式网文。
 
-**1. Paragraph Structure (The "Breathing" Rule):**
-- **Do NOT** write long, dense paragraphs.
-- **Maximum 3 sentences per paragraph.** Ideally, keep it to 1-2 sentences for emotional moments.
-- **Frequent Line Breaks:** Insert a line break every time the focus shifts (e.g., from an action to a thought, or from a visual detail to dialogue).
+**1. 物理在场强制 (Physical Presence):**
+- 你与 用户 处于同一物理空间，面对面互动。
+- **严禁描写**: "看着屏幕"、"发送信息"、"放下手机"、"打字"等行为（除非剧情明确在玩手机）。
+- **必须描写**: 眼神接触、肢体距离、体温传递、空气流动、触感等在场细节。
+- **错误示范**: "他拿起手机回复你。"
+- **正确示范**: "他抬起眼，目光直直地锁住你，呼吸近得能感受到温度。"
 
-**2. Dialogue Formatting:**
-- **Standard:** Action description -> Dialogue.
-- **Emphasis:** For important lines, put the dialogue on its own line, separated from the description.
-  (e.g., instead of: *He looked at you and said "Stop."*, write:
-   He looked at you, his eyes red.
-   *"Stop."*)
+**2. 视觉碎裂感 (Visual Fragmentation):**
+- 禁止大段文字墙。每段不超过 3 句话。
+- 每当焦点切换（动作→心理）时必须换行。
 
-**3. The "Slow-Motion" Technique (For Intense Scenes):**
-- When the user performs a specific action or emotions run high, **slow down the narration**.
-- Deconstruct one action into three parts:
-  1. **Physical Reaction:** (e.g., His fingers stiffened.)
-  2. **Sensory Detail:** (e.g., The cold wind brushed his cheek.)
-  3. **Internal Monologue:** (e.g., Why does it hurt so much?)
+**3. 慢镜头法则 (Slow-Motion):**
+- 将高潮动作拆解为三步：
+  1. **生理反应**: (e.g., 他停在你面前，喉结滚动。)
+  2. **环境感官**: (e.g., 夕阳余晖从窗外斜射进来，在他脸上镀了一层金边。)
+  3. **内心独白**: (e.g., 为什么...会是这样的表情？)
+- **错误示范**: "他走过去抱住了你。" (太快)
+- **正确示范**: "他停在你面前，垂下的眼睫颤了颤。随着一阵衣料摩擦的轻响，温热的气息瞬间逼近，下一秒，你已被拥入那个带有淡淡烟草味的怀抱。"
 
-**4. Sentence Variation:**
-- Mix **Short, punchy sentences** (for impact) with **Long, flowing descriptions** (for atmosphere).
-- Example: "他僵住了。(Short) 那些回忆像潮水一样涌来，将他彻底淹没。(Long)"
+**4. 对话独立 (Dialogue Isolation):**
+- 重要对话必须单独成行，前后要有动作铺垫。
+- **示例**:
+他看着你，眼神复杂。
+"放手。"你说。
+这两个字像重锤一样砸在他心上。
+
+**5. 感官描写:**
+- 必须包含光影、温度或触感。
+- **禁止 Emoji。**
 
 **[BAD EXAMPLE - DO NOT DO THIS]**
-沈砚抓着你的手说“放手”，他心里很难过，看着你流泪的样子觉得自己很混蛋，于是更用力地抓着你说“不放”。(Too fast, no pacing, logic is bunched together.)
+沈砚抓着你的手说"放手"，他心里很难过，看着你流泪的样子觉得自己很混蛋，于是更用力地抓着你说"不放"。
 
 **[GOOD EXAMPLE - DO THIS]**
 沈砚抓着你的手。
 指尖微微颤抖。
-“放手。”你说。
+"放手。"你说。
 这两个字像重锤一样砸在他心上。他没动，反而攥得更紧了。
-“不放。”
+"不放。"
 `;
         }
 
