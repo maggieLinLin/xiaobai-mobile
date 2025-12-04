@@ -220,16 +220,16 @@ function renderChatList() {
             <div style="flex: 1; min-width: 0; border-bottom: 1px solid #F9FAFB; padding-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
                     <div style="display: flex; align-items: center; gap: 4px; overflow: hidden;">
-                        <h3 style="font-size: 16px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</h3>
-                        ${chat.isMuted ? '<ion-icon name="notifications-off-outline" style="font-size: 12px; color: #9CA3AF;"></ion-icon>' : ''}
+                        <h3 style="font-size: 18px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</h3>
+                        ${chat.isMuted ? '<ion-icon name="notifications-off-outline" style="font-size: 14px; color: #9CA3AF;"></ion-icon>' : ''}
                     </div>
-                    <span style="font-size: 11px; color: #9CA3AF; flex-shrink: 0; margin-left: 8px;">${chat.timestamp}</span>
+                    <span style="font-size: 13px; color: #9CA3AF; flex-shrink: 0; margin-left: 8px;">${chat.timestamp}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <p style="font-size: 13px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;">${chat.lastMessage}</p>
+                    <p style="font-size: 15px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;">${chat.lastMessage}</p>
                     <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                        ${chat.isPinned ? '<ion-icon name="pin" style="font-size: 12px; color: #D1D5DB; transform: rotate(45deg);"></ion-icon>' : ''}
-                        ${chat.unreadCount > 0 ? `<span style="display: flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 6px; font-size: 10px; font-weight: 700; color: #FFFFFF; background: #A0D8EF; border-radius: 9px;">${chat.unreadCount > 99 ? '99+' : chat.unreadCount}</span>` : ''}
+                        ${chat.isPinned ? '<ion-icon name="pin" style="font-size: 14px; color: #D1D5DB; transform: rotate(45deg);"></ion-icon>' : ''}
+                        ${chat.unreadCount > 0 ? `<span style="display: flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; font-size: 12px; font-weight: 700; color: #FFFFFF; background: #A0D8EF; border-radius: 10px;">${chat.unreadCount > 99 ? '99+' : chat.unreadCount}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -274,8 +274,8 @@ function renderChatMessages() {
                 return `
                     <div style="display: flex; justify-content: flex-end; margin: 16px 0;">
                         <div style="max-width: 80%; padding: 12px 16px; background: #ffd4e5; border-radius: 12px; border-left: 3px solid #ff9ec7;">
-                            <div style="font-size: 16px; line-height: 1.6; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif;">${msg.text}</div>
-                            <div style="font-size: 11px; color: #666; margin-top: 6px; text-align: right;">${msg.time}</div>
+                            <div style="font-size: 18px; line-height: 1.6; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif;">${msg.text}</div>
+                            <div style="font-size: 13px; color: #666; margin-top: 6px; text-align: right;">${msg.time}</div>
                         </div>
                     </div>
                 `;
@@ -283,10 +283,10 @@ function renderChatMessages() {
                 // AI 回复：酒馆粉色卡片格式，黑色文字
                 return `
                     <div style="margin: 20px 0; padding: 16px; background: #ffffff; border-radius: 8px; border: 1px solid #ffcce0; box-shadow: 0 2px 8px rgba(255, 158, 199, 0.1);">
-                        <div style="font-size: 17px; line-height: 1.8; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif; letter-spacing: 0.3px;">
+                        <div style="font-size: 19px; line-height: 1.8; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif; letter-spacing: 0.3px;">
                             ${msg.text}
                         </div>
-                        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffe0f0; font-size: 11px; color: #666; text-align: right;">
+                        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffe0f0; font-size: 13px; color: #666; text-align: right;">
                             ${msg.time}
                         </div>
                     </div>
@@ -302,8 +302,8 @@ function renderChatMessages() {
             <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;">
                 ${!msg.isUser ? '<div style="width:32px;height:32px;background:#eee;border-radius:50%;margin-right:8px;overflow:hidden;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed='+ currentChatId +'" style="width:100%;"></div>' : ''}
                 <div style="max-width: 70%; padding: 10px 14px; border-radius: 16px; background: ${msg.isUser ? '#A0D8EF' : '#FFFFFF'}; color: ${msg.isUser ? '#FFFFFF' : '#333'}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                    <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${msg.text}</div>
-                    <div style="font-size: 10px; margin-top: 4px; opacity: 0.7; text-align: right;">${msg.time}</div>
+                    <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${msg.text}</div>
+                    <div style="font-size: 12px; margin-top: 4px; opacity: 0.7; text-align: right;">${msg.time}</div>
                 </div>
             </div>
         `).join('');
