@@ -43,6 +43,10 @@ class Character(BaseModel):
     advanced_tuning: AdvancedTuning = Field(default_factory=AdvancedTuning)
     linked_local_world_id: Optional[str] = Field(default=None, description="绑定的局部世界书 ID")
     
+    # ✅ 新增：生日与最爱系统
+    birthday: Optional[str] = Field(default=None, description="生日 (格式: MM-DD, 例如: 03-15)")
+    is_favorite: bool = Field(default=False, description="是否为星标好友")
+    
     # 动态数据
     relationship: RelationshipState = Field(default_factory=RelationshipState)
 

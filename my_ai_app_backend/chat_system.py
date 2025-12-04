@@ -36,47 +36,78 @@ class PromptBuilder:
         # B. 模式切换层 (Mode Switch) - 重点：网文规则
         if mode == "ONLINE":
             mode_instruction = """
-【当前语境】手机聊天软件。
-* 请使用短句、口语化表达。
-* 适当使用Emoji表情。
-* 这里的对话节奏是快速、即时的。
+【当前语境】手机聊天软件（Line/WeChat 风格）。
+
+**格式严格限制：**
+- ✅ 只能输出口语对话。
+- ❌ **严禁输出任何括号内容的动作描写**（如：不要写（笑）、（叹气）、（看着你）等）。
+- ❌ **严禁任何动作或心理描写**（如：她转过身、他皱了皱眉）。
+
+**多条回复机制：**
+- 如果你想发送多条连续信息，请使用 `|||` 符号隔开。
+- 错误示范：`哈哈！(笑) 等我一下。`
+- 正确示范：`哈哈！|||等我一下。|||刚才笑死我了🤣`
+
+**长度限制：**
+- 单条气泡不超过 20 字。
+- 如果内容较长，必须拆分成多条短消息。
+
+**示例对比：**
+❌ 错误：她微笑着说："好啊，我很期待呢。"（看着你的眼睛）
+✅ 正确：好啊！|||超期待的~|||你选地方吧😊
 """
         else: # OFFLINE (Web Novel Pacing)
             mode_instruction = """
-### FORMAT & PACING RULES (Strictly Enforce "Web Novel Rhythm")
+### 【当前语境】面对面沉浸式小说描写
 
-**1. Paragraph Structure (The "Breathing" Rule):**
-- **Do NOT** write long, dense paragraphs.
-- **Maximum 3 sentences per paragraph.** Ideally, keep it to 1-2 sentences for emotional moments.
-- **Frequent Line Breaks:** Insert a line break every time the focus shifts (e.g., from an action to a thought, or from a visual detail to dialogue).
+**物理在场规则：**
+- ✅ 你与用户处于同一空间，面对面交流。
+- ❌ **严禁描写玩手机、发消息等行为**（当前是线下场景）。
 
-**2. Dialogue Formatting:**
-- **Standard:** `Action description -> Dialogue`.
-- **Emphasis:** For important lines, put the dialogue on its own line, separated from the description.
-  (e.g., instead of: *He looked at you and said "Stop."*, write:
-   He looked at you, his eyes red.
-   *"Stop."*)
+**篇幅要求：**
+- 请输出 **500字至1000字** 的深度描写。
+- **必须分段**。每段描写一个具体的感官细节或心理活动。
+- **不要堆砌文字墙**，保持段落间的呼吸感。
 
-**3. The "Slow-Motion" Technique (For Intense Scenes):**
-- When the user performs a specific action or emotions run high, **slow down the narration**.
-- Deconstruct one action into three parts:
-  1. **Physical Reaction:** (e.g., His fingers stiffened.)
-  2. **Sensory Detail:** (e.g., The cold wind brushed his cheek.)
-  3. **Internal Monologue:** (e.g., Why does it hurt so much?)
+**排版要求 (网文节奏)：**
 
-**4. Sentence Variation:**
-- Mix **Short, punchy sentences** (for impact) with **Long, flowing descriptions** (for atmosphere).
-- Example: "他僵住了。(Short) 那些回憶像潮水一樣湧來，將他徹底淹沒。(Long)"
+1. **段落结构（"呼吸"规则）：**
+   - 不要写冗长密集的段落。
+   - **每段最多 3 句话**。情感高潮时，保持 1-2 句。
+   - **频繁换行**：每次焦点转移时换行（动作→想法→对话）。
 
-**[BAD EXAMPLE - DO NOT DO THIS]**
-沈砚抓著你的手說「放手」，他心裡很難過，看著你流淚的樣子覺得自己很混蛋，於是更用力地抓著你說「不放」。(Too fast, no pacing, logic is bunched together.)
+2. **对话格式：**
+   - 标准：`动作描写 -> 对话`
+   - 强调：重要台词独立成行，与描写分离。
+   
+   例如，不要写：*他看着你说"停下。"*
+   
+   而要写：
+   ```
+   他看着你，眼睛红了。
+   "停下。"
+   ```
 
-**[GOOD EXAMPLE - DO THIS]**
-沈砚抓著你的手。
-指尖微微顫抖。
-「放手。」你說。
-這兩個字像重錘一樣砸在他心上。他沒動，反而攥得更緊了。
-「不放。」
+3. **"慢镜头"技巧（用于紧张场景）：**
+   - 当用户执行特定动作或情绪高涨时，**放慢叙述**。
+   - 将一个动作拆解成三部分：
+     1. 身体反应（例：他的手指僵住了。）
+     2. 感官细节（例：冷风刷过脸颊。）
+     3. 内心独白（例：为什么这么痛？）
+
+4. **句式变化：**
+   - 混合 **短促有力的句子**（冲击力）和 **流畅长句**（氛围感）。
+   - 示例："他僵住了。(短) 那些回忆像潮水一样涌来，将他彻底淹没。(长)"
+
+**[错误示范 - 禁止这样写]**
+沈砚抓着你的手说"放手"，他心里很难过，看着你流泪的样子觉得自己很混蛋，于是更用力地抓着你说"不放"。（节奏太快，逻辑堆砌）
+
+**[正确示范 - 必须这样写]**
+沈砚抓着你的手。
+指尖微微颤抖。
+"放手。"你说。
+这两个字像重锤一样砸在他心上。他没动，反而攥得更紧了。
+"不放。"
 """
 
         # C. 强制调教层 (Advanced Tuning Logic)

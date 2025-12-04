@@ -246,6 +246,15 @@ function openChatRoom(chatId, chatName) {
     document.getElementById('chat-room-name').textContent = chatName;
     
     if (!chatMessages[chatId]) chatMessages[chatId] = [];
+    
+    // ✅ 清除未读红点
+    const currentChat = mockChats.find(c => c.id === chatId);
+    if (currentChat && currentChat.unreadCount > 0) {
+        currentChat.unreadCount = 0;
+        renderChatList(); // 更新聊天列表，清除红点
+        saveLineeData();
+    }
+    
     renderChatMessages();
 }
 
@@ -298,9 +307,22 @@ function renderChatMessages() {
         container.style.padding = '16px';
         container.style.background = '#FFFFFF';
         
+        // ✅ 获取当前聊天的角色头像
+        const currentChat = mockChats.find(c => c.id === currentChatId);
+        let avatarUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+        
+        if (currentChat && currentChat.isAI && currentChat.aiCharacterId) {
+            const aiChar = aiCharacters[currentChat.aiCharacterId];
+            if (aiChar && aiChar.avatar) {
+                avatarUrl = aiChar.avatar;
+            }
+        } else if (currentChat && currentChat.avatar) {
+            avatarUrl = currentChat.avatar;
+        }
+        
         container.innerHTML = messages.map((msg, index) => `
             <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)">
-                ${!msg.isUser ? '<div style="width:32px;height:32px;background:#eee;border-radius:50%;margin-right:8px;overflow:hidden;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed='+ currentChatId +'" style="width:100%;"></div>' : ''}
+                ${!msg.isUser ? '<div style="width:32px;height:32px;background:#eee;border-radius:50%;margin-right:8px;overflow:hidden;"><img src="'+ avatarUrl +'" style="width:100%;"></div>' : ''}
                 <div style="max-width: 70%; padding: 10px 14px; border-radius: 16px; background: ${msg.isUser ? '#A0D8EF' : '#FFFFFF'}; color: ${msg.isUser ? '#FFFFFF' : '#333'}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                     <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap;">${msg.text}</div>
                     <div style="font-size: 12px; margin-top: 4px; opacity: 0.7; text-align: right;">${msg.time}</div>
@@ -413,13 +435,53 @@ async function sendChatMessage() {
         // 移除打字提示
         chatMessages[currentChatId] = chatMessages[currentChatId].filter(m => !m.isTyping);
         
-        // 添加真实回复
-        chatMessages[currentChatId].push({ text: responseText, time, isUser: false });
-        renderChatMessages();
-        
-        // 更新列表最后一条消息
-        currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
-        renderChatList();
+        // ✅ 线上模式：清洗与分段处理
+        if (currentMode === "ONLINE") {
+            // 1. 暴力清洗：移除所有括号及内容（包括中英文括号）
+            let cleanText = responseText
+                .replace(/（[^）]*）/g, '')  // 中文括号
+                .replace(/\([^)]*\)/g, '')    // 英文括号
+                .replace(/【[^】]*】/g, '')    // 中文方括号
+                .replace(/\[[^\]]*\]/g, '');  // 英文方括号
+            
+            // 2. 分割多条信息
+            let messages = cleanText.split('|||').map(m => m.trim()).filter(m => m !== '');
+            
+            // 3. 依序渲染（模拟打字间隔）
+            // ✅ 应用流式输出设置
+            const delayBetweenMessages = chatSettings.streaming ? 800 : 0;
+            
+            messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    // ✅ 应用时间同步设置
+                    const msgTime = chatSettings.timeSync 
+                        ? new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+                        : time;
+                    
+                    chatMessages[currentChatId].push({ 
+                        text: msg, 
+                        time: msgTime, 
+                        isUser: false 
+                    });
+                    renderChatMessages();
+                    saveLineeData();
+                    
+                    // 更新列表最后一条消息（只在最后一条时更新）
+                    if (index === messages.length - 1) {
+                        currentChat.lastMessage = msg.substring(0, 50) + (msg.length > 50 ? '...' : '');
+                        renderChatList();
+                    }
+                }, index * delayBetweenMessages); // 根据设置调整间隔
+            });
+        } else {
+            // 线下模式：直接显示完整回复
+            chatMessages[currentChatId].push({ text: responseText, time, isUser: false });
+            renderChatMessages();
+            
+            // 更新列表最后一条消息
+            currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
+            renderChatList();
+        }
         
         // ✅ 更新好感度
         try {
@@ -660,6 +722,8 @@ function initLineeProfileSettings() {
     const saved = localStorage.getItem('linee-persona-cards');
     if (saved) {
         lineePersonaCards = JSON.parse(saved);
+        // ✅ 加载完成后立即更新主页显示
+        updateLineeMainProfile();
     }
 }
 
@@ -884,6 +948,26 @@ function openFriendProfile(friend) {
     const descTextarea = document.getElementById('friend-profile-description');
     descTextarea.value = friend.description || '';
     descTextarea.readOnly = true;
+    
+    // ✅ 设置生日和最爱
+    const birthdayInput = document.getElementById('friend-profile-birthday');
+    const favoriteCheckbox = document.getElementById('friend-profile-favorite');
+    
+    birthdayInput.value = friend.birthday || '';
+    favoriteCheckbox.checked = friend.is_favorite || false;
+    
+    // 更新开关显示
+    const slider = favoriteCheckbox.nextElementSibling;
+    const knob = slider ? slider.querySelector('span') : null;
+    if (slider && knob) {
+        if (favoriteCheckbox.checked) {
+            slider.style.backgroundColor = '#FBBF24';
+            knob.style.transform = 'translateX(20px)';
+        } else {
+            slider.style.backgroundColor = '#E5E7EB';
+            knob.style.transform = 'translateX(0)';
+        }
+    }
 }
 
 function closeFriendProfile() {
@@ -1018,6 +1102,67 @@ function saveDescription() {
     alert('描述已保存！');
     
     alert('保存成功！');
+}
+
+// ✅ 生日与最爱功能
+function toggleFavorite() {
+    const checkbox = document.getElementById('friend-profile-favorite');
+    const slider = checkbox.nextElementSibling;
+    const knob = slider.querySelector('span');
+    
+    checkbox.checked = !checkbox.checked;
+    
+    if (checkbox.checked) {
+        slider.style.backgroundColor = '#FBBF24';
+        knob.style.transform = 'translateX(20px)';
+    } else {
+        slider.style.backgroundColor = '#E5E7EB';
+        knob.style.transform = 'translateX(0)';
+    }
+}
+
+function saveBirthdayAndFavorite() {
+    const birthdayInput = document.getElementById('friend-profile-birthday');
+    const favoriteCheckbox = document.getElementById('friend-profile-favorite');
+    
+    const birthday = birthdayInput.value.trim();
+    const isFavorite = favoriteCheckbox.checked;
+    
+    // 验证生日格式
+    if (birthday && !/^\d{2}-\d{2}$/.test(birthday)) {
+        alert('生日格式错误！请使用 MM-DD 格式（例如：03-15）');
+        return;
+    }
+    
+    if (currentFriendProfile) {
+        currentFriendProfile.birthday = birthday || null;
+        currentFriendProfile.is_favorite = isFavorite;
+        
+        // 如果是 AI 角色，同步到 AI 角色数据
+        if (currentFriendProfile.isAI && currentFriendProfile.aiCharacterId) {
+            const aiChar = aiCharacters[currentFriendProfile.aiCharacterId];
+            if (aiChar) {
+                aiChar.birthday = birthday || null;
+                aiChar.is_favorite = isFavorite;
+            }
+        }
+        
+        // 保存到本地
+        saveLineeData();
+        
+        // 刷新好友列表（如果实现了最爱排序或生日标记）
+        renderLineeFriends();
+        
+        alert('✅ 生日和标记已保存！');
+    }
+}
+
+// 检查是否为本月寿星
+function isBirthdayThisMonth(birthday) {
+    if (!birthday) return false;
+    const [month] = birthday.split('-');
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    return month === currentMonth;
 }
 
 function sendMessageToFriend() {
@@ -1215,6 +1360,35 @@ function loadChatSettings() {
     document.getElementById('autoreply-toggle').checked = chatSettings.autoReply;
     document.getElementById('enter-send-toggle').checked = chatSettings.enterToSend;
     document.getElementById('allow-calls-toggle').checked = chatSettings.allowCalls;
+    
+    // ✅ 渲染卡槽头像和名称（从个人设定同步）
+    renderPersonaSlotsInChatSettings();
+}
+
+// ✅ 渲染卡槽（同步个人设定数据）
+function renderPersonaSlotsInChatSettings() {
+    const slotElements = document.querySelectorAll('.persona-slot');
+    
+    slotElements.forEach((slotEl, index) => {
+        const personaCard = lineePersonaCards[index];
+        const avatarDiv = slotEl.querySelector('div[style*="border-radius: 50%"]');
+        
+        if (personaCard && avatarDiv) {
+            // 更新头像
+            avatarDiv.style.backgroundImage = `url(${personaCard.avatar})`;
+            avatarDiv.style.backgroundSize = 'cover';
+            avatarDiv.style.backgroundPosition = 'center';
+            avatarDiv.style.background = ''; // 清除背景色
+        } else if (avatarDiv) {
+            // 空卡槽显示灰色背景
+            avatarDiv.style.background = '#E5E7EB';
+            avatarDiv.style.backgroundImage = '';
+        }
+    });
+    
+    // 更新当前激活的卡槽
+    const currentSlot = chatSettings.userPersonaSlot || 0;
+    selectPersonaSlot(currentSlot);
 }
 
 // 同步当前好友信息到聊天设置
@@ -1329,10 +1503,30 @@ function selectPersonaSlot(slot) {
     
     // 激活选中的卡槽
     const selectedSlot = document.querySelector(`[data-slot="${slot}"]`);
-    selectedSlot.classList.add('active');
-    selectedSlot.style.borderColor = '#06c755';
+    if (selectedSlot) {
+        selectedSlot.classList.add('active');
+        selectedSlot.style.borderColor = '#06c755';
+    }
     
     chatSettings.userPersonaSlot = slot;
+    
+    // ✅ 同步个人设定卡槽数据
+    const personaCard = lineePersonaCards[slot];
+    if (personaCard) {
+        // 更新聊天室设置中的用户头像和名称
+        chatSettings.userName = personaCard.name;
+        chatSettings.userAvatar = personaCard.avatar;
+        
+        // 更新聊天设置面板中的显示（如果有相关UI）
+        const userNameInput = document.getElementById('user-name-input');
+        const userAvatarInput = document.getElementById('user-avatar-url');
+        if (userNameInput) userNameInput.value = personaCard.name;
+        if (userAvatarInput) userAvatarInput.value = personaCard.avatar;
+        
+        console.log(`✅ 已切换到卡槽 ${slot + 1}: ${personaCard.name}`);
+    } else {
+        console.log(`⚠️ 卡槽 ${slot + 1} 为空`);
+    }
 }
 
 function uploadChatBackground() {
@@ -1764,13 +1958,51 @@ async function handleAIRead() {
         // 移除打字提示
         chatMessages[currentChatId] = chatMessages[currentChatId].filter(m => !m.isTyping);
         
-        // 添加真实回复
-        chatMessages[currentChatId].push({ text: responseText, time, isUser: false });
-        renderChatMessages();
-        
-        // 更新列表最后一条消息
-        currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
-        renderChatList();
+        // ✅ 线上模式：清洗与分段处理
+        if (currentMode === "ONLINE") {
+            // 1. 暴力清洗：移除所有括号及内容
+            let cleanText = responseText
+                .replace(/（[^）]*）/g, '')
+                .replace(/\([^)]*\)/g, '')
+                .replace(/【[^】]*】/g, '')
+                .replace(/\[[^\]]*\]/g, '');
+            
+            // 2. 分割多条信息
+            let messages = cleanText.split('|||').map(m => m.trim()).filter(m => m !== '');
+            
+            // 3. 依序渲染
+            // ✅ 应用流式输出设置
+            const delayBetweenMessages = chatSettings.streaming ? 800 : 0;
+            
+            messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    // ✅ 应用时间同步设置
+                    const msgTime = chatSettings.timeSync 
+                        ? new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+                        : time;
+                    
+                    chatMessages[currentChatId].push({ 
+                        text: msg, 
+                        time: msgTime, 
+                        isUser: false 
+                    });
+                    renderChatMessages();
+                    saveLineeData();
+                    
+                    if (index === messages.length - 1) {
+                        currentChat.lastMessage = msg.substring(0, 50) + (msg.length > 50 ? '...' : '');
+                        renderChatList();
+                    }
+                }, index * delayBetweenMessages);
+            });
+        } else {
+            // 线下模式：直接显示
+            chatMessages[currentChatId].push({ text: responseText, time, isUser: false });
+            renderChatMessages();
+            
+            currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
+            renderChatList();
+        }
         
         // 更新好感度
         try {
@@ -1895,8 +2127,11 @@ function showMessageMenu(event, msgIndex) {
     const menuItems = [];
     
     if (msg.isUser) {
-        menuItems.push({ icon: 'refresh-outline', text: '重新发送', action: () => resendMessage(msgIndex) });
+        // ✅ 用户消息：只显示撤回
         menuItems.push({ icon: 'return-up-back-outline', text: '撤回', action: () => recallMessage(msgIndex) });
+    } else {
+        // ✅ AI消息：显示重新生成
+        menuItems.push({ icon: 'refresh-outline', text: '重新生成', action: () => regenerateMessage(msgIndex) });
     }
     
     menuItems.push({ icon: 'copy-outline', text: '复制', action: () => copyMessage(msgIndex) });
@@ -1912,12 +2147,20 @@ function showMessageMenu(event, msgIndex) {
         menu.appendChild(menuItem);
     });
     
-    const x = event.clientX || event.touches?.[0]?.clientX || 0;
-    const y = event.clientY || event.touches?.[0]?.clientY || 0;
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-    
+    // ✅ 固定在屏幕中间，不跑出屏幕外
     document.body.appendChild(menu);
+    
+    // 计算居中位置
+    const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const centerX = (viewportWidth - menuWidth) / 2;
+    const centerY = (viewportHeight - menuHeight) / 2;
+    
+    menu.style.left = centerX + 'px';
+    menu.style.top = centerY + 'px';
     
     setTimeout(() => {
         document.addEventListener('click', function closeMenu() {
@@ -1927,20 +2170,121 @@ function showMessageMenu(event, msgIndex) {
     }, 100);
 }
 
-function resendMessage(msgIndex) {
+// ✅ 重新生成AI回复
+async function regenerateMessage(msgIndex) {
+    if (!currentChatId) return;
+    
     const msg = chatMessages[currentChatId][msgIndex];
-    if (!msg || !msg.isUser) return;
-    const input = document.getElementById('chat-input-field');
-    if (input) {
-        input.value = msg.text;
-        sendChatMessage();
+    if (!msg || msg.isUser) return;
+    
+    const currentChat = mockChats.find(c => c.id === currentChatId);
+    if (!currentChat || !currentChat.isAI) {
+        alert('当前聊天不是 AI 角色');
+        return;
+    }
+    
+    // 检查 API 配置
+    if (!state || !state.apiConfig || !state.apiConfig.url || !state.apiConfig.key) {
+        alert('请先在设置中配置 API');
+        return;
+    }
+    
+    // 获取 AI 角色
+    const aiChar = aiCharacters[currentChat.aiCharacterId];
+    if (!aiChar) {
+        alert('找不到 AI 角色数据');
+        return;
+    }
+    
+    // 找到这条消息之前的用户消息
+    const messagesBeforeThis = chatMessages[currentChatId].slice(0, msgIndex);
+    const lastUserMsg = [...messagesBeforeThis].reverse().find(m => m.isUser);
+    
+    if (!lastUserMsg) {
+        alert('找不到对应的用户消息');
+        return;
+    }
+    
+    const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    
+    // 替换为"正在重新生成..."
+    chatMessages[currentChatId][msgIndex] = { text: '正在重新生成...', time, isUser: false, isTyping: true };
+    renderChatMessages();
+    
+    try {
+        // 获取历史记录（不包括当前重新生成的这条）
+        const history = messagesBeforeThis
+            .filter(m => !m.isTyping)
+            .map(m => ({ isUser: m.isUser, text: m.text }));
+        
+        const currentMode = chatSettings.offlineMode ? "OFFLINE" : "ONLINE";
+        
+        // 调用 AI 核心重新生成
+        const responseText = await AICore.chatSystem.generateResponse(
+            aiChar,
+            lastUserMsg.text,
+            history,
+            currentMode,
+            state.apiConfig
+        );
+        
+        // ✅ 线上模式：清洗与分段处理
+        if (currentMode === "ONLINE") {
+            let cleanText = responseText
+                .replace(/（[^）]*）/g, '')
+                .replace(/\([^)]*\)/g, '')
+                .replace(/【[^】]*】/g, '')
+                .replace(/\[[^\]]*\]/g, '');
+            
+            let messages = cleanText.split('|||').map(m => m.trim()).filter(m => m !== '');
+            
+            // 删除原有消息
+            chatMessages[currentChatId].splice(msgIndex, 1);
+            
+            // 插入新消息
+            const delayBetweenMessages = chatSettings.streaming ? 800 : 0;
+            messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    const msgTime = chatSettings.timeSync 
+                        ? new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+                        : time;
+                    
+                    chatMessages[currentChatId].splice(msgIndex + index, 0, { 
+                        text: msg, 
+                        time: msgTime, 
+                        isUser: false 
+                    });
+                    renderChatMessages();
+                    saveLineeData();
+                    
+                    if (index === messages.length - 1) {
+                        currentChat.lastMessage = msg.substring(0, 50) + (msg.length > 50 ? '...' : '');
+                        renderChatList();
+                    }
+                }, index * delayBetweenMessages);
+            });
+        } else {
+            // 线下模式：直接替换
+            chatMessages[currentChatId][msgIndex] = { text: responseText, time, isUser: false };
+            renderChatMessages();
+            saveLineeData();
+            
+            currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
+            renderChatList();
+        }
+        
+    } catch (e) {
+        console.error('重新生成失败:', e);
+        chatMessages[currentChatId][msgIndex] = { text: '❌ 重新生成失败: ' + e.message, time, isUser: false };
+        renderChatMessages();
     }
 }
 
 function recallMessage(msgIndex) {
     const msg = chatMessages[currentChatId][msgIndex];
     if (!msg || !msg.isUser) return;
-    chatMessages[currentChatId][msgIndex] = { text: '你撤回了一条消息', time: msg.time, isUser: false, isRecalled: true };
+    // ✅ 保持 isUser: true，撤回消息显示在用户气泡中
+    chatMessages[currentChatId][msgIndex] = { text: '你撤回了一条消息', time: msg.time, isUser: true, isRecalled: true };
     renderChatMessages();
     saveLineeData();
 }
@@ -2241,6 +2585,21 @@ window.generateAllFootprints = function() {
 function initLineeAll() {
     initLineeProfileSettings();
     initLineeApp();
+    
+    // ✅ 绑定聊天输入框回车键事件
+    const chatInput = document.getElementById('chat-input-field');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // 检查是否开启了回车发送
+                if (chatSettings.enterToSend) {
+                    e.preventDefault(); // 阻止默认换行
+                    sendChatMessage();
+                }
+                // 如果未开启回车发送，则允许换行（默认行为）
+            }
+        });
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -2263,6 +2622,11 @@ window.openChatRoom = openChatRoom;
 window.closeChatRoom = closeChatRoom;
 window.sendChatMessage = sendChatMessage;
 
+// ✅ 导出消息菜单相关函数
+window.handleTouchStart = handleTouchStart;
+window.handleTouchEnd = handleTouchEnd;
+window.showMessageMenu = showMessageMenu;
+
 // 新增聊天室功能导出
 window.togglePlusMenu = togglePlusMenu;
 window.promptImageMessage = promptImageMessage;
@@ -2270,6 +2634,11 @@ window.promptAudioMessage = promptAudioMessage;
 window.handleAIRead = handleAIRead;
 window.closePromptModal = closePromptModal;
 window.submitPrompt = submitPrompt;
+
+// ✅ 导出生日与最爱功能
+window.toggleFavorite = toggleFavorite;
+window.saveBirthdayAndFavorite = saveBirthdayAndFavorite;
+window.isBirthdayThisMonth = isBirthdayThisMonth;
 
 // 新增足迹页面功能导出
 window.closeStepsModal = closeStepsModal;
