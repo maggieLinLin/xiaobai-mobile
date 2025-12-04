@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>日历保存按钮测试</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        #test-results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>日历保存按钮测试</h1>
+    
+    <div class="test-section">
+        <h3>测试 1: 按钮是否存在</h3>
+        <button onclick="test1()">运行测试 1</button>
+        <div id="test1-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>测试 2: 按钮点击事件绑定</h3>
+        <button onclick="test2()">运行测试 2</button>
+        <div id="test2-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>测试 3: 模拟完整保存流程</h3>
+        <button onclick="test3()">运行测试 3</button>
+        <div id="test3-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>手动测试区域</h3>
+        <textarea id="memo-input" placeholder="输入备忘录内容..." style="width: 100%; height: 100px; padding: 10px;"></textarea>
+        <button id="save-memo" style="background: #007AFF; color: white; border: none; padding: 12px 20px; border-radius: 8px;">保存</button>
+        <div id="manual-result" style="margin-top: 10px;"></div>
+    </div>
+
+    <div id="test-results"></div>
+
+    <script>
+        // 模拟主程序的状态
+        const state = {
+            memos: {},
+            selectedDate: null
+        };
+
+        function saveState() {
+            localStorage.setItem('xiaobai-state', JSON.stringify(state));
+            console.log('State saved:', state);
+        }
+
+        function saveMemo() {
+            try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const date = state.selectedDate || todayStr;
+                const input = document.getElementById('memo-input');
+                
+                if (!input) {
+                    alert('错误：找不到备忘录输入框');
+                    return;
+                }
+
+                const text = input.value;
+                if (!state.memos) state.memos = {};
+                state.memos[date] = text;
+                saveState();
+                
+                document.getElementById('manual-result').innerHTML = 
+                    `<span class="success">✓ 保存成功！日期: ${date}, 内容: "${text}"</span>`;
+                alert('备忘录已保存');
+            } catch (e) {
+                console.error('Save memo error:', e);
+                document.getElementById('manual-result').innerHTML = 
+                    `<span class="error">✗ 保存失败: ${e.message}</span>`;
+                alert('保存失败: ' + e.message);
+            }
+        }
+
+        // 测试函数
+        function test1() {
+            const btn = document.getElementById('save-memo');
+            const result = document.getElementById('test1-result');
+            
+            if (btn) {
+                result.innerHTML = '<span class="success">✓ 按钮存在</span>';
+                console.log('Button found:', btn);
+            } else {
+                result.innerHTML = '<span class="error">✗ 按钮不存在</span>';
+            }
+        }
+
+        function test2() {
+            const btn = document.getElementById('save-memo');
+            const result = document.getElementById('test2-result');
+            
+            if (!btn) {
+                result.innerHTML = '<span class="error">✗ 按钮不存在，无法测试</span>';
+                return;
+            }
+
+            // 测试当前绑定
+            if (btn.onclick) {
+                result.innerHTML = '<span class="success">✓ 按钮已有 onclick 绑定</span>';
+            } else {
+                result.innerHTML = '<span class="error">✗ 按钮没有 onclick 绑定</span>';
+            }
+
+            console.log('Button onclick:', btn.onclick);
+            console.log('Button listeners:', getEventListeners ? getEventListeners(btn) : 'N/A');
+        }
+
+        function test3() {
+            const btn = document.getElementById('save-memo');
+            const input = document.getElementById('memo-input');
+            const result = document.getElementById('test3-result');
+            
+            // 设置测试数据
+            input.value = '测试备忘录内容 - ' + new Date().toLocaleTimeString();
+            state.selectedDate = new Date().toISOString().split('T')[0];
+            
+            // 模拟点击
+            try {
+                btn.click();
+                result.innerHTML = '<span class="success">✓ 点击已触发，查看控制台和弹窗</span>';
+            } catch (e) {
+                result.innerHTML = '<span class="error">✗ 点击触发失败: ' + e.message + '</span>';
+            }
+        }
+
+        // 页面加载时绑定
+        document.addEventListener('DOMContentLoaded', () => {
+            const saveBtn = document.getElementById('save-memo');
+            if (saveBtn) {
+                // 移除旧的监听器
+                const newSaveBtn = saveBtn.cloneNode(true);
+                saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+                
+                // 绑定新的监听器
+                newSaveBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Save memo button clicked via DOMContentLoaded binding');
+                    saveMemo();
+                };
+                
+                console.log('Save button bound successfully on DOMContentLoaded');
+            } else {
+                console.error('Save button not found on DOMContentLoaded');
+            }
+        });
+    </script>
+</body>
+</html>
+

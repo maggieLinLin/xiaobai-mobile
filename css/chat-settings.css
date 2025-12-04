@@ -1,0 +1,123 @@
+/* Chat Settings Styles */
+
+/* Switch Toggle */
+.chat-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 28px;
+}
+
+.chat-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.chat-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #E5E7EB;
+    transition: .3s;
+    border-radius: 28px;
+}
+
+.chat-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.chat-switch input:checked + .chat-slider {
+    background-color: #A0D8EF;
+}
+
+.chat-switch input:checked + .chat-slider:before {
+    transform: translateX(20px);
+}
+
+/* Context Slider */
+#context-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #A0D8EF;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(160, 216, 239, 0.3);
+}
+
+#context-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #A0D8EF;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(160, 216, 239, 0.3);
+}
+
+/* Persona Slot Styles */
+.persona-slot {
+    transition: all 0.2s;
+}
+
+.persona-slot.active {
+    border-color: #A0D8EF !important;
+}
+
+.persona-slot.active ion-icon[name="checkmark-circle"] {
+    display: block;
+}
+
+.persona-slot:not(.active) ion-icon[name="checkmark-circle"] {
+    display: none;
+}
+
+.persona-slot:hover {
+    border-color: #A0D8EF;
+    transform: translateY(-2px);
+}
+
+/* Bubble Color Selector */
+.bubble-color {
+    transition: all 0.2s;
+}
+
+.bubble-color.active {
+    box-shadow: 0 0 0 2px white, 0 0 0 4px currentColor !important;
+}
+
+.bubble-color:hover {
+    transform: scale(1.1);
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#character-details,
+#custom-css {
+    animation: slideIn 0.3s ease;
+}
+

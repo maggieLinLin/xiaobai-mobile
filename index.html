@@ -24,6 +24,14 @@
     <meta name="theme-color" content="#A0D8EF">
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <link rel="stylesheet" href="css/worldbook.css?v=1">
+    <link rel="stylesheet" href="css/chat-settings.css">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Scoped Tailwind-like overrides if necessary to prevent global breakage */
+        #phone-frame { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    </style>
 </head>
 <body>
     <div id="phone-container">
@@ -165,13 +173,13 @@
                         
                         <!-- 任务栏 - 左下角 -->
                         <textarea id="today-memo-widget" placeholder="今天没有任务" rows="1"></textarea>
-                        
+
                         <!-- 应用图标 - 对角线排列 -->
                         <div class="app-icon app-icon-1" data-app="linee">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%23A0D8EF'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3EL%3C/text%3E%3C/svg%3E">
                             <span>Linee</span>
                         </div>
-                        <div class="app-icon app-icon-2" data-app="developing">
+                        <div class="app-icon app-icon-2" data-app="worldbook">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Crect width='44' height='44' rx='10' fill='%234A90E2'/%3E%3Ctext x='22' y='28' font-size='24' text-anchor='middle' fill='white'%3E🌍%3C/text%3E%3C/svg%3E">
                             <span>世界书</span>
                         </div>
@@ -380,7 +388,7 @@
                             <div class="linee-actions">
                                 <button class="linee-icon-btn"><ion-icon name="search-outline"></ion-icon></button>
                                 <button class="linee-icon-btn"><ion-icon name="call-outline"></ion-icon></button>
-                                <button class="linee-icon-btn"><ion-icon name="ellipsis-vertical"></ion-icon></button>
+                                <button class="linee-icon-btn" onclick="openChatSettings()"><ion-icon name="ellipsis-vertical"></ion-icon></button>
                             </div>
                         </div>
                         <!-- Messages -->
@@ -615,13 +623,101 @@
                     </div>
 
                     <!-- Modals -->
-                    <div id="linee-modal-add-friend" class="linee-modal hidden">
-                        <div class="linee-modal-content">
-                            <h3>添加好友</h3>
-                            <input type="text" id="linee-new-friend-name" placeholder="输入好友名字">
-                            <div class="linee-modal-actions">
+                    <div id="linee-modal-add-friend" class="linee-modal hidden" style="z-index: 200;">
+                        <div class="linee-modal-content" style="max-width: 360px;">
+                            <h3 style="margin-bottom: 8px;">添加新联系人</h3>
+                            <p style="font-size: 12px; color: #999; margin-bottom: 20px;">选择创建方式</p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- Manual Create Character - Linear Style -->
+                                <div style="border: 2px solid #E5E7EB; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 14px;" 
+                                     onclick="document.getElementById('linee-modal-add-friend').classList.add('hidden'); document.getElementById('linee-modal-create-char').classList.remove('hidden');"
+                                     onmouseover="this.style.borderColor='#A0D8EF'; this.style.background='#F9FAFB';"
+                                     onmouseout="this.style.borderColor='#E5E7EB'; this.style.background='white';">
+                                    <div style="width: 48px; height: 48px; border: 2px solid #A0D8EF; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A0D8EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; font-size: 15px; color: #111827; margin-bottom: 2px;">手动创建</div>
+                                        <div style="font-size: 12px; color: #9CA3AF;">自定义角色详细设定</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- AI Generate Character - Linear Style -->
+                                <div style="border: 2px solid #E5E7EB; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 14px;" 
+                                     onclick="document.getElementById('linee-modal-add-friend').classList.add('hidden'); document.getElementById('linee-modal-ai-generate').classList.remove('hidden');"
+                                     onmouseover="this.style.borderColor='#A0D8EF'; this.style.background='#F9FAFB';"
+                                     onmouseout="this.style.borderColor='#E5E7EB'; this.style.background='white';">
+                                    <div style="width: 48px; height: 48px; border: 2px solid #A0D8EF; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A0D8EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                                            <path d="M2 17l10 5 10-5"></path>
+                                            <path d="M2 12l10 5 10-5"></path>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; font-size: 15px; color: #111827; margin-bottom: 2px;">AI 生成</div>
+                                        <div style="font-size: 12px; color: #9CA3AF;">输入关键词自动生成</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Import Card - Linear Style -->
+                                <div style="border: 2px solid #E5E7EB; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 14px;" 
+                                     onclick="openImportCardModal(); document.getElementById('linee-modal-add-friend').classList.add('hidden');"
+                                     onmouseover="this.style.borderColor='#A0D8EF'; this.style.background='#F9FAFB';"
+                                     onmouseout="this.style.borderColor='#E5E7EB'; this.style.background='white';">
+                                    <div style="width: 48px; height: 48px; border: 2px solid #A0D8EF; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A0D8EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; font-size: 15px; color: #111827; margin-bottom: 2px;">导入角色卡</div>
+                                        <div style="font-size: 12px; color: #9CA3AF;">从 Tavern 卡导入</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="linee-modal-actions" style="margin-top: 20px;">
                                 <button class="linee-btn-cancel" onclick="closeLineeModal('linee-modal-add-friend')">取消</button>
-                                <button class="linee-btn-confirm" onclick="confirmLineeAddFriend()">添加</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Generate Character Modal -->
+                    <div id="linee-modal-ai-generate" class="linee-modal hidden" style="z-index: 300;">
+                        <div class="linee-modal-content" style="max-width: 400px;">
+                            <h3 style="margin-bottom: 8px;">✨ AI 生成角色</h3>
+                            <p style="font-size: 12px; color: #999; margin-bottom: 16px;">输入关键词，AI 将自动生成完整的角色设定</p>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px;">关键词</label>
+                                <textarea id="ai-generate-keywords" placeholder="例如：冷酷霸道总裁、温柔邻家姐姐、中二病魔法师..." rows="3" style="width: 100%; padding: 12px; border: 1px solid #E5E7EB; border-radius: 8px; resize: vertical; font-size: 14px; line-height: 1.6;"></textarea>
+                                <div style="font-size: 11px; color: #9CA3AF; margin-top: 6px;">💡 提示：可以包含性别、年龄、职业、性格等信息</div>
+                            </div>
+                            
+                            <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                                <div style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">
+                                    <strong style="color: #374151;">示例：</strong>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    <span onclick="document.getElementById('ai-generate-keywords').value='28岁霸道总裁，冷漠高傲，对主角有执念'" style="font-size: 11px; padding: 4px 8px; background: white; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A0D8EF'; this.style.color='#0EA5E9';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='inherit';">霸道总裁</span>
+                                    <span onclick="document.getElementById('ai-generate-keywords').value='温柔体贴的邻家姐姐，25岁，开朗善良'" style="font-size: 11px; padding: 4px 8px; background: white; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A0D8EF'; this.style.color='#0EA5E9';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='inherit';">邻家姐姐</span>
+                                    <span onclick="document.getElementById('ai-generate-keywords').value='中二病魔法师，16岁，自称魔王，实际上很单纯'" style="font-size: 11px; padding: 4px 8px; background: white; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A0D8EF'; this.style.color='#0EA5E9';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='inherit';">中二魔法师</span>
+                                    <span onclick="document.getElementById('ai-generate-keywords').value='冷酷杀手，32岁，寡言少语，内心柔软'" style="font-size: 11px; padding: 4px 8px; background: white; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A0D8EF'; this.style.color='#0EA5E9';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='inherit';">冷酷杀手</span>
+                                </div>
+                            </div>
+                            
+                            <div class="linee-modal-actions">
+                                <button class="linee-btn-cancel" onclick="closeLineeModal('linee-modal-ai-generate')">取消</button>
+                                <button class="linee-btn-confirm" onclick="confirmAIGenerateChar()">
+                                    <span>🤖 生成角色</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -644,10 +740,402 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Advanced Create Character Modal -->
+                    <div id="linee-modal-create-char" class="linee-modal hidden" style="z-index: 200;">
+                        <div class="linee-modal-content" style="max-height: 85vh; overflow-y: auto; width: 90%; max-width: 400px;">
+                            <h3>✨ 高级角色创建</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <input type="text" id="ai-char-name" placeholder="姓名 (必填)" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                <div style="display: flex; gap: 10px;">
+                                    <select id="ai-char-gender" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                        <option value="男">男</option>
+                                        <option value="女">女</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                    <input type="text" id="ai-char-identity" placeholder="身份/职业" style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                </div>
+                                <textarea id="ai-char-appearance" placeholder="外貌特征..." rows="2" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none;"></textarea>
+                                <textarea id="ai-char-background" placeholder="核心背景与性格设定 (越详细越好)..." rows="4" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none;"></textarea>
+                                
+                                <div>
+                                    <label style="font-size: 12px; color: #666;">性格标签 (用逗号分隔)</label>
+                                    <input type="text" id="ai-char-tags" placeholder="例如: 傲娇, 高冷" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                </div>
+                                
+                                <div>
+                                    <label style="font-size: 12px; color: #666;">对话风格</label>
+                                    <select id="ai-char-style" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                        <option value="现代日常 (默认)">现代日常 (默认)</option>
+                                        <option value="古风 (吾, 汝, 甚好)">古风</option>
+                                        <option value="翻译腔 (哦, 我的老伙计)">翻译腔</option>
+                                        <option value="二次元 (颜文字)">二次元</option>
+                                        <option value="赛博朋克">赛博朋克</option>
+                                    </select>
+                                </div>
+
+                                <textarea id="ai-char-first-msg" placeholder="开场白 (选填)..." rows="2" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: none;"></textarea>
+                            </div>
+                            <div class="linee-modal-actions" style="margin-top: 20px;">
+                                <button class="linee-btn-cancel" onclick="closeLineeModal('linee-modal-create-char')">取消</button>
+                                <button class="linee-btn-confirm" onclick="confirmAICreateChar()">创建</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- World Book Modal -->
+                    <div id="linee-modal-world-book" class="linee-modal hidden" style="z-index: 200;">
+                        <div class="linee-modal-content" style="max-height: 80vh; overflow-y: auto;">
+                            <h3>🌍 世界书管理</h3>
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-size: 12px; color: #666;">全局设定 (Global)</label>
+                                <div id="world-entries-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+                                    <!-- Dynamic Entries -->
+                                    <div style="color: #999; font-size: 12px; text-align: center;">暂无条目</div>
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="text" id="world-key" placeholder="关键词" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                                    <input type="text" id="world-content" placeholder="内容描述" style="flex: 2; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                                    <button onclick="addWorldEntry()" style="padding: 0 12px; background: #A0D8EF; color: white; border: none; border-radius: 6px;">+</button>
+                                </div>
+                            </div>
+                            <div class="linee-modal-actions">
+                                <button class="linee-btn-confirm" onclick="closeLineeModal('linee-modal-world-book')">完成</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Import Card Modal -->
+                    <div id="linee-modal-import-card" class="linee-modal hidden" style="z-index: 200;">
+                        <div class="linee-modal-content">
+                            <h3>📥 导入角色卡</h3>
+                            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">支持 TavernAI 格式图片 (PNG) 或 JSON 文件。</p>
+                            <input type="file" id="import-card-file" accept=".png,.json" style="width: 100%; margin-bottom: 15px;">
+                            <div class="linee-modal-actions">
+                                <button class="linee-btn-cancel" onclick="closeLineeModal('linee-modal-import-card')">取消</button>
+                                <button class="linee-btn-confirm" onclick="confirmImportCard()">导入</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             <!-- Linee 个人设定页 -->
+            <!-- Chat Settings Page -->
+            <div id="chat-settings-page" class="app-window hidden">
+                <div style="height: 100%; display: flex; flex-direction: column; background: #F7F7F7;">
+                    <!-- Header -->
+                    <div style="background: white; border-bottom: 1px solid #E5E7EB; padding: 48px 16px 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button onclick="closeChatSettings()" style="width: 32px; height: 32px; border: none; background: transparent; color: #A0D8EF; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                ←
+                            </button>
+                            <h1 style="margin: 0; font-size: 18px; font-weight: 700; color: #1f2937;">聊天设定</h1>
+                        </div>
+                    </div>
+
+                    <!-- Content (Scrollable) -->
+                    <div style="flex: 1; overflow-y: auto; padding-bottom: 100px;">
+                        
+                        <!-- Block A: Logic & World -->
+                        <div style="margin-top: 20px;">
+                            <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px;">AI 配置</div>
+                            <div style="background: white; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB;">
+                                <!-- World Book Link -->
+                                <div onclick="selectWorldBook()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="book-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">关联世界书</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="selected-worldbook" style="font-size: 13px; color: #9CA3AF;">未选择</span>
+                                        <ion-icon name="chevron-forward-outline" style="font-size: 16px; color: #D1D5DB;"></ion-icon>
+                                    </div>
+                                </div>
+                                
+                                <!-- Streaming -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="flash-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">流式输出</span>
+                                    </div>
+                                    <label class="chat-switch">
+                                        <input type="checkbox" id="streaming-toggle">
+                                        <span class="chat-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <!-- Time Sync -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="time-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">时间同步</span>
+                                    </div>
+                                    <label class="chat-switch">
+                                        <input type="checkbox" id="timesync-toggle">
+                                        <span class="chat-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <!-- Context Limit -->
+                                <div style="padding: 14px 16px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                        <ion-icon name="layers-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">上下文记忆</span>
+                                        <span id="context-value" style="margin-left: auto; font-size: 13px; color: #A0D8EF; font-weight: 600;">20 条</span>
+                                    </div>
+                                    <input type="range" id="context-slider" min="5" max="50" value="20" style="width: 100%; height: 4px; border-radius: 2px; background: #E5E7EB; outline: none; -webkit-appearance: none; appearance: none;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Block B: Persona & Role -->
+                        <div style="margin-top: 20px;">
+                            <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px;">角色与扮演</div>
+                            <div style="background: white; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB;">
+                                <!-- Character Profile -->
+                                <div onclick="toggleCharacterProfile()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="person-circle-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">当前角色设置</span>
+                                    </div>
+                                    <ion-icon id="char-profile-arrow" name="chevron-forward-outline" style="font-size: 16px; color: #D1D5DB; transition: transform 0.3s;"></ion-icon>
+                                </div>
+                                
+                                <!-- Expandable Character Details -->
+                                <div id="character-details" style="display: none; border-top: 1px solid #F3F4F6; padding: 16px; background: #F9FAFB;">
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 6px;">姓名</label>
+                                        <input type="text" id="char-name-input" placeholder="输入角色姓名..." style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 8px; background: white; font-size: 13px; outline: none;">
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 6px;">备注昵称</label>
+                                        <input type="text" id="char-nickname-input" placeholder="添加备注昵称..." style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 8px; background: white; font-size: 13px; outline: none;">
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 6px;">头像</label>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button onclick="uploadCharAvatar()" style="padding: 8px 16px; border: 1px solid #E5E7EB; background: white; border-radius: 8px; font-size: 13px; color: #374151; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                                <ion-icon name="cloud-upload-outline"></ion-icon> 上传
+                                            </button>
+                                            <input type="text" id="char-avatar-url" placeholder="或输入图片 URL" style="flex: 1; padding: 8px 12px; border: none; border-bottom: 1px solid #E5E7EB; background: transparent; font-size: 13px; outline: none;">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 6px;">背景/性格</label>
+                                        <textarea id="char-background" placeholder="描述角色的背景故事和性格..." style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px; resize: vertical; background: white;"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Persona Slots -->
+                                <div style="border-top: 1px solid #F3F4F6; padding: 16px;">
+                                    <div style="font-size: 13px; color: #374151; margin-bottom: 12px; font-weight: 600;">我的卡槽</div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <div onclick="selectPersonaSlot(0)" data-slot="0" class="persona-slot active" style="flex: 1; aspect-ratio: 1; border: 2px solid #A0D8EF; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: white; position: relative;">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #E5E7EB; margin-bottom: 6px;"></div>
+                                            <span style="font-size: 11px; color: #6B7280;">卡槽 A</span>
+                                            <ion-icon name="checkmark-circle" style="position: absolute; top: 4px; right: 4px; font-size: 16px; color: #A0D8EF;"></ion-icon>
+                                        </div>
+                                        <div onclick="selectPersonaSlot(1)" data-slot="1" class="persona-slot" style="flex: 1; aspect-ratio: 1; border: 2px solid #E5E7EB; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: white; position: relative;">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #E5E7EB; margin-bottom: 6px;"></div>
+                                            <span style="font-size: 11px; color: #6B7280;">卡槽 B</span>
+                                        </div>
+                                        <div onclick="selectPersonaSlot(2)" data-slot="2" class="persona-slot" style="flex: 1; aspect-ratio: 1; border: 2px solid #E5E7EB; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: white; position: relative;">
+                                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #E5E7EB; margin-bottom: 6px;"></div>
+                                            <span style="font-size: 11px; color: #6B7280;">卡槽 C</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Block C: Appearance -->
+                        <div style="margin-top: 20px;">
+                            <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px;">外观与主题</div>
+                            <div style="background: white; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB;">
+                                <!-- Chat Background -->
+                                <div style="padding: 14px 16px; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                        <ion-icon name="image-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">聊天背景</span>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <div id="chat-bg-preview" style="width: 60px; height: 60px; border-radius: 8px; background: #F3F4F6; overflow: hidden;">
+                                            <img src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                        </div>
+                                        <button onclick="uploadChatBackground()" style="flex: 1; padding: 10px; border: 1px solid #A0D8EF; background: transparent; color: #A0D8EF; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                            <ion-icon name="cloud-upload-outline"></ion-icon> 上传图片
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bubble Theme -->
+                                <div style="padding: 14px 16px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                        <ion-icon name="chatbubble-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">气泡主题</span>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                                        <div onclick="selectBubbleColor('#A0D8EF')" data-color="#A0D8EF" class="bubble-color active" style="width: 36px; height: 36px; border-radius: 50%; background: #A0D8EF; cursor: pointer; border: 3px solid #A0D8EF; box-shadow: 0 0 0 2px white, 0 0 0 4px #A0D8EF;"></div>
+                                        <div onclick="selectBubbleColor('#3b82f6')" data-color="#3b82f6" class="bubble-color" style="width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; cursor: pointer; border: 3px solid white;"></div>
+                                        <div onclick="selectBubbleColor('#ec4899')" data-color="#ec4899" class="bubble-color" style="width: 36px; height: 36px; border-radius: 50%; background: #ec4899; cursor: pointer; border: 3px solid white;"></div>
+                                        <div onclick="selectBubbleColor('#f59e0b')" data-color="#f59e0b" class="bubble-color" style="width: 36px; height: 36px; border-radius: 50%; background: #f59e0b; cursor: pointer; border: 3px solid white;"></div>
+                                        <div onclick="selectBubbleColor('#8b5cf6')" data-color="#8b5cf6" class="bubble-color" style="width: 36px; height: 36px; border-radius: 50%; background: #8b5cf6; cursor: pointer; border: 3px solid white;"></div>
+                                    </div>
+                                    <button onclick="toggleAdvancedCSS()" style="width: 100%; padding: 10px; border: 1px solid #E5E7EB; background: white; color: #6B7280; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <ion-icon name="code-outline"></ion-icon> 高级 CSS
+                                        <ion-icon id="css-arrow" name="chevron-down-outline" style="font-size: 14px; margin-left: auto; transition: transform 0.3s;"></ion-icon>
+                                    </button>
+                                    <textarea id="chat-custom-css" placeholder="输入自定义 CSS 代码..." style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 12px; font-family: 'Courier New', monospace; resize: vertical; margin-top: 10px; display: none; background: #1f2937; color: #10b981; box-sizing: border-box;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Block D: Interaction -->
+                        <div style="margin-top: 20px;">
+                            <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px;">交互习惯</div>
+                            <div style="background: white; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB;">
+                                <!-- Auto Reply -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="chatbox-ellipses-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">自动回复</span>
+                                    </div>
+                                    <label class="chat-switch">
+                                        <input type="checkbox" id="autoreply-toggle">
+                                        <span class="chat-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <!-- Enter to Send -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="return-down-forward-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">回车发送</span>
+                                    </div>
+                                    <label class="chat-switch">
+                                        <input type="checkbox" id="enter-send-toggle" checked>
+                                        <span class="chat-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <!-- Allow Calls -->
+                                <div style="padding: 14px 16px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <ion-icon name="call-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
+                                            <span style="font-size: 14px; color: #1f2937;">允许主动通话</span>
+                                        </div>
+                                        <label class="chat-switch">
+                                            <input type="checkbox" id="allow-calls-toggle">
+                                            <span class="chat-slider"></span>
+                                        </label>
+                                    </div>
+                                    <p style="margin: 0; padding-left: 32px; font-size: 12px; color: #9CA3AF;">允许角色主动发起语音或视讯请求</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Fixed Save Button -->
+                    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: white; border-top: 1px solid #E5E7EB;">
+                        <button onclick="saveAllChatSettings()" style="width: 100%; padding: 12px; border: 2px solid #A0D8EF; background: transparent; color: #A0D8EF; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                            保存设定
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden File Inputs -->
+                <input type="file" id="char-avatar-file" accept="image/*" style="display: none;" onchange="handleCharAvatarUpload(event)">
+                <input type="file" id="chat-bg-file" accept="image/*" style="display: none;" onchange="handleChatBgUpload(event)">
+            </div>
+
+            <!-- Friend Profile Page -->
+            <div id="friend-profile-page" class="app-window hidden">
+                <div style="position: relative; height: 100%; background: #F9FAFB; overflow-y: auto;">
+                    <!-- Background Banner -->
+                    <div id="friend-profile-banner" style="position: relative; height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden;">
+                        <img id="friend-profile-bg-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        <div style="position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+                            <button onclick="closeFriendProfile()" style="width: 36px; height: 36px; border: none; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); border-radius: 50%; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                ←
+                            </button>
+                            <button onclick="openBgUploader()" style="padding: 8px 16px; border: none; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-radius: 20px; color: #333; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <ion-icon name="image-outline"></ion-icon> 更换背景
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Content -->
+                    <div style="position: relative; margin-top: -50px; padding: 0 20px 20px;">
+                        <!-- Avatar Section -->
+                        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                            <div style="position: relative;">
+                                <div id="friend-profile-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: #E5E7EB; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden;">
+                                    <img id="friend-profile-avatar-img" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <button onclick="openAvatarUploader()" style="position: absolute; bottom: 0; right: 0; width: 32px; height: 32px; border: 2px solid white; background: #A0D8EF; border-radius: 50%; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                                    <ion-icon name="camera-outline"></ion-icon>
+                                </button>
+                            </div>
+                            <h2 id="friend-profile-name" style="margin: 12px 0 4px 0; font-size: 20px; font-weight: 700; color: #111827;"></h2>
+                            <p id="friend-profile-status" style="margin: 0; font-size: 13px; color: #6B7280;"></p>
+                        </div>
+
+                        <!-- Name & Nickname Card -->
+                        <div style="background: white; border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #111827;">好友信息</h3>
+                                <button onclick="toggleEditNameNickname()" id="edit-name-btn" style="padding: 6px 12px; border: 1px solid #E5E7EB; background: white; border-radius: 8px; color: #6B7280; font-size: 12px; cursor: pointer;">
+                                    <ion-icon name="create-outline"></ion-icon> 编辑
+                                </button>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">姓名</label>
+                                <input type="text" id="friend-profile-name-input" placeholder="输入姓名..." style="width: 100%; padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 14px; font-family: inherit;" readonly>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">备注昵称</label>
+                                <input type="text" id="friend-profile-nickname" placeholder="添加备注昵称..." style="width: 100%; padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 14px; font-family: inherit;" readonly>
+                            </div>
+                            <div id="name-save-section" style="display: none; margin-top: 10px; text-align: right;">
+                                <button onclick="saveNameNickname()" style="padding: 8px 16px; border: none; background: #A0D8EF; color: white; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">保存</button>
+                            </div>
+                        </div>
+
+                        <!-- Info Cards -->
+                        <div style="background: white; border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #111827;">背景描述</h3>
+                                <button onclick="toggleEditDescription()" id="edit-desc-btn" style="padding: 6px 12px; border: 1px solid #E5E7EB; background: white; border-radius: 8px; color: #6B7280; font-size: 12px; cursor: pointer;">
+                                    <ion-icon name="create-outline"></ion-icon> 编辑
+                                </button>
+                            </div>
+                            <textarea id="friend-profile-description" placeholder="暂无描述..." style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px; line-height: 1.6; resize: vertical; font-family: inherit;" readonly></textarea>
+                            <div id="desc-save-section" style="display: none; margin-top: 10px; text-align: right;">
+                                <button onclick="saveDescription()" style="padding: 8px 16px; border: none; background: #A0D8EF; color: white; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">保存</button>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="sendMessageToFriend()" style="flex: 1; padding: 14px; border: none; background: #A0D8EF; color: white; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <ion-icon name="chatbubble-outline"></ion-icon> 发送消息
+                            </button>
+                            <button onclick="deleteFriend()" style="padding: 14px 20px; border: 1px solid #E5E7EB; background: white; color: #EF4444; border-radius: 12px; font-size: 14px; cursor: pointer;">
+                                <ion-icon name="trash-outline"></ion-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden File Inputs -->
+                <input type="file" id="friend-avatar-upload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+                <input type="file" id="friend-bg-upload" accept="image/*" style="display: none;" onchange="handleBgUpload(event)">
+            </div>
+
             <div id="linee-profile-settings" class="app-window hidden">
                 <div id="linee-settings-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -679,6 +1167,17 @@
                             <label>我的设定</label>
                             <textarea id="linee-edit-settings" placeholder="输入我的设定..." rows="5"></textarea>
                         </div>
+                        
+                        <!-- AI Creative Tools -->
+                        <div class="linee-settings-group" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; display: none;">
+                            <h4 style="margin-bottom: 10px; font-size: 14px; color: #666;">🤖 AI 创意工坊</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button onclick="openCreateCharModal()" style="padding: 10px; background: #f0f4ff; border: 1px solid #dbeafe; border-radius: 12px; color: #4b5563; font-size: 13px; cursor: pointer;">✨ 高级创角</button>
+                                <button onclick="openWorldBookModal()" style="padding: 10px; background: #f0f4ff; border: 1px solid #dbeafe; border-radius: 12px; color: #4b5563; font-size: 13px; cursor: pointer;">🌍 世界书</button>
+                                <button onclick="openImportCardModal()" style="padding: 10px; background: #f0f4ff; border: 1px solid #dbeafe; border-radius: 12px; color: #4b5563; font-size: 13px; cursor: pointer; grid-column: span 2;">📥 导入角色卡 (V2)</button>
+                            </div>
+                        </div>
+
                         <button class="linee-save-profile-btn" onclick="saveLineeProfile()">保存至卡槽</button>
                     </div>
 
@@ -709,6 +1208,103 @@
                 </div>
             </div>
 
+            <div id="worldbook-app" class="app-window hidden">
+                <!-- A. Dynamic Header -->
+                <div id="wb-header" class="wb-header">
+                    <!-- Normal Mode -->
+                    <div class="wb-header-normal">
+                        <button class="wb-btn-icon" onclick="closeApp()">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <h3 class="wb-title">世界书</h3>
+                    </div>
+                    
+                    <!-- Selection Mode (Hidden by default) -->
+                    <div class="wb-header-selection hidden">
+                        <div class="flex items-center gap-2">
+                            <button class="wb-btn-icon" onclick="wbExitSelectionMode()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <span id="wb-selection-count" class="wb-selection-count">已选 0</span>
+                        </div>
+                        <div class="wb-selection-tools">
+                            <button class="wb-btn-icon" onclick="wbMoveItems()" title="移动">
+                                <i class="fa-solid fa-folder-tree"></i>
+                            </button>
+                            <button class="wb-btn-icon" onclick="wbDownloadItems()" title="下载">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+                            <button class="wb-btn-icon danger" onclick="wbDeleteItems()" title="删除">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="wb-tabs">
+                    <button class="wb-tab-btn active" onclick="wbSwitchTab('global')" id="wb-tab-global-btn">全局世界书</button>
+                    <button class="wb-tab-btn" onclick="wbSwitchTab('local')" id="wb-tab-local-btn">局部世界书</button>
+                </div>
+
+                <!-- B. Main Content -->
+                <div class="wb-container">
+                    
+                    <!-- Global Panel -->
+                    <div id="wb-panel-global" class="wb-panel active">
+                        <div class="wb-panel-header">
+                            <h4 class="wb-panel-title">
+                                <i class="fa-solid fa-globe"></i> 全局条目
+                            </h4>
+                            <div class="wb-panel-actions">
+                                <button class="wb-btn-outline" onclick="wbCreateGlobal()" title="新增">
+                                    <i class="fa-solid fa-folder-plus"></i>
+                                </button>
+                                <button class="wb-btn-outline" onclick="wbImportGlobal()" title="导入">
+                                    <i class="fa-solid fa-file-import"></i>
+                                </button>
+                                <button class="wb-btn-outline" onclick="wbExportGlobal()" title="导出">
+                                    <i class="fa-solid fa-file-export"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- List -->
+                        <div id="wb-list-global" class="wb-list">
+                            <!-- Items will be injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Local Panel -->
+                    <div id="wb-panel-local" class="wb-panel hidden">
+                        <div class="wb-panel-header">
+                            <h4 class="wb-panel-title">
+                                <i class="fa-solid fa-book-bookmark"></i> 局部世界书
+                            </h4>
+                            <div class="wb-panel-actions">
+                                <button class="wb-btn-outline" onclick="wbCreateLocal()" title="新增">
+                                    <i class="fa-solid fa-folder-plus"></i>
+                                </button>
+                                <button class="wb-btn-outline" onclick="wbImportLocal()" title="导入">
+                                    <i class="fa-solid fa-file-import"></i>
+                                </button>
+                                <button class="wb-btn-outline" onclick="wbExportLocal()" title="导出">
+                                    <i class="fa-solid fa-file-export"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- List -->
+                        <div id="wb-list-local" class="wb-list">
+                            <!-- Items will be injected here -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Hidden Inputs for File Operations -->
+                <input type="file" id="wb-file-import-global" class="hidden" accept=".json" onchange="handleWbImportGlobal(this)">
+                <input type="file" id="wb-file-import-local" class="hidden" accept=".json" onchange="handleWbImportLocal(this)">
+            </div>
+
             <div id="chat-window" class="app-window hidden">
                 <div class="app-header">
                     <button class="back-btn">←</button>
@@ -721,16 +1317,18 @@
                 </div>
             </div>
 
-            <div id="calendar-app" class="app-window hidden">
-                <div class="app-header">
+            <div id="calendar-app" class="app-window hidden" style="background-color: #f5f5f7;">
+                <div class="app-header" style="background-color: #fff; border-bottom: 1px solid #e5e5e5; padding-top: 40px;">
                     <button class="back-btn">←</button>
                     <h3>日历</h3>
                 </div>
-                <div id="calendar-full"></div>
-                <div id="memo-area">
-                    <h4 id="memo-date-title">备忘录</h4>
-                    <textarea id="memo-input" placeholder="输入备忘录..."></textarea>
-                    <button id="save-memo">保存</button>
+                <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                    <div id="calendar-full" style="background-color: #fff; margin-bottom: 10px; padding-bottom: 10px;"></div>
+                    <div id="memo-area" style="background-color: #fff; flex: 1; padding: 20px; border-top: 1px solid #e5e5e5;">
+                        <h4 id="memo-date-title" style="margin-bottom: 15px; color: #333; font-size: 18px;">备忘录</h4>
+                        <textarea id="memo-input" placeholder="点击日期添加备忘录..." style="width: 100%; height: 150px; padding: 15px; border: 1px solid #e5e5e5; border-radius: 12px; resize: none; background-color: #f9f9f9; font-size: 16px; line-height: 1.5;"></textarea>
+                        <button id="save-memo" style="width: 100%; margin-top: 15px; padding: 12px; background-color: #007AFF; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">保存</button>
+                    </div>
                 </div>
             </div>
 
@@ -792,7 +1390,10 @@
     <style id="custom-style"></style>
     <style id="custom-font"></style>
     <!-- 使用單一文件版本（推薦） -->
-    <script src="app.js"></script>
+    <script src="js/ai-core.js"></script>
+    <script src="js/app-complete.js"></script>
+    <script src="js/linee.js"></script>
+    <script src="js/worldbook.js"></script>
     <!-- 或使用模塊化版本（取消下面的註釋並註釋掉上面的 app.js）
     <script src="js/state.js"></script>
     <script src="js/statusbar.js"></script>

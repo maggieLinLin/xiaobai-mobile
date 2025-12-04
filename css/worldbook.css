@@ -1,0 +1,319 @@
+/* World Book Manager UI - Green Linear Style */
+
+/* Base container */
+#worldbook-app {
+    background-color: #ffffff;
+    color: #1f2937; /* gray-800 */
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Header */
+.wb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 35px 16px 10px; /* Top padding for status bar */
+    height: auto;
+    min-height: 80px;
+    border-bottom: 1px solid #d1fae5; /* emerald-100 */
+    background-color: #ffffff;
+    transition: background-color 0.3s ease;
+}
+
+.wb-header.selection-active {
+    background-color: #ecfdf5; /* emerald-50 */
+}
+
+.wb-header-normal, .wb-header-selection {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.wb-header-selection {
+    justify-content: space-between;
+}
+
+.wb-header-selection .wb-selection-tools {
+    display: flex;
+    gap: 4px;
+}
+
+.wb-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #047857; /* emerald-700 */
+}
+
+.wb-selection-count {
+    font-weight: 700;
+    color: #047857;
+}
+
+/* Tabs */
+.wb-tabs {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    padding: 0 16px;
+}
+
+.wb-tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280; /* gray-500 */
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wb-tab-btn.active {
+    color: #059669; /* emerald-600 */
+    border-bottom-color: #059669;
+}
+
+/* Buttons */
+.wb-btn-icon {
+    padding: 8px;
+    border-radius: 9999px; /* rounded-full */
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #059669; /* emerald-600 */
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wb-btn-icon:hover {
+    background-color: #ecfdf5; /* emerald-50 */
+}
+
+.wb-btn-icon.danger {
+    color: #ef4444; /* red-500 */
+}
+
+.wb-btn-icon.danger:hover {
+    background-color: #fef2f2; /* red-50 */
+}
+
+.wb-btn-outline {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #10b981; /* emerald-500 */
+    border-radius: 9999px;
+    color: #059669; /* emerald-600 */
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.wb-btn-outline:hover {
+    background-color: #ecfdf5; /* emerald-50 */
+}
+
+.wb-btn-outline i {
+    font-size: 12px;
+}
+
+/* Content Container - Tabbed Layout */
+.wb-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 128px); /* Adjust for header + tabs */
+    overflow: hidden;
+    background-color: #f9fafb; /* gray-50 */
+}
+
+/* Panels */
+.wb-panel {
+    flex: 1;
+    display: none; /* Hidden by default for tabs */
+    flex-direction: column;
+    padding: 16px;
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+.wb-panel.active {
+    display: flex;
+}
+
+.wb-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.wb-panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #059669; /* emerald-600 */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+}
+
+.wb-panel-title i {
+    margin-right: 8px;
+}
+
+.wb-panel-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* List Items (Cards) */
+.wb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wb-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-radius: 12px; /* rounded-xl */
+    border: 1px solid #d1fae5; /* emerald-100 */
+    background-color: #ffffff;
+    transition: all 0.2s;
+    cursor: pointer;
+    user-select: none;
+}
+
+.wb-card:hover {
+    border-color: #6ee7b7; /* emerald-300 */
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.wb-card.selected {
+    background-color: #ecfdf5; /* emerald-50 */
+    border-color: #10b981; /* emerald-500 */
+    box-shadow: 0 0 0 2px #10b981; /* ring-2 for better visibility */
+    transform: translateY(-2px);
+}
+
+.wb-card.selected::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: #10b981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wb-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Dragging state */
+.wb-card.dragging {
+    opacity: 0.4;
+}
+
+.wb-card.drag-over {
+    border-color: #10b981;
+    border-width: 2px;
+    border-style: dashed;
+}
+
+.wb-card-icon {
+    margin-right: 12px;
+    color: #10b981; /* emerald-500 */
+    font-size: 18px;
+    background: #ecfdf5;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.wb-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.wb-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937; /* gray-800 */
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wb-card-subtitle {
+    font-size: 11px;
+    color: #9ca3af; /* gray-400 */
+    margin: 0;
+}
+
+.wb-card-action {
+    margin-left: 8px;
+}
+
+.wb-card-handle {
+    color: #d1d5db; /* gray-300 */
+    cursor: grab;
+    padding: 4px;
+}
+
+.wb-card-handle:active {
+    cursor: grabbing;
+}
+
+.wb-card-check {
+    color: #059669; /* emerald-600 */
+    font-size: 20px;
+}
+
+/* Utility */
+.hidden {
+    display: none !important;
+}
+
+/* Modal Animations */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

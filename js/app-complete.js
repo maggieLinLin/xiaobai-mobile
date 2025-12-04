@@ -39,8 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadState() {
     const saved = localStorage.getItem('xiaobai-state');
     if (saved) {
-        Object.assign(state, JSON.parse(saved));
+        try {
+            Object.assign(state, JSON.parse(saved));
+        } catch (e) {
+            console.error('Failed to parse saved state:', e);
+        }
     }
+    // Safety checks
+    if (!state.memos) state.memos = {};
+    if (!state.music) state.music = { current: null, playlist: [], favorites: [], isPlaying: false };
 }
 
 // 保存状态
@@ -187,11 +194,13 @@ function renderMiniCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date().toISOString().split('T')[0];
     
-    let html = `<div style="padding:5px">
+    // Fix: Add pointer-events handling to ensure days are clickable
+    // while allowing the background to open the app
+    let html = `<div style="padding:5px; pointer-events: none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <button id="cal-prev" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px">◀</button>
+            <button id="cal-prev" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px;pointer-events:auto;">◀</button>
             <div style="font-size:11px;font-weight:bold">${year}年${month + 1}月</div>
-            <button id="cal-next" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px">▶</button>
+            <button id="cal-next" style="border:none;background:none;font-size:14px;cursor:pointer;padding:5px;pointer-events:auto;">▶</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:8px;text-align:center">
             <div style="font-weight:bold">S</div><div style="font-weight:bold">M</div><div style="font-weight:bold">T</div><div style="font-weight:bold">W</div><div style="font-weight:bold">T</div><div style="font-weight:bold">F</div><div style="font-weight:bold">S</div>`;
@@ -204,16 +213,34 @@ function renderMiniCalendar() {
         const hasMemo = state.memos[dateStr];
         const bgColor = isToday ? 'background:#007AFF !important;color:white !important;font-weight:bold !important;' : '';
         const border = hasMemo ? 'border:1px solid #FF9500;' : '';
-        html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border}" class="cal-day" data-date="${dateStr}">${day}</div>`;
+        html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border};pointer-events:auto;" class="cal-day" data-date="${dateStr}">${day}</div>`;
     }
     
     html += '</div></div>';
     widget.innerHTML = html;
     
+    // Add click handler to the whole widget
+    widget.onclick = (e) => {
+        // Prevent if clicking buttons
+        if (e.target.id === 'cal-prev' || e.target.id === 'cal-next') return;
+        
+        // Always open calendar app
+        openApp('calendar-app');
+        
+        // If clicked specific day, select it
+        if (e.target.classList.contains('cal-day')) {
+             state.selectedDate = e.target.dataset.date;
+             selectDate(e.target.dataset.date);
+        } else {
+             // If clicked background, default to today
+             selectDate(today);
+        }
+    };
+    
     const todayMemoWidget = document.getElementById('today-memo-widget');
     if (todayMemoWidget) {
         const memo = state.memos[today];
-        todayMemoWidget.textContent = memo && memo.trim() ? memo : '今天没有任务';
+        todayMemoWidget.value = memo && memo.trim() ? memo : '今天没有任务';
     }
     
     const prevBtn = document.getElementById('cal-prev');
@@ -236,15 +263,6 @@ function renderMiniCalendar() {
             saveState();
         };
     }
-    
-    widget.querySelectorAll('.cal-day').forEach(el => {
-        el.onclick = (e) => {
-            e.stopPropagation();
-            state.selectedDate = el.dataset.date;
-            openApp('calendar-app');
-            selectDate(el.dataset.date);
-        };
-    });
 }
 
 // 设置页面
@@ -828,6 +846,9 @@ function initApps() {
                 alert('功能开发中...');
             } else if (app === 'linee') {
                 openApp('linee-app');
+            } else if (app === 'worldbook') {
+                openApp('worldbook-app');
+                initWorldBookApp(); // Call initialization for WorldBook logic
             }
         };
     });
@@ -869,6 +890,7 @@ function openApp(appId) {
     const app = document.getElementById(appId);
     app.classList.remove('hidden');
     
+    // Bind back button
     const backBtn = app.querySelector('.back-btn');
     if (backBtn) {
         backBtn.onclick = (e) => {
@@ -877,6 +899,25 @@ function openApp(appId) {
             console.log('Back button clicked');
             closeApp();
         };
+    }
+    
+    // Special handling for calendar app - bind save button
+    if (appId === 'calendar-app') {
+        const saveBtn = document.getElementById('save-memo');
+        if (saveBtn) {
+            // Remove any previous listeners by cloning
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+            // Bind the saveMemo function
+            newSaveBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Save memo button clicked');
+                saveMemo();
+            };
+        } else {
+            console.error('Save memo button not found in calendar app');
+        }
     }
 }
 
@@ -938,42 +979,80 @@ function addMessage(role, text) {
 
 // 日历
 function initCalendar() {
-    document.getElementById('save-memo').onclick = saveMemo;
+    // Defer binding until the button is actually accessible
+    // Use event delegation or bind when calendar app opens
+    console.log('Calendar initialized');
+    
+    // Initialize full calendar date if not set
+    if (!state.fullCalendarDate) {
+        state.fullCalendarDate = new Date();
+    }
     renderFullCalendar();
 }
 
 function renderFullCalendar() {
     const container = document.getElementById('calendar-full');
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    // Use state for navigation
+    const date = new Date(state.fullCalendarDate || new Date());
+    const year = date.getFullYear();
+    const month = date.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const today = new Date().toISOString().split('T')[0];
     
-    let html = `<div style="padding:10px"><h3 style="margin-bottom:15px">${year}年${month + 1}月</h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">`;
-    html += '<div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">日</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">一</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">二</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">三</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">四</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">五</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px">六</div>';
+    // Header with Navigation
+    let html = `
+    <div style="padding:10px">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <button onclick="changeFullCalendarMonth(-1)" style="border:none; background:none; font-size:18px; cursor:pointer; padding:5px;">◀</button>
+            <h3 style="margin:0; font-size:18px;">${year}年${month + 1}月</h3>
+            <button onclick="changeFullCalendarMonth(1)" style="border:none; background:none; font-size:18px; cursor:pointer; padding:5px;">▶</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:10px;">
+    `;
+    
+    html += '<div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">日</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">一</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">二</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">三</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">四</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">五</div><div style="text-align:center;font-weight:bold;padding:8px;font-size:12px;color:#999">六</div>';
     
     for (let i = 0; i < firstDay; i++) html += '<div></div>';
     
     for (let day = 1; day <= daysInMonth; day++) {
-        const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isToday = date === today;
-        const hasMemo = state.memos[date];
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = dateStr === today;
+        const isSelected = state.selectedDate === dateStr;
+        const hasMemo = state.memos[dateStr];
+        
+        let bgStyle = '';
+        if (isSelected) bgStyle = 'background:#007AFF; color:white; font-weight:bold;';
+        else if (isToday) bgStyle = 'background:#E5F1FF; color:#007AFF; font-weight:bold;';
+        
+        const border = hasMemo ? 'border:1px solid #FF9500;' : '';
         const classes = `calendar-day ${isToday ? 'today' : ''} ${hasMemo ? 'has-memo' : ''}`;
-        html += `<div class="${classes}" data-date="${date}">${day}</div>`;
+        
+        html += `<div class="${classes}" data-date="${dateStr}" style="padding:10px; text-align:center; border-radius:10px; cursor:pointer; font-size:14px; ${bgStyle} ${border}">${day}</div>`;
     }
     
     html += '</div></div>';
     container.innerHTML = html;
     
-    document.querySelectorAll('.calendar-day').forEach(el => {
+    document.querySelectorAll('#calendar-full .calendar-day').forEach(el => {
         el.onclick = () => selectDate(el.dataset.date);
     });
 }
 
+// Global function for navigation
+window.changeFullCalendarMonth = function(delta) {
+    const currentDate = new Date(state.fullCalendarDate || new Date());
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    state.fullCalendarDate = currentDate;
+    renderFullCalendar();
+};
+
 function selectDate(date) {
     state.selectedDate = date;
+    
+    // Re-render to update selection style
+    renderFullCalendar();
+    
     const memoTitle = document.getElementById('memo-date-title');
     const memoInput = document.getElementById('memo-input');
     const memoArea = document.getElementById('memo-area');
@@ -981,21 +1060,43 @@ function selectDate(date) {
     if (memoTitle) memoTitle.textContent = `${date} 备忘录`;
     if (memoInput) memoInput.value = state.memos[date] || '';
     if (memoArea) memoArea.style.display = 'block';
-    
-    document.querySelectorAll('.calendar-day').forEach(el => {
-        el.style.background = el.dataset.date === date ? '#007AFF' : '';
-        el.style.color = el.dataset.date === date ? 'white' : '';
-    });
 }
 
 function saveMemo() {
-    const date = state.selectedDate || new Date().toISOString().split('T')[0];
-    const text = document.getElementById('memo-input').value;
-    state.memos[date] = text;
-    saveState();
-    renderFullCalendar();
-    renderMiniCalendar();
-    alert('备忘录已保存');
+    try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const date = state.selectedDate || todayStr;
+        const input = document.getElementById('memo-input');
+        
+        if (!input) {
+            alert('错误：找不到备忘录输入框');
+            return;
+        }
+
+        const text = input.value;
+        if (!state.memos) state.memos = {};
+        state.memos[date] = text;
+        saveState();
+        
+        // Update Full Calendar UI (dots/indicators)
+        renderFullCalendar();
+        
+        // Update Home Screen Widget immediately if it's today's memo
+        if (date === todayStr) {
+            const todayMemoWidget = document.getElementById('today-memo-widget');
+            if (todayMemoWidget) {
+                todayMemoWidget.value = text && text.trim() ? text : '今天没有任务';
+            }
+        }
+        
+        // Re-render mini calendar to show indicators
+        renderMiniCalendar();
+        
+        alert('备忘录已保存');
+    } catch (e) {
+        console.error('Save memo error:', e);
+        alert('保存失败: ' + e.message);
+    }
 }
 
 // 音乐
