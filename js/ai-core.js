@@ -386,9 +386,31 @@ function uuidv4() {
     });
 }
 
+// --- Character System ---
+class CharacterSystem {
+    constructor() {
+        this.characters = {};
+    }
+    
+    saveCharacter(character) {
+        this.characters[character.id] = character;
+        return character;
+    }
+    
+    getCharacter(id) {
+        return this.characters[id];
+    }
+    
+    getAllCharacters() {
+        return Object.values(this.characters);
+    }
+}
+
 // --- Singleton Instances ---
 const worldSystem = new WorldSystem();
 const chatSystem = new ChatSystem(worldSystem);
+const characterSystem = new CharacterSystem();
+const relationshipSystem = new RelationshipSystem();
 
 // Export to window
 window.AICore = {
@@ -396,8 +418,9 @@ window.AICore = {
     RelationshipState,
     WorldBook,
     worldSystem,
-    relationshipSystem: new RelationshipSystem(),
+    relationshipSystem,
     chatSystem,
-    characterSystem
+    characterSystem,
+    AdvancedTuning
 };
 
