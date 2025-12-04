@@ -260,15 +260,55 @@ function renderChatMessages() {
     if (!container || !currentChatId) return;
     
     const messages = chatMessages[currentChatId] || [];
-    container.innerHTML = messages.map(msg => `
-        <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;">
-            ${!msg.isUser ? '<div style="width:32px;height:32px;background:#eee;border-radius:50%;margin-right:8px;overflow:hidden;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed='+ currentChatId +'" style="width:100%;"></div>' : ''}
-            <div style="max-width: 70%; padding: 10px 14px; border-radius: 16px; background: ${msg.isUser ? '#A0D8EF' : '#FFFFFF'}; color: ${msg.isUser ? '#FFFFFF' : '#333'}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${msg.text}</div>
-                <div style="font-size: 10px; margin-top: 4px; opacity: 0.7; text-align: right;">${msg.time}</div>
+    const isOfflineMode = chatSettings.offlineMode;
+
+    if (isOfflineMode) {
+        // 线下模式：酒馆粉色温馨风格
+        container.style.padding = '20px 16px';
+        container.style.background = '#fff5f7';
+        container.style.color = '#000';
+        
+        container.innerHTML = messages.map(msg => {
+            if (msg.isUser) {
+                // 用户消息：简洁样式，右对齐，黑色文字
+                return `
+                    <div style="display: flex; justify-content: flex-end; margin: 16px 0;">
+                        <div style="max-width: 80%; padding: 12px 16px; background: #ffd4e5; border-radius: 12px; border-left: 3px solid #ff9ec7;">
+                            <div style="font-size: 16px; line-height: 1.6; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif;">${msg.text}</div>
+                            <div style="font-size: 11px; color: #666; margin-top: 6px; text-align: right;">${msg.time}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // AI 回复：酒馆粉色卡片格式，黑色文字
+                return `
+                    <div style="margin: 20px 0; padding: 16px; background: #ffffff; border-radius: 8px; border: 1px solid #ffcce0; box-shadow: 0 2px 8px rgba(255, 158, 199, 0.1);">
+                        <div style="font-size: 17px; line-height: 1.8; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif; letter-spacing: 0.3px;">
+                            ${msg.text}
+                        </div>
+                        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffe0f0; font-size: 11px; color: #666; text-align: right;">
+                            ${msg.time}
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
+    } else {
+        // 线上模式：即时聊天风格
+        container.style.padding = '16px';
+        container.style.background = '#FFFFFF';
+        
+        container.innerHTML = messages.map(msg => `
+            <div style="display: flex; justify-content: ${msg.isUser ? 'flex-end' : 'flex-start'}; margin-bottom: 12px;">
+                ${!msg.isUser ? '<div style="width:32px;height:32px;background:#eee;border-radius:50%;margin-right:8px;overflow:hidden;"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed='+ currentChatId +'" style="width:100%;"></div>' : ''}
+                <div style="max-width: 70%; padding: 10px 14px; border-radius: 16px; background: ${msg.isUser ? '#A0D8EF' : '#FFFFFF'}; color: ${msg.isUser ? '#FFFFFF' : '#333'}; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                    <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${msg.text}</div>
+                    <div style="font-size: 10px; margin-top: 4px; opacity: 0.7; text-align: right;">${msg.time}</div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    }
+    
     container.scrollTop = container.scrollHeight;
 }
 
@@ -285,7 +325,16 @@ async function sendChatMessage() {
     input.value = '';
     renderChatMessages();
     
-    // 2. 检查是否为 AI 聊天
+    // 保存消息到本地
+    saveLineeData();
+    
+    // 2. 检查是否开启自动回复
+    if (!chatSettings.autoReply) {
+        console.log('⏸️ 自动回复已关闭，等待用户手动触发回复');
+        return; // 不自动回复
+    }
+    
+    // 3. 检查是否为 AI 聊天
     const currentChat = mockChats.find(c => c.id === currentChatId);
     
     // A. 普通聊天 (API 直连，旧逻辑)
@@ -349,12 +398,15 @@ async function sendChatMessage() {
             .filter(m => !m.isTyping)
             .map(m => ({ isUser: m.isUser, text: m.text }));
         
+        // 获取当前模式 (从聊天设置中读取)
+        const currentMode = chatSettings.offlineMode ? "OFFLINE" : "ONLINE";
+        
         // 调用 AI 核心
         const responseText = await AICore.chatSystem.generateResponse(
             aiChar,
             text,
             history,
-            "OFFLINE", // 默认网文模式，后续可加开关切换
+            currentMode, // 使用设置中的模式
             state.apiConfig
         );
         
@@ -368,6 +420,37 @@ async function sendChatMessage() {
         // 更新列表最后一条消息
         currentChat.lastMessage = responseText.substring(0, 50) + (responseText.length > 50 ? '...' : '');
         renderChatList();
+        
+        // ✅ 更新好感度
+        try {
+            const relationshipChange = await AICore.relationshipSystem.calculateChange(
+                text, 
+                responseText, 
+                state.apiConfig
+            );
+            
+            if (relationshipChange !== 0) {
+                aiChar.relationship.updateScore(relationshipChange);
+                
+                // 保存更新后的角色数据
+                aiCharacters[currentChat.aiCharacterId] = aiChar;
+                saveLineeData();
+                
+                console.log(`💖 好感度变化: ${relationshipChange > 0 ? '+' : ''}${relationshipChange}, 当前: ${aiChar.relationship.score} (${aiChar.relationship.level})`);
+                
+                // 可选：显示好感度变化提示
+                if (Math.abs(relationshipChange) >= 3) {
+                    const changeText = relationshipChange > 0 ? `↑ +${relationshipChange}` : `↓ ${relationshipChange}`;
+                    const levelText = `${aiChar.relationship.level} (${aiChar.relationship.score})`;
+                    
+                    // 在聊天界面显示提示（可选）
+                    // showRelationshipNotification(changeText, levelText);
+                }
+            }
+        } catch (e) {
+            console.error('好感度更新失败:', e);
+            // 不影响主流程，静默失败
+        }
         
     } catch (e) {
         // 移除打字提示
@@ -616,17 +699,63 @@ function saveLineeProfile() {
     const settings = document.getElementById('linee-edit-settings').value.trim();
     const avatar = document.getElementById('linee-edit-avatar').src;
     
-    if (!name) return alert('請輸入名字');
+    if (!name) return alert('请输入名字');
     
     const wasActive = lineePersonaCards[currentEditingSlot] && lineePersonaCards[currentEditingSlot].active;
     lineePersonaCards[currentEditingSlot] = { name, status, settings, avatar, active: wasActive };
     
+    // 保存到本地存储
     localStorage.setItem('linee-persona-cards', JSON.stringify(lineePersonaCards));
+    
+    // 同时保存到 lineeData
+    saveLineeData();
     
     if (wasActive) updateLineeMainProfile();
     renderPersonaCards();
     
-    alert('已保存至卡槽 ' + (currentEditingSlot + 1) + '！');
+    console.log('✅ 个人设定已保存:', lineePersonaCards[currentEditingSlot]);
+    alert('✅ 已保存至卡槽 ' + (currentEditingSlot + 1) + '！');
+}
+
+// 上传个人头像
+function uploadPersonalAvatar() {
+    document.getElementById('personal-avatar-upload').click();
+}
+
+// 处理个人头像上传
+function handlePersonalAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+        alert('请选择图片文件');
+        return;
+    }
+    
+    // 检查文件大小 (限制 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('图片文件不能超过 5MB');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        
+        // 更新显示
+        document.getElementById('linee-edit-avatar').src = dataUrl;
+        document.getElementById('linee-display-avatar').src = dataUrl;
+        
+        console.log('✅ 头像已上传 (Base64)');
+        alert('✅ 头像已上传！记得点击"保存至卡槽"按钮保存');
+    };
+    
+    reader.onerror = () => {
+        alert('❌ 读取图片失败，请重试');
+    };
+    
+    reader.readAsDataURL(file);
 }
 
 function selectPersonaCard(slot) {
@@ -795,6 +924,11 @@ function handleAvatarUpload(event) {
                 chat.avatar = dataUrl;
                 renderChatList();
             }
+            
+            // 保存到本地
+            saveLineeData();
+            
+            alert('✅ 头像已更新并保存');
         }
     };
     reader.readAsDataURL(file);
@@ -816,6 +950,11 @@ function handleBgUpload(event) {
         // 更新好友数据
         if (currentFriendProfile) {
             currentFriendProfile.bgImage = dataUrl;
+            
+            // 保存到本地
+            saveLineeData();
+            
+            alert('✅ 背景已更新并保存');
         }
     };
     reader.readAsDataURL(file);
@@ -850,6 +989,7 @@ function saveDescription() {
     
     if (currentFriendProfile) {
         currentFriendProfile.description = description;
+        currentFriendProfile.background = description; // 同步到 background 字段
         
         // 更新 AI 角色的背景信息
         if (currentFriendProfile.isAI && currentFriendProfile.aiCharacterId) {
@@ -858,6 +998,15 @@ function saveDescription() {
                 aiChar.background = description;
             }
         }
+        
+        // 更新状态显示
+        if (description) {
+            currentFriendProfile.status = description.substring(0, 50) + (description.length > 50 ? '...' : '');
+            renderLineeFriends();
+        }
+        
+        // 保存到本地
+        saveLineeData();
     }
     
     // 退出编辑模式
@@ -865,6 +1014,8 @@ function saveDescription() {
     textarea.style.borderColor = '#E5E7EB';
     document.getElementById('desc-save-section').style.display = 'none';
     document.getElementById('edit-desc-btn').innerHTML = '<ion-icon name="create-outline"></ion-icon> 编辑';
+    
+    alert('描述已保存！');
     
     alert('保存成功！');
 }
@@ -1023,7 +1174,8 @@ let chatSettings = {
     customCSS: '',
     autoReply: false,
     enterToSend: true,
-    allowCalls: false
+    allowCalls: false,
+    offlineMode: false  // 新增：线下模式开关 (默认线上模式)
 };
 
 function openChatSettings() {
@@ -1036,6 +1188,9 @@ function openChatSettings() {
     
     // 加载当前设置
     loadChatSettings();
+    
+    // 同步当前聊天好友的信息到设置
+    syncCurrentFriendToSettings();
 }
 
 function closeChatSettings() {
@@ -1056,9 +1211,40 @@ function loadChatSettings() {
     document.getElementById('char-avatar-url').value = chatSettings.charAvatar;
     document.getElementById('char-background').value = chatSettings.charBackground;
     document.getElementById('chat-custom-css').value = chatSettings.customCSS;
+    document.getElementById('offline-mode-toggle').checked = chatSettings.offlineMode;
     document.getElementById('autoreply-toggle').checked = chatSettings.autoReply;
     document.getElementById('enter-send-toggle').checked = chatSettings.enterToSend;
     document.getElementById('allow-calls-toggle').checked = chatSettings.allowCalls;
+}
+
+// 同步当前好友信息到聊天设置
+function syncCurrentFriendToSettings() {
+    if (!currentChatId) return;
+    
+    // 查找当前聊天对应的好友
+    const currentChat = mockChats.find(c => c.id === currentChatId);
+    if (!currentChat) return;
+    
+    const friend = lineeFriends.find(f => f.name === currentChat.name);
+    if (!friend) return;
+    
+    // 同步姓名和备注
+    const nameInput = document.getElementById('char-name-input');
+    const nicknameInput = document.getElementById('char-nickname-input');
+    const backgroundInput = document.getElementById('char-background');
+    const avatarInput = document.getElementById('char-avatar-url');
+    
+    if (nameInput) nameInput.value = friend.name || '';
+    if (nicknameInput) nicknameInput.value = friend.nickname || '';
+    if (backgroundInput) backgroundInput.value = friend.background || friend.status || '';
+    if (avatarInput && friend.avatar) {
+        // 如果是 data URL，显示 "(本地图片)"
+        if (friend.avatar.startsWith('data:')) {
+            avatarInput.value = '(本地图片已上传)';
+        } else {
+            avatarInput.value = friend.avatar;
+        }
+    }
 }
 
 function selectWorldBook() {
@@ -1203,9 +1389,13 @@ function saveAllChatSettings() {
     chatSettings.charAvatar = document.getElementById('char-avatar-url').value;
     chatSettings.charBackground = document.getElementById('char-background').value;
     chatSettings.customCSS = document.getElementById('chat-custom-css').value;
+    chatSettings.offlineMode = document.getElementById('offline-mode-toggle').checked;
     chatSettings.autoReply = document.getElementById('autoreply-toggle').checked;
     chatSettings.enterToSend = document.getElementById('enter-send-toggle').checked;
     chatSettings.allowCalls = document.getElementById('allow-calls-toggle').checked;
+    
+    // 同步设置到当前好友
+    syncSettingsToCurrentFriend();
     
     // 保存到 localStorage
     localStorage.setItem('chatSettings', JSON.stringify(chatSettings));
@@ -1217,10 +1407,58 @@ function saveAllChatSettings() {
     applyChatSettings();
     
     // 显示成功提示
-    alert('✅ 设定已保存！\n\n设置将应用到当前聊天。');
+    alert('✅ 设定已保存！\n\n设置将应用到当前聊天和好友信息。');
     
     // 返回聊天室
     closeChatSettings();
+}
+
+// 将聊天设置同步到当前好友
+function syncSettingsToCurrentFriend() {
+    if (!currentChatId) return;
+    
+    // 查找当前聊天对应的好友
+    const currentChat = mockChats.find(c => c.id === currentChatId);
+    if (!currentChat) return;
+    
+    const friend = lineeFriends.find(f => f.name === currentChat.name);
+    if (!friend) return;
+    
+    // 同步姓名和备注
+    const newName = document.getElementById('char-name-input').value.trim();
+    const newNickname = document.getElementById('char-nickname-input').value.trim();
+    const newBackground = document.getElementById('char-background').value.trim();
+    
+    if (newName && newName !== friend.name) {
+        const oldName = friend.name;
+        friend.name = newName;
+        currentChat.name = newName;
+        
+        // 更新聊天消息中的好友名称
+        if (chatMessages[currentChatId]) {
+            // 消息已经在 chatMessages 中，不需要改名称
+        }
+    }
+    
+    if (newNickname !== friend.nickname) {
+        friend.nickname = newNickname;
+        currentChat.nickname = newNickname;
+    }
+    
+    if (newBackground) {
+        friend.background = newBackground;
+        // 如果没有 status 或 status 是默认值，用 background 的前50字作为状态
+        if (!friend.status || friend.status === 'New Friend' || friend.status === 'AI Character') {
+            friend.status = newBackground.substring(0, 50) + (newBackground.length > 50 ? '...' : '');
+        }
+    }
+    
+    // 保存数据
+    saveLineeData();
+    
+    // 更新列表显示
+    renderLineeFriends();
+    renderChatList();
 }
 
 function applyChatSettings() {
@@ -1245,6 +1483,11 @@ function applyChatSettings() {
         }
         styleTag.textContent = chatSettings.customCSS;
     }
+    
+    // 重新渲染消息（应用线上/线下模式布局）
+    if (currentChatId && chatMessages[currentChatId]) {
+        renderChatMessages();
+    }
 }
 
 // 页面加载时恢复设置
@@ -1268,6 +1511,12 @@ window.handleChatBgUpload = handleChatBgUpload;
 window.selectBubbleColor = selectBubbleColor;
 window.toggleAdvancedCSS = toggleAdvancedCSS;
 window.saveAllChatSettings = saveAllChatSettings;
+window.syncCurrentFriendToSettings = syncCurrentFriendToSettings;
+window.syncSettingsToCurrentFriend = syncSettingsToCurrentFriend;
+
+// 导出个人设定函数
+window.uploadPersonalAvatar = uploadPersonalAvatar;
+window.handlePersonalAvatarUpload = handlePersonalAvatarUpload;
 
 // 导出好友信息页函数
 window.openFriendProfile = openFriendProfile;

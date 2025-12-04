@@ -9,6 +9,89 @@ class RelationshipState {
         this.score = score;
         this.level = level;
     }
+    
+    updateScore(change) {
+        this.score = Math.max(0, Math.min(100, this.score + change));
+        this.level = this.getLevel();
+    }
+    
+    getLevel() {
+        if (this.score >= 80) return "挚爱";
+        if (this.score >= 60) return "恋人";
+        if (this.score >= 40) return "密友";
+        if (this.score >= 20) return "朋友";
+        if (this.score >= 10) return "熟人";
+        return "陌生";
+    }
+}
+
+class RelationshipSystem {
+    async calculateChange(userMessage, aiResponse, apiConfig) {
+        // 简化版：根据对话内容分析好感度变化
+        // 可以调用 LLM 分析，或使用规则
+        
+        if (!apiConfig || !apiConfig.url || !apiConfig.key) {
+            // 无 API 时使用简单规则
+            return this.simpleCalculate(userMessage, aiResponse);
+        }
+        
+        try {
+            // 使用 LLM 分析好感度变化
+            const prompt = `分析以下对话，判断好感度变化值（-10到+10之间的整数）：
+
+用户：${userMessage}
+AI：${aiResponse}
+
+只需返回一个数字，正数表示好感度上升，负数表示下降。
+比如：用户友好 → +2，用户赞美 → +5，用户冒犯 → -3`;
+
+            const response = await fetch(`${apiConfig.url}/v1/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiConfig.key}`
+                },
+                body: JSON.stringify({
+                    model: apiConfig.model,
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.3,
+                    max_tokens: 10
+                })
+            });
+            
+            const data = await response.json();
+            const changeText = data.choices[0].message.content.trim();
+            const change = parseInt(changeText) || 0;
+            
+            return Math.max(-10, Math.min(10, change));
+        } catch (e) {
+            console.error('好感度计算失败，使用简单规则:', e);
+            return this.simpleCalculate(userMessage, aiResponse);
+        }
+    }
+    
+    simpleCalculate(userMessage, aiResponse) {
+        // 简单规则：基于关键词
+        const positiveKeywords = ['谢谢', '感谢', '喜欢', '爱', '好', '棒', '赞', '厉害', '可爱', '美'];
+        const negativeKeywords = ['讨厌', '恨', '烦', '滚', '傻', '笨', '丑', '差'];
+        
+        let change = 0;
+        const userLower = userMessage.toLowerCase();
+        
+        positiveKeywords.forEach(word => {
+            if (userLower.includes(word)) change += 1;
+        });
+        
+        negativeKeywords.forEach(word => {
+            if (userLower.includes(word)) change -= 2;
+        });
+        
+        // 消息长度也影响（表示用心程度）
+        if (userMessage.length > 50) change += 1;
+        if (userMessage.length > 100) change += 1;
+        
+        return Math.max(-5, Math.min(5, change));
+    }
 }
 
 class AdvancedTuning {
@@ -164,6 +247,47 @@ class WorldSystem {
     constructor() {
         this.global_books = {};
         this.local_books = {};
+        this.loadFromLocalStorage();
+    }
+
+    loadFromLocalStorage() {
+        try {
+            const worldbookData = localStorage.getItem('worldbook_data');
+            if (worldbookData) {
+                const data = JSON.parse(worldbookData);
+                
+                // 加载全局世界书
+                if (data.GLOBAL) {
+                    data.GLOBAL.forEach(item => {
+                        if (item.type === 'book') {
+                            const entries = {};
+                            // 解析内容为键值对
+                            if (item.content) {
+                                entries[item.name] = item.content;
+                            }
+                            this.global_books[item.id] = new WorldBook(item.id, 'GLOBAL', entries);
+                        }
+                    });
+                }
+                
+                // 加载局部世界书
+                if (data.LOCAL) {
+                    data.LOCAL.forEach(item => {
+                        if (item.type === 'book') {
+                            const entries = {};
+                            if (item.content) {
+                                entries[item.name] = item.content;
+                            }
+                            this.local_books[item.id] = new WorldBook(item.id, 'LOCAL', entries);
+                        }
+                    });
+                }
+                
+                console.log('✅ 已加载世界书:', Object.keys(this.global_books).length, '个全局,', Object.keys(this.local_books).length, '个局部');
+            }
+        } catch (e) {
+            console.error('❌ 加载世界书失败:', e);
+        }
     }
 
     addGlobalBook(book) {
@@ -177,20 +301,25 @@ class WorldSystem {
     getWorldContext(userInput, globalId, localId) {
         let mergedEntries = {};
         
-        if (globalId && this.global_books[globalId]) {
-            Object.assign(mergedEntries, this.global_books[globalId].entries);
-        }
+        // 合并全局世界书
+        Object.values(this.global_books).forEach(book => {
+            Object.assign(mergedEntries, book.entries);
+        });
+        
+        // 合并指定的局部世界书 (优先级更高)
         if (localId && this.local_books[localId]) {
             Object.assign(mergedEntries, this.local_books[localId].entries);
         }
 
         let matchedContent = [];
         for (const [key, content] of Object.entries(mergedEntries)) {
-            if (userInput.includes(key)) {
-                matchedContent.push(`【世界观-${key}】：${content}`);
+            // 匹配用户输入中的关键词
+            if (userInput.toLowerCase().includes(key.toLowerCase())) {
+                matchedContent.push(`【${key}】：${content}`);
             }
         }
-        return matchedContent.join("\n");
+        
+        return matchedContent.length > 0 ? matchedContent.join("\n") : "无相关世界观信息";
     }
 }
 
@@ -264,8 +393,11 @@ const chatSystem = new ChatSystem(worldSystem);
 // Export to window
 window.AICore = {
     Character,
+    RelationshipState,
     WorldBook,
     worldSystem,
-    chatSystem
+    relationshipSystem: new RelationshipSystem(),
+    chatSystem,
+    characterSystem
 };
 
