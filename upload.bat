@@ -1,6 +1,6 @@
 @echo off
 cd /d c:\xiaobai-mobile
 git add .
-git commit -m "整合 LINEE 应用到小白机系统"
+git commit -m "feat: Upgrade AI pacing to 'Variable Rhythm' and fix Worldbook issues"
 git push origin main
 pause

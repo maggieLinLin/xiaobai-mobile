@@ -280,26 +280,10 @@ function renderChatMessages() {
         container.innerHTML = messages.map((msg, index) => {
             if (msg.isUser) {
                 // 用户消息：简洁样式，右对齐，黑色文字
-                return `
-                    <div style="display: flex; justify-content: flex-end; margin: 16px 0;" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)">
-                        <div style="max-width: 80%; padding: 12px 16px; background: #ffd4e5; border-radius: 12px; border-left: 3px solid #ff9ec7;">
-                            <div style="font-size: 18px; line-height: 1.6; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif;">${msg.text}</div>
-                            <div style="font-size: 13px; color: #666; margin-top: 6px; text-align: right;">${msg.time}</div>
-                        </div>
-                    </div>
-                `;
+                return `<div style="display: flex; justify-content: flex-end; margin: 16px 0;" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)"><div style="max-width: 80%; padding: 12px 16px; background: #ffd4e5; border-radius: 12px; border-left: 3px solid #ff9ec7;"><div style="font-size: 18px; line-height: 1.6; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif;">${msg.text}</div><div style="font-size: 13px; color: #666; margin-top: 6px; text-align: right;">${msg.time}</div></div></div>`;
             } else {
                 // AI 回复：酒馆粉色卡片格式，黑色文字
-                return `
-                    <div style="margin: 20px 0; padding: 16px; background: #ffffff; border-radius: 8px; border: 1px solid #ffcce0; box-shadow: 0 2px 8px rgba(255, 158, 199, 0.1);" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)">
-                        <div style="font-size: 19px; line-height: 1.8; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif; letter-spacing: 0.3px;">
-                            ${msg.text}
-                        </div>
-                        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffe0f0; font-size: 13px; color: #666; text-align: right;">
-                            ${msg.time}
-                        </div>
-                    </div>
-                `;
+                return `<div style="margin: 20px 0; padding: 16px; background: #ffffff; border-radius: 8px; border: 1px solid #ffcce0; box-shadow: 0 2px 8px rgba(255, 158, 199, 0.1);" oncontextmenu="showMessageMenu(event, ${index}); return false;" ontouchstart="handleTouchStart(event, ${index})" ontouchend="handleTouchEnd(event)"><div style="font-size: 19px; line-height: 1.8; color: #000; white-space: pre-wrap; font-family: 'Source Han Sans CN', sans-serif; letter-spacing: 0.3px;">${msg.text}</div><div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffe0f0; font-size: 13px; color: #666; text-align: right;">${msg.time}</div></div>`;
             }
         }).join('');
     } else {
@@ -307,17 +291,27 @@ function renderChatMessages() {
         container.style.padding = '16px';
         container.style.background = '#FFFFFF';
         
-        // ✅ 获取当前聊天的角色头像
+        // ✅ 获取当前聊天的角色头像 (优先使用聊天设置的头像)
         const currentChat = mockChats.find(c => c.id === currentChatId);
         let avatarUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
         
-        if (currentChat && currentChat.isAI && currentChat.aiCharacterId) {
+        // 优先级1: chatSettings的自定义头像
+        if (chatSettings.charAvatar && chatSettings.charAvatar.trim() !== '' && chatSettings.charAvatar !== '(本地图片已上传)') {
+            avatarUrl = chatSettings.charAvatar;
+            console.log('🖼️ 使用聊天设置头像');
+        }
+        // 优先级2: AI角色的默认头像
+        else if (currentChat && currentChat.isAI && currentChat.aiCharacterId) {
             const aiChar = aiCharacters[currentChat.aiCharacterId];
             if (aiChar && aiChar.avatar) {
                 avatarUrl = aiChar.avatar;
+                console.log('🖼️ 使用AI角色头像');
             }
-        } else if (currentChat && currentChat.avatar) {
+        }
+        // 优先级3: 聊天对象的头像
+        else if (currentChat && currentChat.avatar) {
             avatarUrl = currentChat.avatar;
+            console.log('🖼️ 使用聊天对象头像');
         }
         
         container.innerHTML = messages.map((msg, index) => `
@@ -361,12 +355,9 @@ async function sendChatMessage() {
     
     // A. 普通聊天 (API 直连，旧逻辑)
     if (!currentChat || !currentChat.isAI) {
+        // 如果没有 API 配置，跳过（让 AI Core 处理 Mock）
         if (!state.apiConfig.url || !state.apiConfig.key) {
-            // 模拟回复
-            setTimeout(() => {
-                chatMessages[currentChatId].push({ text: '此功能需要连接 API，请在设置中配置。', time, isUser: false });
-                renderChatMessages();
-            }, 1000);
+            console.log('⚠️ API 未配置，普通聊天无法工作');
             return;
         }
         
@@ -402,12 +393,8 @@ async function sendChatMessage() {
         return;
     }
 
-    // 检查 API 配置
-    if (!state || !state.apiConfig || !state.apiConfig.url || !state.apiConfig.key) {
-        chatMessages[currentChatId].push({ text: '请先在设置中配置 API', time, isUser: false });
-        renderChatMessages();
-        return;
-    }
+    // 注意：即使没有 API，也继续执行（AI Core 会生成 Mock 回复）
+    const hasRealAPI = state && state.apiConfig && state.apiConfig.url && state.apiConfig.key;
 
     // 显示对方气泡 "输入中..."
     const typingMsg = { text: '输入中...', time, isUser: false, isTyping: true };
@@ -423,13 +410,36 @@ async function sendChatMessage() {
         // 获取当前模式 (从聊天设置中读取)
         const currentMode = chatSettings.offlineMode ? "OFFLINE" : "ONLINE";
         
-        // 调用 AI 核心
+        // ✅ 合并世界书: chatSettings的世界书 + 角色自己的世界书
+        const mergedChar = Object.assign({}, aiChar);
+        
+        // 合并全局世界书 (chatSettings优先)
+        const globalWorlds = [
+            ...(chatSettings.linkedGlobalWorldBooks || []),
+            ...(aiChar.linked_global_worlds || [])
+        ];
+        mergedChar.linked_global_worlds = [...new Set(globalWorlds)]; // 去重
+        
+        // 合并局部世界书 (chatSettings优先)
+        const localWorlds = [
+            ...(chatSettings.linkedLocalWorldBooks || []),
+            ...(aiChar.linked_local_worlds || [])
+        ];
+        mergedChar.linked_local_worlds = [...new Set(localWorlds)]; // 去重
+        
+        console.log('🌍 使用的世界书:', {
+            global: mergedChar.linked_global_worlds,
+            local: mergedChar.linked_local_worlds
+        });
+        
+        // 调用 AI 核心 (即使没有 API 也会生成 Mock 回复)
+        const apiConfigToUse = (state && state.apiConfig) ? state.apiConfig : {};
         const responseText = await AICore.chatSystem.generateResponse(
-            aiChar,
+            mergedChar, // 使用合并后的角色数据
             text,
             history,
             currentMode, // 使用设置中的模式
-            state.apiConfig
+            apiConfigToUse
         );
         
         // 移除打字提示
@@ -488,7 +498,7 @@ async function sendChatMessage() {
             const relationshipChange = await AICore.relationshipSystem.calculateChange(
                 text, 
                 responseText, 
-                state.apiConfig
+                apiConfigToUse
             );
             
             if (relationshipChange !== 0) {
@@ -560,32 +570,45 @@ async function confirmAIGenerateChar() {
     confirmBtn.style.opacity = '0.6';
     
     try {
-        // 构建 AI 生成角色的 Prompt
-        const systemPrompt = `你是一个专业的角色设定生成器。请根据用户提供的关键词，生成一个完整的角色设定。
+        // 构建 AI 生成角色的 Prompt (使用思维链强制生成详细内容)
+        const systemPrompt = `任务：基于关键词「${keywords}」，创作一个极度详细的虚构角色。
 
-请严格按照以下 JSON 格式输出（不要添加任何其他文字）：
+【思维链生成要求 - Chain of Thought】
+你必须按以下步骤思考，然后生成完整角色：
 
+步骤1：先分析关键词，列出这个角色的核心特质（性格、职业、背景）
+步骤2：构思一个「不为人知的秘密」或「隐藏的创伤」，让角色有深度
+步骤3：设计3组对话范例，展示角色在不同情绪下的说话方式
+
+【要求 - 必须严格执行】
+1. "appearance" (外貌描述) 必须超过 300 字，包含：身高体型、五官细节、穿衣风格、特殊标记（疤痕/纹身/配饰）、气质气场。
+2. "background" (背景故事) 必须超过 300 字，包含：
+   - 原生家庭与成长环境
+   - 重大人生转折点
+   - 不为人知的怪癖或创伤
+   - 最近的烦恼
+   - 对未来的期待或恐惧
+3. "identity" (身份) 必须详细，包含年龄、具体职业、社会地位。
+4. "mes_example" 必须包含 3 组对话，展示他在「生气」、「撒娇」、「敷衍」时的不同语气。
+
+【输出格式 (严格 JSON)】
 {
-  "name": "角色姓名",
+  "name": "...",
   "gender": "男/女/其他",
-  "identity": "身份职业（例如：28岁跨国集团CEO）",
-  "appearance": "外貌特征的详细描述（100-200字）",
-  "background": "性格背景设定（200-300字，包含性格、经历、动机等）",
-  "personality_tags": ["标签1", "标签2", "标签3"],
-  "dialogue_style": "现代日常 (默认)/古风 (吾, 汝, 甚好)/翻译腔 (哦, 我的老伙计)/二次元 (颜文字)/赛博朋克",
-  "first_message": "开场白（50-100字，符合角色性格的第一句话）"
+  "identity": "详细身份（年龄+职业+背景，如：28岁前黑帮成员，现为咖啡店老板）",
+  "appearance": "...(至少300字)",
+  "background": "...(至少300字)",
+  "personality_tags": ["...", "...", "..."],
+  "dialogue_style": "现代日常 (默认)/古风/翻译腔/二次元/赛博朋克",
+  "mes_example": "...(3组对话范例)",
+  "first_message": "开场白（50-100字）"
 }
 
-要求：
-1. 名字要符合角色设定的文化背景
-2. 外貌描写要具体生动
-3. 背景设定要有深度和故事性
-4. 性格标签要精准（2-4个）
-5. 开场白要有代入感`;
+重要：不要只写大纲，要写出「有血有肉」的细节。现在开始生成。`;
 
         const userPrompt = `关键词：${keywords}
 
-请生成角色设定（纯 JSON 格式）。`;
+请按照上述要求，生成完整详细的角色设定（纯 JSON 格式，不要添加任何其他说明文字）。`;
 
         // 调用 LLM API
         const res = await fetch(`${state.apiConfig.url}/v1/chat/completions`, {
@@ -614,55 +637,47 @@ async function confirmAIGenerateChar() {
         
         const charData = JSON.parse(responseText);
         
-        // 创建 AI Character 对象
-        const char = new AICore.Character({
-            ...charData,
-            source: 'ai'
-        });
-        aiCharacters[char.id] = char;
+        // ✅ 填充表单到"高级创建"模态框供用户编辑
         
-        // 添加到好友列表
-        lineeFriends.push({ 
-            name: char.name, 
-            status: char.identity || "AI Character", 
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${char.name}`,
-            isAI: true,
-            aiCharacterId: char.id
-        });
+        // 1. 填充表单
+        document.getElementById('ai-char-name').value = charData.name || '';
         
-        // 创建聊天会话
-        const newChat = {
-            id: 'chat_' + Date.now(),
-            name: char.name,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${char.name}`,
-            lastMessage: char.first_message || "你好，我是" + char.name,
-            timestamp: '刚刚',
-            unreadCount: 1,
-            isGroup: false,
-            isAI: true,
-            aiCharacterId: char.id
-        };
-        mockChats.unshift(newChat);
-        
-        // 如果有开场白，添加到聊天记录
-        if (char.first_message) {
-            chatMessages[newChat.id] = [{
-                text: char.first_message,
-                time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-                isUser: false
-            }];
+        // 处理性别下拉框
+        const genderSelect = document.getElementById('ai-char-gender');
+        if (['男', '女', '其他'].includes(charData.gender)) {
+            genderSelect.value = charData.gender;
+        } else {
+            genderSelect.value = '其他';
         }
         
-        // 更新 UI
-        renderLineeFriends();
-        renderChatList();
+        document.getElementById('ai-char-identity').value = charData.identity || '';
+        document.getElementById('ai-char-appearance').value = charData.appearance || '';
+        document.getElementById('ai-char-background').value = charData.background || '';
+        document.getElementById('ai-char-tags').value = (charData.personality_tags || []).join(', ');
         
-        // 关闭模态框
+        // 处理风格下拉框 (尽量匹配，否则默认)
+        const styleSelect = document.getElementById('ai-char-style');
+        const styleValue = charData.dialogue_style;
+        let matchedStyle = '现代日常 (默认)';
+        if (styleValue) {
+            for (let i = 0; i < styleSelect.options.length; i++) {
+                if (styleSelect.options[i].value.includes(styleValue) || styleValue.includes(styleSelect.options[i].value)) {
+                    matchedStyle = styleSelect.options[i].value;
+                    break;
+                }
+            }
+        }
+        styleSelect.value = matchedStyle;
+        
+        // 开场白
+        document.getElementById('ai-char-first-msg').value = charData.first_message || '';
+        
+        // 2. 切换模态框
+        closeLineeModal('linee-modal-ai-generate'); // 关闭 AI 输入框
+        document.getElementById('linee-modal-create-char').classList.remove('hidden'); // 打开高级编辑框
+        
+        // 清空关键词输入
         keywordsInput.value = '';
-        closeLineeModal('linee-modal-ai-generate');
-        
-        // 显示成功提示
-        alert(`✅ 角色 "${char.name}" 生成成功！\n\n已添加到好友列表，可以开始聊天了。`);
         
     } catch (e) {
         console.error('AI Generate Error:', e);
@@ -967,6 +982,15 @@ function openFriendProfile(friend) {
             slider.style.backgroundColor = '#E5E7EB';
             knob.style.transform = 'translateX(0)';
         }
+    }
+    
+    // ✅ 显示/隐藏世界书卡片 (仅 AI 角色显示)
+    const worldbookCard = document.getElementById('friend-worldbook-card');
+    if (friend.isAI && friend.aiCharacterId) {
+        worldbookCard.style.display = 'block';
+        renderFriendWorldBooks(friend.aiCharacterId);
+    } else {
+        worldbookCard.style.display = 'none';
     }
 }
 
@@ -1307,7 +1331,11 @@ function deleteFriend() {
 
 // === 聊天设置页功能 ===
 let chatSettings = {
-    worldbook: null,
+    // ✅ 更新：支持多个世界书选择
+    linkedGlobalWorldBooks: [],  // 全局世界书 ID 数组
+    linkedLocalWorldBooks: [],   // 局部世界书 ID 数组
+    worldbook: null,  // 🔄 保留兼容旧版
+    
     streaming: false,
     timeSync: false,
     contextLimit: 20,
@@ -1360,6 +1388,9 @@ function loadChatSettings() {
     document.getElementById('autoreply-toggle').checked = chatSettings.autoReply;
     document.getElementById('enter-send-toggle').checked = chatSettings.enterToSend;
     document.getElementById('allow-calls-toggle').checked = chatSettings.allowCalls;
+    
+    // ✅ 更新世界书显示
+    updateWorldBookDisplay();
     
     // ✅ 渲染卡槽头像和名称（从个人设定同步）
     renderPersonaSlotsInChatSettings();
@@ -1421,35 +1452,80 @@ function syncCurrentFriendToSettings() {
     }
 }
 
+// 🔄 保留旧版函数用于兼容 (已废弃)
 function selectWorldBook() {
-    // 获取所有局部世界书
-    const localBooks = Object.keys(AICore.worldSystem.local_books);
+    selectChatLocalWorldBooks();
+}
+
+// ✅ 新增：选择聊天设置中的全局世界书 (使用独立选择页面)
+function selectChatGlobalWorldBooks() {
+    console.log('🔍 打开全局世界书选择器');
     
-    if (localBooks.length === 0) {
-        alert('暂无可用的世界书\n\n请先在世界书 App 中创建局部世界书');
+    const globalBooks = Object.keys(AICore.worldSystem.global_books);
+    
+    if (globalBooks.length === 0) {
+        alert('暂无可用的全局世界书\n\n请先在世界书 App 中创建全局世界书');
         return;
     }
     
-    // 创建选择列表
-    let booksList = '请选择要关联的世界书：\n\n';
-    localBooks.forEach((id, index) => {
-        const book = AICore.worldSystem.local_books[id];
-        const name = book.entries["__META_NAME__"] || id;
-        booksList += `${index + 1}. ${name}\n`;
-    });
+    // ✅ 使用独立选择页面
+    openWorldbookLinkSelector('global', chatSettings.linkedGlobalWorldBooks, (selectedBooks) => {
+        console.log('✅ 用户选择了全局世界书:', selectedBooks);
+        chatSettings.linkedGlobalWorldBooks = selectedBooks;
+        updateWorldBookDisplay();
+        saveLineeData();
+    }, 'chat');
+}
+
+// ✅ 新增：选择聊天设置中的局部世界书 (使用独立选择页面)
+function selectChatLocalWorldBooks() {
+    console.log('🔍 打开局部世界书选择器');
     
-    const choice = prompt(booksList + '\n输入序号选择：');
-    if (!choice) return;
+    const localBooks = Object.keys(AICore.worldSystem.local_books);
     
-    const index = parseInt(choice) - 1;
-    if (index >= 0 && index < localBooks.length) {
-        const selectedId = localBooks[index];
-        const book = AICore.worldSystem.local_books[selectedId];
-        const name = book.entries["__META_NAME__"] || selectedId;
-        
-        chatSettings.worldbook = selectedId;
-        document.getElementById('selected-worldbook').textContent = name;
-        document.getElementById('selected-worldbook').style.color = '#06c755';
+    if (localBooks.length === 0) {
+        alert('暂无可用的局部世界书\n\n请先在世界书 App 中创建局部世界书');
+        return;
+    }
+    
+    // ✅ 使用独立选择页面
+    openWorldbookLinkSelector('local', chatSettings.linkedLocalWorldBooks, (selectedBooks) => {
+        console.log('✅ 用户选择了局部世界书:', selectedBooks);
+        chatSettings.linkedLocalWorldBooks = selectedBooks;
+        // 🔄 同时更新旧版字段 (取第一个)
+        chatSettings.worldbook = selectedBooks[0] || null;
+        updateWorldBookDisplay();
+        saveLineeData();
+    }, 'chat');
+}
+
+// ✅ 新增：更新世界书显示
+function updateWorldBookDisplay() {
+    const globalDisplay = document.getElementById('selected-global-worldbooks');
+    const localDisplay = document.getElementById('selected-local-worldbooks');
+    
+    // 更新全局世界书显示
+    if (globalDisplay) {
+        if (chatSettings.linkedGlobalWorldBooks && chatSettings.linkedGlobalWorldBooks.length > 0) {
+            const count = chatSettings.linkedGlobalWorldBooks.length;
+            globalDisplay.textContent = `已选 ${count} 个`;
+            globalDisplay.style.color = '#3B82F6';
+        } else {
+            globalDisplay.textContent = '未选择';
+            globalDisplay.style.color = '#9CA3AF';
+        }
+    }
+    
+    // 更新局部世界书显示
+    if (localDisplay) {
+        if (chatSettings.linkedLocalWorldBooks && chatSettings.linkedLocalWorldBooks.length > 0) {
+            const count = chatSettings.linkedLocalWorldBooks.length;
+            localDisplay.textContent = `已选 ${count} 个`;
+            localDisplay.style.color = '#10B981';
+        } else {
+            localDisplay.textContent = '未选择';
+            localDisplay.style.color = '#9CA3AF';
+        }
     }
 }
 
@@ -1688,7 +1764,23 @@ function applyChatSettings() {
 if (typeof window !== 'undefined') {
     const savedSettings = localStorage.getItem('chatSettings');
     if (savedSettings) {
-        chatSettings = JSON.parse(savedSettings);
+        try {
+            const parsed = JSON.parse(savedSettings);
+            // ✅ 使用 Object.assign 合并,保留新字段的默认值
+            chatSettings = Object.assign(chatSettings, parsed);
+            
+            // 🔄 确保新字段存在
+            if (!chatSettings.linkedGlobalWorldBooks) {
+                chatSettings.linkedGlobalWorldBooks = [];
+            }
+            if (!chatSettings.linkedLocalWorldBooks) {
+                chatSettings.linkedLocalWorldBooks = [];
+            }
+            
+            console.log('✅ 聊天设置已加载:', chatSettings);
+        } catch (e) {
+            console.error('❌ 加载聊天设置失败:', e);
+        }
     }
 }
 
@@ -1696,6 +1788,9 @@ if (typeof window !== 'undefined') {
 window.openChatSettings = openChatSettings;
 window.closeChatSettings = closeChatSettings;
 window.selectWorldBook = selectWorldBook;
+window.selectChatGlobalWorldBooks = selectChatGlobalWorldBooks;
+window.selectChatLocalWorldBooks = selectChatLocalWorldBooks;
+window.updateWorldBookDisplay = updateWorldBookDisplay;
 window.toggleCharacterProfile = toggleCharacterProfile;
 window.uploadCharAvatar = uploadCharAvatar;
 window.handleCharAvatarUpload = handleCharAvatarUpload;
@@ -1921,12 +2016,6 @@ async function handleAIRead() {
     // 手动触发 AI 回复（即使自动回复关闭也生成）
     const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     
-    // 检查 API 配置
-    if (!state.apiConfig || !state.apiConfig.url || !state.apiConfig.key) {
-        alert('请先在设置中配置 API');
-        return;
-    }
-    
     // 获取 AI 角色
     const aiChar = aiCharacters[currentChat.aiCharacterId];
     if (!aiChar) {
@@ -1934,8 +2023,11 @@ async function handleAIRead() {
         return;
     }
     
-    // 显示 "正在输入..." 气泡
-    const typingMsg = { text: '正在输入...', time, isUser: false, isTyping: true };
+    // 即使没有 API 也继续（会使用 Mock 回复）
+    const apiConfigToUse = (state && state.apiConfig) ? state.apiConfig : {};
+    
+    // 显示 "输入中..." 气泡
+    const typingMsg = { text: '输入中...', time, isUser: false, isTyping: true };
     chatMessages[currentChatId].push(typingMsg);
     renderChatMessages();
     
@@ -1946,13 +2038,13 @@ async function handleAIRead() {
         
         const currentMode = chatSettings.offlineMode ? "OFFLINE" : "ONLINE";
         
-        // 调用 AI 核心
+        // 调用 AI 核心（即使没有 API 也会生成 Mock 回复）
         const responseText = await AICore.chatSystem.generateResponse(
             aiChar,
             "（继续之前的对话）",  // 提示词
             recentHistory,
             currentMode,
-            state.apiConfig
+            apiConfigToUse
         );
         
         // 移除打字提示
@@ -2649,3 +2741,190 @@ window.generateAllFootprints = generateAllFootprints;
 window.openAddCharModal = openAddCharModal;
 window.openMapRefreshModal = openMapRefreshModal;
 window.openFootprintSettingsModal = openFootprintSettingsModal;
+
+// ===============================================
+// 开发者调试面板 (Debug Panel)
+// ===============================================
+
+// 存储最后一次生成的 Prompt
+window.lastSystemPrompt = null;
+
+// 初始化调试面板
+function initDebugPanel() {
+    const toggleBtn = document.getElementById('debug-toggle-btn');
+    const debugWindow = document.getElementById('debug-window');
+    
+    if (toggleBtn && debugWindow) {
+        toggleBtn.onclick = () => {
+            const isVisible = debugWindow.style.display === 'block';
+            debugWindow.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                updateDebugInfo();
+            }
+        };
+        
+        // 每次打开时自动更新
+        setInterval(() => {
+            if (debugWindow.style.display === 'block') {
+                updateDebugInfo();
+            }
+        }, 1000);
+    }
+}
+
+// 更新调试信息
+function updateDebugInfo() {
+    // 1. 显示当前聊天设置
+    const settingsDiv = document.getElementById('debug-settings');
+    if (settingsDiv) {
+        settingsDiv.innerHTML = `
+<span style="color: #00ff00;">自动回复:</span> ${chatSettings.autoReply ? '<span style="color: #0f0;">✅ 开启</span>' : '<span style="color: #f00;">❌ 关闭</span>'}
+<span style="color: #00ff00;">线下模式:</span> ${chatSettings.offlineMode ? '<span style="color: #0f0;">✅ 开启</span>' : '<span style="color: #f00;">❌ 关闭</span>'}
+<span style="color: #00ff00;">流式输出:</span> ${chatSettings.streaming ? '<span style="color: #0f0;">✅ 开启</span>' : '<span style="color: #f00;">❌ 关闭</span>'}
+<span style="color: #00ff00;">时间同步:</span> ${chatSettings.timeSync ? '<span style="color: #0f0;">✅ 开启</span>' : '<span style="color: #f00;">❌ 关闭</span>'}
+<span style="color: #00ff00;">回车发送:</span> ${chatSettings.enterToSend ? '<span style="color: #0f0;">✅ 开启</span>' : '<span style="color: #f00;">❌ 关闭</span>'}
+        `.trim();
+    }
+    
+    // 2. 显示当前角色信息
+    const charDiv = document.getElementById('debug-character');
+    if (charDiv && currentChatId) {
+        const currentChat = mockChats.find(c => c.id === currentChatId);
+        if (currentChat && currentChat.isAI && currentChat.aiCharacterId) {
+            const aiChar = aiCharacters[currentChat.aiCharacterId];
+            if (aiChar) {
+                charDiv.innerHTML = `
+<span style="color: #ffff00;">角色名:</span> ${aiChar.name}
+<span style="color: #ffff00;">性别:</span> ${aiChar.gender}
+<span style="color: #ffff00;">身份:</span> ${aiChar.identity}
+<span style="color: #ffff00;">关系等级:</span> ${aiChar.relationship.level} (${aiChar.relationship.score})
+<span style="color: #ffff00;">对话风格:</span> ${aiChar.dialogue_style}
+<span style="color: #ffff00;">性格标签:</span> ${aiChar.personality_tags.join(', ')}
+
+<span style="color: #ffff00;">高级设置:</span>
+  - 防搶話: ${aiChar.advanced_tuning.prevent_godmoding ? '<span style="color: #0f0;">✅</span>' : '<span style="color: #f00;">❌</span>'}
+  - 尊重主权: ${aiChar.advanced_tuning.respect_user_agency ? '<span style="color: #0f0;">✅</span>' : '<span style="color: #f00;">❌</span>'}
+  - 网文节奏: ${aiChar.advanced_tuning.force_web_novel_pacing ? '<span style="color: #0f0;">✅</span>' : '<span style="color: #f00;">❌</span>'}
+
+<span style="color: #ffff00;">外貌:</span> ${aiChar.appearance.substring(0, 80)}...
+<span style="color: #ffff00;">背景:</span> ${aiChar.background.substring(0, 100)}...
+                `.trim();
+            } else {
+                charDiv.innerHTML = '<span style="color: #ff0000;">未找到 AI 角色数据</span>';
+            }
+        } else {
+            charDiv.innerHTML = '<span style="color: #999;">当前不是 AI 聊天</span>';
+        }
+    } else {
+        charDiv.innerHTML = '<span style="color: #999;">未选择聊天</span>';
+    }
+    
+    // 3. 显示最后的 System Prompt
+    const promptDiv = document.getElementById('debug-prompt');
+    if (promptDiv) {
+        if (window.lastSystemPrompt) {
+            promptDiv.textContent = window.lastSystemPrompt;
+        } else {
+            promptDiv.innerHTML = '<span style="color: #999;">尚未生成 Prompt（发送一条消息后会显示）</span>';
+        }
+    }
+}
+
+// 在页面加载时初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDebugPanel);
+} else {
+    initDebugPanel();
+}
+
+window.updateDebugInfo = updateDebugInfo;
+
+// ===============================================
+// 世界书选择功能 (针对 AI 角色)
+// ===============================================
+
+// 渲染好友关联的世界书
+function renderFriendWorldBooks(aiCharId) {
+    const aiChar = aiCharacters[aiCharId];
+    if (!aiChar) return;
+    
+    const globalDiv = document.getElementById('friend-global-worldbooks');
+    const localDiv = document.getElementById('friend-local-worldbooks');
+    
+    // 渲染全局世界书
+    if (aiChar.linked_global_worlds && aiChar.linked_global_worlds.length > 0) {
+        const globalNames = aiChar.linked_global_worlds.map(id => {
+            const book = AICore.worldSystem.global_books[id];
+            if (book) {
+                const name = book.entries['__META_NAME__'] || id;
+                return `<span style="display: inline-block; padding: 4px 8px; background: #DBEAFE; color: #1E40AF; border-radius: 6px; font-size: 12px; margin: 2px;">${name}</span>`;
+            }
+            return `<span style="display: inline-block; padding: 4px 8px; background: #FEE2E2; color: #991B1B; border-radius: 6px; font-size: 12px; margin: 2px;">${id} (已删除)</span>`;
+        }).join(' ');
+        globalDiv.innerHTML = globalNames;
+    } else {
+        globalDiv.innerHTML = '<span style="color: #9CA3AF;">未选择全局世界书</span>';
+    }
+    
+    // 渲染局部世界书
+    if (aiChar.linked_local_worlds && aiChar.linked_local_worlds.length > 0) {
+        const localNames = aiChar.linked_local_worlds.map(id => {
+            const book = AICore.worldSystem.local_books[id];
+            if (book) {
+                const name = book.entries['__META_NAME__'] || id;
+                return `<span style="display: inline-block; padding: 4px 8px; background: #D1FAE5; color: #065F46; border-radius: 6px; font-size: 12px; margin: 2px;">${name}</span>`;
+            }
+            return `<span style="display: inline-block; padding: 4px 8px; background: #FEE2E2; color: #991B1B; border-radius: 6px; font-size: 12px; margin: 2px;">${id} (已删除)</span>`;
+        }).join(' ');
+        localDiv.innerHTML = localNames;
+    } else {
+        localDiv.innerHTML = '<span style="color: #9CA3AF;">未选择局部世界书</span>';
+    }
+}
+
+// 选择全局世界书 (使用独立选择页面)
+window.selectGlobalWorldBooks = function() {
+    if (!currentFriendProfile || !currentFriendProfile.aiCharacterId) return;
+    
+    const aiChar = aiCharacters[currentFriendProfile.aiCharacterId];
+    if (!aiChar) return;
+    
+    const globalBooks = Object.keys(AICore.worldSystem.global_books);
+    if (globalBooks.length === 0) {
+        alert('暂无可用的全局世界书\n\n请先在世界书 App 中创建全局世界书');
+        return;
+    }
+    
+    // ✅ 使用独立选择页面
+    openWorldbookLinkSelector('global', aiChar.linked_global_worlds || [], (selectedBooks) => {
+        console.log('✅ 为角色选择了全局世界书:', selectedBooks);
+        aiChar.linked_global_worlds = selectedBooks;
+        aiCharacters[currentFriendProfile.aiCharacterId] = aiChar;
+        renderFriendWorldBooks(currentFriendProfile.aiCharacterId);
+        saveLineeData();
+    }, 'friend');
+};
+
+// 选择局部世界书 (使用独立选择页面)
+window.selectLocalWorldBooks = function() {
+    if (!currentFriendProfile || !currentFriendProfile.aiCharacterId) return;
+    
+    const aiChar = aiCharacters[currentFriendProfile.aiCharacterId];
+    if (!aiChar) return;
+    
+    const localBooks = Object.keys(AICore.worldSystem.local_books);
+    if (localBooks.length === 0) {
+        alert('暂无可用的局部世界书\n\n请先在世界书 App 中创建局部世界书');
+        return;
+    }
+    
+    // ✅ 使用独立选择页面
+    openWorldbookLinkSelector('local', aiChar.linked_local_worlds || [], (selectedBooks) => {
+        console.log('✅ 为角色选择了局部世界书:', selectedBooks);
+        aiChar.linked_local_worlds = selectedBooks;
+        aiCharacters[currentFriendProfile.aiCharacterId] = aiChar;
+        renderFriendWorldBooks(currentFriendProfile.aiCharacterId);
+        saveLineeData();
+    }, 'friend');
+};

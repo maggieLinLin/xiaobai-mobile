@@ -3,7 +3,7 @@
    ======================================== */
 
 let wbState = {
-    mode: 'normal', // 'normal', 'selection', 'editor'
+    mode: 'normal', // 'normal', 'selection', 'editor', 'picker'
     selectedItems: new Set(), // Set of IDs
     longPressTimer: null,
     dragSrcEl: null,
@@ -11,6 +11,10 @@ let wbState = {
     folders: { global: {}, local: {} }, // folderID -> { name, items: [] }
     currentFolder: null, // Current folder being viewed
     currentEditBook: null, // Current book being edited { id, type }
+    
+    // ✅ 新增：选择器模式状态
+    pickerMode: null, // { type: 'global'|'local', source: 'chat'|'friend', targetId: null, callback: fn }
+    pickerSelected: new Set(), // 当前选择器选中的 ID
 };
 
 function initWorldBookApp() {
@@ -20,6 +24,138 @@ function initWorldBookApp() {
     
     // Initialize tabs - ensure global is active by default if not set
     wbSwitchTab('global');
+}
+
+// ✅ 新增：进入选择器模式
+function enterWorldBookPicker(type, currentSelection, callback) {
+    console.log('🎯 进入世界书选择器模式');
+    console.log('  - 类型:', type);
+    console.log('  - 当前已选:', currentSelection);
+    console.log('  - 回调函数:', typeof callback);
+    
+    // 保存选择器状态
+    wbState.mode = 'picker';
+    wbState.pickerMode = { type, callback };
+    wbState.pickerSelected = new Set(currentSelection || []);
+    
+    console.log('✅ 选择器状态已设置:');
+    console.log('  - wbState.mode:', wbState.mode);
+    console.log('  - pickerMode.type:', wbState.pickerMode.type);
+    console.log('  - pickerSelected:', Array.from(wbState.pickerSelected));
+    
+    // 打开世界书 App
+    openApp('worldbook-app');
+    
+    // 切换到对应的标签页
+    wbSwitchTab(type);
+    
+    // 显示选择器 UI
+    showPickerUI();
+}
+
+// ✅ 显示选择器 UI
+function showPickerUI() {
+    const header = document.getElementById('wb-header');
+    if (!header) return;
+    
+    // 隐藏普通模式header
+    header.querySelector('.wb-header-normal').classList.add('hidden');
+    
+    // 创建选择器 header
+    let pickerHeader = header.querySelector('.wb-header-picker');
+    if (!pickerHeader) {
+        pickerHeader = document.createElement('div');
+        pickerHeader.className = 'wb-header-picker';
+        pickerHeader.innerHTML = `
+            <div class="flex items-center gap-2">
+                <button class="wb-btn-icon" onclick="exitWorldBookPicker(false)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <span id="wb-picker-count" class="wb-selection-count">已选 0</span>
+            </div>
+            <button class="wb-btn-primary" onclick="exitWorldBookPicker(true)">
+                <i class="fa-solid fa-check"></i> 确定
+            </button>
+        `;
+        header.appendChild(pickerHeader);
+    }
+    
+    pickerHeader.classList.remove('hidden');
+    
+    // 更新计数
+    updatePickerCount();
+    
+    // 重新渲染列表以显示选择状态
+    renderWbList(wbState.pickerMode.type);
+}
+
+// ✅ 更新选择器计数
+function updatePickerCount() {
+    const countEl = document.getElementById('wb-picker-count');
+    if (countEl) {
+        countEl.textContent = `已选 ${wbState.pickerSelected.size} 个`;
+    }
+}
+
+// ✅ 退出选择器模式
+function exitWorldBookPicker(confirm) {
+    console.log('🚪 退出选择器模式:', confirm);
+    
+    const selectedBooks = Array.from(wbState.pickerSelected);
+    
+    // 调用回调
+    if (confirm && wbState.pickerMode.callback) {
+        wbState.pickerMode.callback(selectedBooks);
+    }
+    
+    // 清理状态
+    wbState.mode = 'normal';
+    wbState.pickerMode = null;
+    wbState.pickerSelected.clear();
+    
+    // 恢复UI
+    const header = document.getElementById('wb-header');
+    if (header) {
+        header.querySelector('.wb-header-normal').classList.remove('hidden');
+        const pickerHeader = header.querySelector('.wb-header-picker');
+        if (pickerHeader) {
+            pickerHeader.classList.add('hidden');
+        }
+    }
+    
+    // 重新渲染列表
+    renderWbList('global');
+    renderWbList('local');
+    
+    // 关闭世界书 App
+    closeApp();
+}
+
+// ✅ 切换选择器中的项目
+function togglePickerItem(bookId) {
+    console.log('🎯 togglePickerItem 被调用:', bookId);
+    console.log('当前选择器模式:', wbState.pickerMode);
+    console.log('选中前:', Array.from(wbState.pickerSelected));
+    
+    if (wbState.pickerSelected.has(bookId)) {
+        wbState.pickerSelected.delete(bookId);
+        console.log('❌ 取消选择:', bookId);
+    } else {
+        wbState.pickerSelected.add(bookId);
+        console.log('✅ 添加选择:', bookId);
+    }
+    
+    console.log('选中后:', Array.from(wbState.pickerSelected));
+    
+    updatePickerCount();
+    
+    // 重新渲染以更新UI
+    if (wbState.pickerMode && wbState.pickerMode.type) {
+        console.log('🔄 重新渲染列表:', wbState.pickerMode.type);
+        renderWbList(wbState.pickerMode.type);
+    } else {
+        console.error('❌ pickerMode.type 未定义!');
+    }
 }
 
 function wbSwitchTab(tabName) {
@@ -118,27 +254,42 @@ function renderWbList(type) {
     // Render books
     Object.entries(books).forEach(([id, book]) => {
         const name = book.entries["__META_NAME__"] || id;
-        const isSelected = wbState.selectedItems.has(id);
+        const isSelected = wbState.mode === 'picker' ? wbState.pickerSelected.has(id) : wbState.selectedItems.has(id);
         const entryCount = Object.keys(book.entries).filter(k => k !== "__META_NAME__").length;
 
         const el = document.createElement('div');
         el.className = `wb-card ${isSelected ? 'selected' : ''}`;
-        el.setAttribute('draggable', 'true');
+        
+        // ✅ 在选择器模式下不允许拖动
+        if (wbState.mode !== 'picker') {
+            el.setAttribute('draggable', 'true');
+        }
+        
+        // ✅ 在选择器模式下添加标记,用于CSS区分
+        if (wbState.mode === 'picker') {
+            el.setAttribute('data-picker-mode', 'true');
+        }
+        
+        // ✅ 在批量操作模式(selection)下也添加标记,隐藏重复的勾选
+        if (wbState.mode === 'selection') {
+            el.setAttribute('data-selection-mode', 'true');
+        }
+        
         el.dataset.id = id;
         el.dataset.type = 'book';
         el.dataset.wbtype = type;
 
         el.innerHTML = `
             <div class="wb-card-icon">
-                <i class="fa-solid fa-book text-lg"></i>
+                <i class="fa-solid fa-book text-lg" style="color: ${type === 'global' ? '#3B82F6' : '#10B981'};"></i>
             </div>
             <div class="wb-card-content">
                 <h5 class="wb-card-title">${name}</h5>
                 <p class="wb-card-subtitle">${entryCount} 条目</p>
             </div>
-            ${wbState.mode === 'selection' ? `
+            ${(wbState.mode === 'selection' || wbState.mode === 'picker') ? `
                 <div class="wb-card-action">
-                    <i class="fa-regular ${isSelected ? 'fa-circle-check' : 'fa-circle'} text-xl wb-card-check"></i>
+                    <i class="fa-regular ${isSelected ? 'fa-circle-check' : 'fa-circle'} text-xl wb-card-check" style="color: ${isSelected ? '#A0D8EF' : '#D1D5DB'};"></i>
                 </div>
             ` : `
                 <div class="wb-card-action wb-card-handle">
@@ -149,7 +300,11 @@ function renderWbList(type) {
 
         // Events
         addInteractionEvents(el, id, type);
-        addDragEvents(el);
+        
+        // ✅ 在选择器模式下不添加拖动事件
+        if (wbState.mode !== 'picker') {
+            addDragEvents(el);
+        }
 
         container.appendChild(el);
     });
@@ -309,6 +464,19 @@ function addInteractionEvents(el, id, type) {
     // Click
     el.onclick = (e) => {
         e.preventDefault();
+        
+        console.log('🖱️ 世界书卡片被点击');
+        console.log('  - ID:', id);
+        console.log('  - 当前模式:', wbState.mode);
+        console.log('  - 项目类型:', itemType);
+        
+        // ✅ 在选择器模式下,只允许切换选择
+        if (wbState.mode === 'picker') {
+            console.log('📌 触发选择器切换');
+            togglePickerItem(id);
+            return;
+        }
+        
         if (wbState.mode === 'selection') {
             toggleSelection(id);
         } else {
@@ -328,7 +496,8 @@ function addInteractionEvents(el, id, type) {
     const movementThreshold = 10; // pixels
     
     const startLongPress = (e) => {
-        if (wbState.mode === 'selection' || wbState.mode === 'editor') return;
+        // ✅ 在选择器模式下禁用长按
+        if (wbState.mode === 'selection' || wbState.mode === 'editor' || wbState.mode === 'picker') return;
         
         const touch = e.touches ? e.touches[0] : e;
         pressStartX = touch.clientX;
@@ -534,6 +703,10 @@ function addEntryToCurrentBook() {
     keyInput.value = '';
     valueInput.value = '';
     renderEntriesList();
+    
+    // ✅ 自动保存到 localStorage
+    saveWorldBookData();
+    console.log('✅ 条目已添加并保存:', key);
 }
 
 function deleteEntryFromCurrentBook(key) {
@@ -545,6 +718,10 @@ function deleteEntryFromCurrentBook(key) {
     
     delete book.entries[key];
     renderEntriesList();
+    
+    // ✅ 自动保存到 localStorage
+    saveWorldBookData();
+    console.log('✅ 条目已删除并保存:', key);
 }
 
 function saveCurrentBook() {
@@ -1017,6 +1194,11 @@ window.wbDeleteItems = wbDeleteItems;
 window.wbDownloadItems = wbDownloadItems;
 window.wbMoveItems = wbMoveItems;
 window.wbSwitchTab = wbSwitchTab;
+
+// ✅ 导出选择器模式函数
+window.enterWorldBookPicker = enterWorldBookPicker;
+window.exitWorldBookPicker = exitWorldBookPicker;
+window.togglePickerItem = togglePickerItem;
 window.closeBookEditor = closeBookEditor;
 window.saveCurrentBook = saveCurrentBook;
 window.addEntryToCurrentBook = addEntryToCurrentBook;

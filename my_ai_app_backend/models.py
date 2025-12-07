@@ -41,7 +41,13 @@ class Character(BaseModel):
     # 原有字段保持
     source: str = Field(default='manual', pattern='^(manual|ai|import)$', description="角色来源")
     advanced_tuning: AdvancedTuning = Field(default_factory=AdvancedTuning)
-    linked_local_world_id: Optional[str] = Field(default=None, description="绑定的局部世界书 ID")
+    
+    # ✅ 新增：支持多个世界书选择 (全局 + 局部)
+    linked_global_worlds: List[str] = Field(default_factory=list, description="关联的全局世界书 ID 列表")
+    linked_local_worlds: List[str] = Field(default_factory=list, description="关联的局部世界书 ID 列表")
+    
+    # 🔄 保留旧版兼容性
+    linked_local_world_id: Optional[str] = Field(default=None, description="[已废弃] 绑定的局部世界书 ID (使用 linked_local_worlds 替代)")
     
     # ✅ 新增：生日与最爱系统
     birthday: Optional[str] = Field(default=None, description="生日 (格式: MM-DD, 例如: 03-15)")

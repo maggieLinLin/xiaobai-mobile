@@ -27,20 +27,27 @@
     background-color: #ecfdf5; /* emerald-50 */
 }
 
-.wb-header-normal, .wb-header-selection {
+.wb-header-normal, .wb-header-selection, .wb-header-picker {
     display: flex;
     align-items: center;
     width: 100%;
     gap: 8px;
 }
 
-.wb-header-selection {
+.wb-header-selection, .wb-header-picker {
     justify-content: space-between;
 }
 
 .wb-header-selection .wb-selection-tools {
     display: flex;
     gap: 4px;
+}
+
+/* ✅ 选择器模式样式 */
+.wb-header-picker {
+    background: rgba(160, 216, 239, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
 }
 
 .wb-title {
@@ -96,6 +103,27 @@
 
 .wb-btn-icon:hover {
     background-color: #ecfdf5; /* emerald-50 */
+}
+
+/* ✅ 主按钮样式 (用于选择器确定按钮) */
+.wb-btn-primary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: #A0D8EF;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.wb-btn-primary:hover {
+    background: #8ac5db;
+    transform: scale(1.02);
 }
 
 .wb-btn-icon.danger {
@@ -212,6 +240,11 @@
     transform: translateY(-2px);
 }
 
+/* ✅ 选择器模式下的选中样式 */
+.wb-card.selected .wb-card-check {
+    color: #A0D8EF !important;
+}
+
 .wb-card.selected::before {
     content: '';
     position: absolute;
@@ -241,6 +274,18 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
+}
+
+/* ✅ 在选择器模式下隐藏默认的勾选标记,只显示图标 */
+.wb-card[data-picker-mode="true"].selected::before,
+.wb-card[data-picker-mode="true"].selected::after {
+    display: none;
+}
+
+/* ✅ 在批量操作模式(selection)下也隐藏::before和::after,只显示蓝色勾选图标 */
+.wb-card[data-selection-mode="true"].selected::before,
+.wb-card[data-selection-mode="true"].selected::after {
+    display: none;
 }
 
 /* Dragging state */

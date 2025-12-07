@@ -846,14 +846,27 @@
                         <div style="margin-top: 20px;">
                             <div style="padding: 8px 16px; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.5px;">AI 配置</div>
                             <div style="background: white; border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB;">
-                                <!-- World Book Link -->
-                                <div onclick="selectWorldBook()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid #F3F4F6;">
+                                <!-- World Book Links -->
+                                <!-- Global World Books -->
+                                <div onclick="selectChatGlobalWorldBooks()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid #F3F4F6;">
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <ion-icon name="book-outline" style="font-size: 20px; color: #6B7280;"></ion-icon>
-                                        <span style="font-size: 14px; color: #1f2937;">关联世界书</span>
+                                        <ion-icon name="planet-outline" style="font-size: 20px; color: #3B82F6;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">全局世界书</span>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span id="selected-worldbook" style="font-size: 13px; color: #9CA3AF;">未选择</span>
+                                        <span id="selected-global-worldbooks" style="font-size: 13px; color: #9CA3AF;">未选择</span>
+                                        <ion-icon name="chevron-forward-outline" style="font-size: 16px; color: #D1D5DB;"></ion-icon>
+                                    </div>
+                                </div>
+                                
+                                <!-- Local World Books -->
+                                <div onclick="selectChatLocalWorldBooks()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid #F3F4F6;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <ion-icon name="book-outline" style="font-size: 20px; color: #10B981;"></ion-icon>
+                                        <span style="font-size: 14px; color: #1f2937;">局部世界书</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="selected-local-worldbooks" style="font-size: 13px; color: #9CA3AF;">未选择</span>
                                         <ion-icon name="chevron-forward-outline" style="font-size: 16px; color: #D1D5DB;"></ion-icon>
                                     </div>
                                 </div>
@@ -1173,6 +1186,32 @@
                             </div>
                         </div>
 
+                        <!-- World Books Card (Only for AI Characters) -->
+                        <div id="friend-worldbook-card" style="display: none; background: white; border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                <ion-icon name="planet-outline" style="font-size: 18px; color: #A0D8EF;"></ion-icon>
+                                <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #111827;">关联世界书</h3>
+                            </div>
+                            
+                            <!-- 全局世界书 -->
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 6px;">🌍 全局世界书</label>
+                                <div id="friend-global-worldbooks" style="min-height: 40px; padding: 8px; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB; font-size: 13px;">
+                                    <span style="color: #9CA3AF;">未选择全局世界书</span>
+                                </div>
+                                <button onclick="selectGlobalWorldBooks()" style="width: 100%; margin-top: 6px; padding: 8px; border: 1px solid #A0D8EF; background: white; color: #A0D8EF; border-radius: 8px; font-size: 12px; cursor: pointer;">选择全局世界书</button>
+                            </div>
+                            
+                            <!-- 局部世界书 -->
+                            <div>
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 6px;">📚 局部世界书</label>
+                                <div id="friend-local-worldbooks" style="min-height: 40px; padding: 8px; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB; font-size: 13px;">
+                                    <span style="color: #9CA3AF;">未选择局部世界书</span>
+                                </div>
+                                <button onclick="selectLocalWorldBooks()" style="width: 100%; margin-top: 6px; padding: 8px; border: 1px solid #A0D8EF; background: white; color: #A0D8EF; border-radius: 8px; font-size: 12px; cursor: pointer;">选择局部世界书</button>
+                            </div>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div style="display: flex; gap: 10px;">
                             <button onclick="sendMessageToFriend()" style="flex: 1; padding: 14px; border: none; background: #A0D8EF; color: white; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -1262,6 +1301,28 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ======== 世界书关联选择页面 (独立) ======== -->
+            <div id="worldbook-link-selector" class="app-window hidden">
+                <div class="app-header" style="background: linear-gradient(135deg, #A0D8EF 0%, #8AC5DB 100%); color: white; padding: 35px 16px 16px;">
+                    <button class="back-btn" onclick="closeWorldbookLinkSelector()" style="color: white; background: none; border: none; font-size: 24px; cursor: pointer; padding: 8px;">←</button>
+                    <h3 id="wblink-title" style="margin: 0; flex: 1; text-align: center; font-size: 18px;">选择世界书</h3>
+                    <button onclick="confirmWorldbookLinkSelection()" style="background: rgba(255,255,255,0.3); border: 2px solid white; color: white; padding: 8px 20px; border-radius: 20px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                        <i class="fa-solid fa-check"></i> 确定
+                    </button>
+                </div>
+                
+                <!-- 计数显示 -->
+                <div id="wblink-count-bar" style="padding: 12px 16px; background: rgba(160, 216, 239, 0.1); border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="wblink-count" style="font-size: 14px; font-weight: 600; color: #047857;">已选 0 个</span>
+                    <button onclick="clearWorldbookLinkSelection()" style="background: none; border: none; color: #ef4444; font-size: 12px; cursor: pointer;">清空选择</button>
+                </div>
+                
+                <!-- 世界书列表 -->
+                <div id="wblink-list-container" style="flex: 1; overflow-y: auto; padding: 16px; background: #f9fafb;">
+                    <!-- 世界书卡片将在这里渲染 -->
                 </div>
             </div>
 
@@ -1446,12 +1507,95 @@
     <audio id="music-player" style="display:none"></audio>
     <style id="custom-style"></style>
     <style id="custom-font"></style>
+    
+    <!-- 打字机效果样式 -->
+    <style>
+        /* 打字游标动画 */
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            color: currentColor;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+    </style>
+
+    <!-- ======== 开发者调试面板 ======== -->
+    <div id="debug-panel" style="position: fixed; top: 10px; right: 10px; z-index: 99999;">
+        <button id="debug-toggle-btn" style="
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #ff4757, #c23616);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+            transition: all 0.3s;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            🐛 Debug
+        </button>
+        
+        <div id="debug-window" style="
+            display: none;
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            width: 500px;
+            max-height: 80vh;
+            background: rgba(0, 0, 0, 0.95);
+            color: #00ff00;
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #00ff00;">
+                <h3 style="margin: 0; color: #00ff00; font-size: 16px;">🔍 AI 调试面板</h3>
+                <button id="debug-close-btn" style="
+                    background: transparent;
+                    color: #00ff00;
+                    border: 1px solid #00ff00;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    cursor: pointer;
+                    font-size: 16px;
+                " onclick="document.getElementById('debug-window').style.display='none'">×</button>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <h4 style="color: #ffff00; margin-bottom: 8px;">📋 当前聊天设置</h4>
+                <div id="debug-settings" style="background: rgba(0, 255, 0, 0.1); padding: 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word;"></div>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <h4 style="color: #ffff00; margin-bottom: 8px;">👤 当前角色信息</h4>
+                <div id="debug-character" style="background: rgba(0, 255, 0, 0.1); padding: 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word;"></div>
+            </div>
+            
+            <div>
+                <h4 style="color: #ffff00; margin-bottom: 8px;">📝 最后发送的 System Prompt</h4>
+                <div id="debug-prompt" style="background: rgba(0, 255, 0, 0.1); padding: 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
     <!-- 使用單一文件版本（推薦） -->
     <script src="js/ai-core.js"></script>
     <script src="js/app-complete.js"></script>
+    <script src="js/typewriter.js"></script>
     <script src="js/linee.js"></script>
     <script src="js/linee-enhancements.js"></script>
     <script src="js/worldbook.js"></script>
+    <script src="js/worldbook-link-selector.js"></script>
     <!-- 或使用模塊化版本（取消下面的註釋並註釋掉上面的 app.js）
     <script src="js/state.js"></script>
     <script src="js/statusbar.js"></script>
