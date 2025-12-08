@@ -1,6 +1,6 @@
 /* ✅ 投影仪模式：手机外框锁死尺寸 */
 #phone-container{position:relative;display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;padding:0}
-#phone-frame{width:375px;height:812px;flex-shrink:0;background:#FFFFFF;border-radius:38px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;position:relative;border:10px solid #78B9DC;transform-origin:center center;transition:transform 0.3s ease;visibility:hidden;box-sizing:border-box}
+#phone-frame{width:375px;height:812px;flex-shrink:0;background:#FFFFFF;border-radius:38px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;position:relative;border:10px solid #78B9DC;transform-origin:center center;transition:transform 0.3s ease;visibility:visible!important;display:block;box-sizing:border-box}
 @media (max-width:768px){#phone-frame{border-radius:20px;border:8px solid #78B9DC}}
 @media (max-width:400px){#phone-frame{border-width:6px;border-radius:25px}}
 #notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:25px;background:#333;border-radius:0 0 15px 15px;z-index:1000;cursor:pointer}
