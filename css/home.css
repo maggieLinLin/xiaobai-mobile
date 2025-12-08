@@ -75,8 +75,8 @@
     background: rgba(0,0,0,0.2);
     border-radius: 2px;
 }
-.cal-day.today{background:#333!important;color:white!important;font-weight:bold!important;border-radius:8px}
-.cal-day.has-memo{border:1px solid #333!important}
+.cal-day.today{background:#007AFF!important;color:white!important;font-weight:bold!important;border-radius:8px}
+.cal-day.selected{border:2px solid #FF9500!important}
 #today-memo-widget {
     position: absolute;
     left: 6%;

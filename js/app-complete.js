@@ -210,9 +210,9 @@ function renderMiniCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === today;
-        const hasMemo = state.memos[dateStr];
+        const isSelected = state.selectedDate === dateStr;
         const bgColor = isToday ? 'background:#007AFF !important;color:white !important;font-weight:bold !important;' : '';
-        const border = hasMemo ? 'border:1px solid #FF9500;' : '';
+        const border = isSelected ? 'border:2px solid #FF9500;' : '';
         html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border};pointer-events:auto;" class="cal-day" data-date="${dateStr}">${day}</div>`;
     }
     
@@ -1018,15 +1018,18 @@ function renderFullCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === today;
-        const isSelected = state.selectedDate === dateStr;
-        const hasMemo = state.memos[dateStr];
+        const isSelectedInFull = state.selectedDate === dateStr;
         
         let bgStyle = '';
-        if (isSelected) bgStyle = 'background:#007AFF; color:white; font-weight:bold;';
-        else if (isToday) bgStyle = 'background:#E5F1FF; color:#007AFF; font-weight:bold;';
+        let border = '';
+        if (isSelectedInFull) {
+            bgStyle = 'background:#007AFF; color:white; font-weight:bold;';
+            border = 'border:2px solid #FF9500;';
+        } else if (isToday) {
+            bgStyle = 'background:#E5F1FF; color:#007AFF; font-weight:bold;';
+        }
         
-        const border = hasMemo ? 'border:1px solid #FF9500;' : '';
-        const classes = `calendar-day ${isToday ? 'today' : ''} ${hasMemo ? 'has-memo' : ''}`;
+        const classes = `calendar-day ${isToday ? 'today' : ''} ${isSelectedInFull ? 'selected' : ''}`;
         
         html += `<div class="${classes}" data-date="${dateStr}" style="padding:10px; text-align:center; border-radius:10px; cursor:pointer; font-size:14px; ${bgStyle} ${border}">${day}</div>`;
     }

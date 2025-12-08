@@ -63,9 +63,9 @@ function renderMiniCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = dateStr === today;
-        const hasMemo = state.memos[dateStr];
+        const isSelected = state.selectedDate === dateStr;
         const bgColor = isToday ? 'background:#007AFF !important;color:white !important;font-weight:bold !important;' : '';
-        const border = hasMemo ? 'border:1px solid #FF9500;' : '';
+        const border = isSelected ? 'border:2px solid #FF9500;' : '';
         html += `<div style="padding:4px 2px;text-align:center;border-radius:4px;cursor:pointer;font-size:9px;${bgColor}${border}" class="cal-day" data-date="${dateStr}">${day}</div>`;
     }
     
@@ -85,6 +85,13 @@ function renderMiniCalendar() {
     if (nextBtn) nextBtn.onclick = (e) => { e.stopPropagation(); state.calendarDate = new Date(date.setMonth(date.getMonth() + 1)); renderMiniCalendar(); saveState(); };
     
     widget.querySelectorAll('.cal-day').forEach(el => {
-        el.onclick = (e) => { e.stopPropagation(); state.selectedDate = el.dataset.date; openApp('calendar-app'); selectDate(el.dataset.date); };
+        el.onclick = (e) => { 
+            e.stopPropagation(); 
+            state.selectedDate = el.dataset.date; 
+            saveState();
+            renderMiniCalendar(); // 刷新日历显示橘线
+            openApp('calendar-app'); 
+            selectDate(el.dataset.date); 
+        };
     });
 }
