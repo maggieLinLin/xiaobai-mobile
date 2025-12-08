@@ -1,51 +1,42 @@
-/* ✅ 终极自适应：绝对定位+强制居中 */
+/* ✅ 终极自适应：等比缩放方案 */
 #phone-container{
-    position:absolute;
-    top:0;
-    left:0;
+    position:relative;
     width:100%;
     height:100%;
-    pointer-events:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
 }
 #phone-frame{
-    /* 锁死设计稿尺寸 */
-    width:375px;
-    height:812px;
-    
-    /* 绝对居中大法 */
-    position:absolute;
-    top:50%;
-    left:50%;
-    
-    /* transform由JS控制，这里设置初始值 */
-    transform:translate(-50%, -50%) scale(1);
-    transform-origin:center center;
-    
-    /* 其他样式 */
+    /* 固定设计稿尺寸 (400x780) */
+    width:400px;
+    height:780px;
     background:#FFFFFF;
-    border-radius:38px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    border-radius:32px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.25);
     overflow:hidden;
     border:10px solid #78B9DC;
-    visibility:visible!important;
-    display:block;
+    display:flex;
+    flex-direction:column;
     box-sizing:border-box;
-    pointer-events:auto;
-    z-index:10;
+    position:relative;
+    transform-origin:center center;
+    /* 动态缩放：根据视口尺寸自动计算 */
+    transform:scale(min(calc((100vw - 32px) / 400), calc((100vh - 32px) / 780)));
 }
 
-/* 小屏幕边框优化 */
 @media (max-width:768px){
     #phone-frame{
-        border-radius:28px;
-        border:8px solid #78B9DC;
+        border-radius:26px;
+        border-width:8px;
     }
 }
 
 @media (max-width:400px){
     #phone-frame{
+        border-radius:22px;
         border-width:6px;
-        border-radius:25px;
     }
 }
 #notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:25px;background:#333;border-radius:0 0 15px 15px;z-index:1000;cursor:pointer}
