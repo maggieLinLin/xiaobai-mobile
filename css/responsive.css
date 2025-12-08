@@ -1,0 +1,100 @@
+/* ✅ 终极响应式优化 - 绝对定位方案 */
+
+/* 确保容器不会产生滚动条 */
+body, html {
+    overflow: hidden !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#phone-container {
+    overflow: hidden !important;
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+    .app-icon:active {
+        transform: scale(0.85);
+    }
+    
+    .control-btn:active,
+    .action-btn:active {
+        transform: scale(0.9);
+    }
+}
+
+/* 设置页面响应式优化 */
+@media (max-height: 850px) or (max-width: 395px) {
+    .settings-header {
+        padding: clamp(35px, 6vh, 50px) 20px 15px !important;
+    }
+    
+    .settings-header h2 {
+        font-size: clamp(18px, 4vw, 26px) !important;
+    }
+    
+    #close-settings {
+        width: clamp(32px, 6vw, 40px) !important;
+        height: clamp(32px, 6vw, 40px) !important;
+        font-size: clamp(28px, 5vw, 36px) !important;
+    }
+    
+    .tab-btn {
+        padding: clamp(12px, 3vw, 18px) !important;
+        font-size: clamp(12px, 2.5vw, 15px) !important;
+    }
+    
+    .tab-content {
+        padding: clamp(15px, 3vw, 25px) !important;
+        max-height: clamp(300px, 50vh, 500px) !important;
+    }
+    
+    .tab-content h3 {
+        font-size: clamp(13px, 2.5vw, 16px) !important;
+    }
+    
+    .tab-content h4 {
+        font-size: clamp(11px, 2vw, 14px) !important;
+    }
+    
+    .tab-content input,
+    .tab-content select,
+    .tab-content textarea,
+    .tab-content button {
+        font-size: clamp(11px, 2.5vw, 14px) !important;
+        padding: clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 15px) !important;
+    }
+}
+
+/* 应用窗口响应式优化 */
+@media (max-height: 850px) or (max-width: 395px) {
+    .app-header {
+        padding: clamp(35px, 6vh, 50px) 15px 12px !important;
+    }
+    
+    .app-header h3 {
+        font-size: clamp(14px, 3vw, 18px) !important;
+    }
+    
+    .back-btn {
+        font-size: clamp(18px, 4vw, 24px) !important;
+    }
+    
+    .chat-item {
+        padding: clamp(10px, 2vw, 15px) clamp(12px, 2.5vw, 20px) !important;
+    }
+    
+    .chat-avatar {
+        width: clamp(40px, 8vw, 50px) !important;
+        height: clamp(40px, 8vw, 50px) !important;
+        font-size: clamp(18px, 4vw, 24px) !important;
+    }
+    
+    .chat-name {
+        font-size: clamp(13px, 2.5vw, 15px) !important;
+    }
+    
+    .chat-preview {
+        font-size: clamp(11px, 2vw, 14px) !important;
+    }
+}

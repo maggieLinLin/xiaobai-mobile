@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="color-scheme" content="light only">
     <meta name="supported-color-schemes" content="light">
     <style>
@@ -26,6 +26,7 @@
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <link rel="stylesheet" href="css/worldbook.css?v=1">
     <link rel="stylesheet" href="css/chat-settings.css">
+    <link rel="stylesheet" href="css/responsive.css?v=1">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -1588,6 +1589,8 @@
             </div>
         </div>
     </div>
+    <!-- 屏幕自适应脚本（必须最先加载） -->
+    <script src="js/screen-fit.js"></script>
     <!-- 使用單一文件版本（推薦） -->
     <script src="js/ai-core.js"></script>
     <script src="js/app-complete.js"></script>
