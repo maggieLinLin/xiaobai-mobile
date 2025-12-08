@@ -1,17 +1,19 @@
 /* ✅ 终极自适应：等比缩放方案 */
 #phone-container{
-    position:relative;
-    width:100%;
-    height:100%;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
     display:flex;
     align-items:center;
     justify-content:center;
     overflow:hidden;
 }
 #phone-frame{
-    /* 固定设计稿尺寸 (400x780) */
-    width:400px;
-    height:780px;
+    /* 固定设计稿尺寸 (375x667) - iPhone 8 标准尺寸 */
+    width:375px;
+    height:667px;
     background:#FFFFFF;
     border-radius:32px;
     box-shadow:0 20px 60px rgba(0,0,0,0.25);
@@ -22,21 +24,39 @@
     box-sizing:border-box;
     position:relative;
     transform-origin:center center;
-    /* 动态缩放：根据视口尺寸自动计算 */
-    transform:scale(min(calc((100vw - 32px) / 400), calc((100vh - 32px) / 780)));
 }
 
-@media (max-width:768px){
+/* 桌面端：缩小到70%，更接近真实手机大小 */
+@media (min-width:769px){
     #phone-frame{
-        border-radius:26px;
-        border-width:8px;
+        transform:scale(0.7);
     }
 }
 
-@media (max-width:400px){
+/* 平板端：根据屏幕大小缩放，最大0.9 */
+@media (max-width:768px) and (min-width:481px){
     #phone-frame{
-        border-radius:22px;
+        transform:scale(min(calc((100vw - 40px) / 375), calc((100vh - 40px) / 667), 0.9));
+    }
+}
+
+/* 手机端：自适应缩放 */
+@media (max-width:480px){
+    #phone-frame{
+        width:375px;
+        height:667px;
+        border-radius:32px;
+        border-width:8px;
+        transform:scale(min(calc((100vw - 20px) / 375), calc((100vh - 20px) / 667)));
+    }
+}
+
+/* 小屏手机优化 */
+@media (max-width:380px){
+    #phone-frame{
+        border-radius:28px;
         border-width:6px;
+        transform:scale(min(calc((100vw - 16px) / 375), calc((100vh - 16px) / 667)));
     }
 }
 #notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:25px;background:#333;border-radius:0 0 15px 15px;z-index:1000;cursor:pointer}
