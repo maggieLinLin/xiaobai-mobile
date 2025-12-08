@@ -4,8 +4,8 @@ function fitScreen() {
     if (!phone) return;
     
     // 1. 定义手机原始尺寸
-    const baseWidth = 375;
-    const baseHeight = 812;
+    const baseWidth = 390;
+    const baseHeight = 844;
     
     // 2. 获取浏览器视窗尺寸
     const winWidth = window.innerWidth;
