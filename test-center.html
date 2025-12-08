@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>居中测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        #phone-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        #phone-frame {
+            width: 375px;
+            height: 667px;
+            background: #FFFFFF;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            border: 10px solid #78B9DC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #333;
+        }
+        
+        @media (max-width: 480px) {
+            #phone-frame {
+                width: calc(100vw - 32px);
+                height: calc((100vw - 32px) * 667 / 375);
+                max-height: calc(100vh - 32px);
+                border-radius: 32px;
+                border-width: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="phone-container">
+        <div id="phone-frame">
+            ✅ 居中成功！
+        </div>
+    </div>
+</body>
+</html>
