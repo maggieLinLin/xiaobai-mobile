@@ -1,31 +1,46 @@
-// 📱 自动缩放手机以适应屏幕
-function resizePhone() {
+// ✅ 投影仪模式：数学缩放函数（强制全屏适配）
+function fitScreen() {
     const phone = document.getElementById('phone-frame');
-    const container = document.getElementById('phone-container');
-    if (!phone || !container) return;
+    if (!phone) return;
     
-    const padding = window.innerWidth <= 768 ? 10 : 20;
+    // 1. 定义设计稿原始尺寸（不可更改）
     const baseWidth = 375;
     const baseHeight = 812;
     
-    const windowWidth = window.innerWidth - (padding * 2);
-    const windowHeight = window.innerHeight - (padding * 2);
+    // 2. 获取当前视窗的可视尺寸
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
     
-    const scaleX = windowWidth / baseWidth;
-    const scaleY = windowHeight / baseHeight;
-    const scale = Math.min(scaleX, scaleY, 1);
+    // 3. 设定边距（Padding）以免贴边太难看
+    const padding = 20;
+    const availableWidth = winWidth - (padding * 2);
+    const availableHeight = winHeight - (padding * 2);
     
-    phone.style.transform = `scale(${scale})`;
+    // 4. 计算缩放比例（取宽高比中较小的那个，确保完全放入）
+    const scaleX = availableWidth / baseWidth;
+    const scaleY = availableHeight / baseHeight;
+    const scale = Math.min(scaleX, scaleY); // 保持比例
     
-    const scaledHeight = baseHeight * scale;
-    const scaledWidth = baseWidth * scale;
-    container.style.height = `${scaledHeight}px`;
-    container.style.width = `${scaledWidth}px`;
+    // 5. 应用缩放（限制最大放大倍率为 1.2，避免糊掉）
+    const finalScale = Math.min(scale, 1.2);
+    
+    phone.style.transform = `scale(${finalScale})`;
+    
+    // 6. 显示手机（避免闪烁）
+    phone.style.visibility = 'visible';
+    
+    console.log(`[ScreenFit] Scale applied: ${finalScale.toFixed(2)} (${winWidth}x${winHeight})`);
 }
 
-window.addEventListener('resize', resizePhone);
-window.addEventListener('load', resizePhone);
-window.addEventListener('orientationchange', resizePhone);
+// 监听事件
+window.addEventListener('resize', fitScreen);
+window.addEventListener('load', fitScreen);
+window.addEventListener('orientationchange', () => {
+    setTimeout(fitScreen, 100); // 延迟执行，等待方向变化完成
+});
+
+// 防止某些浏览器加载延迟，强制执行一次
+setTimeout(fitScreen, 100);
 
 document.addEventListener('DOMContentLoaded', () => {
     loadState();
@@ -38,5 +53,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!state.wallpaper) {
         applyTheme(state.currentTheme);
     }
-    resizePhone();
+    fitScreen(); // 使用新的函数名
 });
