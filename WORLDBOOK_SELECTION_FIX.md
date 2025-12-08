@@ -252,3 +252,4 @@ function migrateChatSettings(oldSettings) {
 - `test-worldbook-selection.html` - 测试页面
 
 🎉 **修复完成!现在全局世界书选择功能应该正常工作了!**
+

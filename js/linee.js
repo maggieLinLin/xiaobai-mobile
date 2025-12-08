@@ -432,6 +432,16 @@ async function sendChatMessage() {
             local: mergedChar.linked_local_worlds
         });
         
+        // ✅ 检测模式是否刚切换
+        if (!window.lineeLastMode) window.lineeLastMode = {};
+        const lastMode = window.lineeLastMode[currentChatId] || currentMode;
+        const justSwitchedMode = lastMode !== currentMode;
+        window.lineeLastMode[currentChatId] = currentMode;
+        
+        if (justSwitchedMode) {
+            console.log(`🔄 模式切换检测: ${lastMode} → ${currentMode}`);
+        }
+        
         // 调用 AI 核心 (即使没有 API 也会生成 Mock 回复)
         const apiConfigToUse = (state && state.apiConfig) ? state.apiConfig : {};
         const responseText = await AICore.chatSystem.generateResponse(
@@ -439,7 +449,8 @@ async function sendChatMessage() {
             text,
             history,
             currentMode, // 使用设置中的模式
-            apiConfigToUse
+            apiConfigToUse,
+            justSwitchedMode // ✅ 传递模式切换状态
         );
         
         // 移除打字提示
@@ -610,27 +621,54 @@ async function confirmAIGenerateChar() {
 
 请按照上述要求，生成完整详细的角色设定（纯 JSON 格式，不要添加任何其他说明文字）。`;
 
-        // 调用 LLM API
-        const res = await fetch(`${state.apiConfig.url}/v1/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${state.apiConfig.key}`
-            },
-            body: JSON.stringify({
-                model: state.apiConfig.model || "gpt-3.5-turbo",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: userPrompt }
-                ],
-                temperature: 0.8
-            })
-        });
+        // ✅ 调用 LLM API (添加重试机制)
+        let retryCount = 0;
+        const maxRetries = 2;
+        let res, data, responseText;
         
-        if (!res.ok) throw new Error(`API Error: ${res.status}`);
-        
-        const data = await res.json();
-        let responseText = data.choices[0].message.content.trim();
+        while (retryCount <= maxRetries) {
+            try {
+                res = await fetch(`${state.apiConfig.url}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.apiConfig.key}`
+                    },
+                    body: JSON.stringify({
+                        model: state.apiConfig.model || "gpt-3.5-turbo",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        temperature: 0.8,
+                        timeout: 60000 // 60秒超时
+                    })
+                });
+                
+                if (!res.ok) {
+                    if (retryCount < maxRetries && (res.status === 500 || res.status === 502 || res.status === 503)) {
+                        retryCount++;
+                        confirmBtn.innerHTML = `<span>⏳ 网络波动，重试中 (${retryCount}/${maxRetries})...</span>`;
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒后重试
+                        continue;
+                    }
+                    throw new Error(`API Error ${res.status}: ${await res.text()}`);
+                }
+                
+                data = await res.json();
+                responseText = data.choices[0].message.content.trim();
+                break; // 成功，跳出循环
+                
+            } catch (networkError) {
+                if (retryCount < maxRetries && (networkError.message.includes('Network') || networkError.message.includes('fetch'))) {
+                    retryCount++;
+                    confirmBtn.innerHTML = `<span>⏳ 连接失败，重试中 (${retryCount}/${maxRetries})...</span>`;
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    continue;
+                }
+                throw networkError; // 超过重试次数，抛出错误
+            }
+        }
         
         // 尝试解析 JSON（可能被包裹在代码块中）
         responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
@@ -639,24 +677,38 @@ async function confirmAIGenerateChar() {
         
         // ✅ 填充表单到"高级创建"模态框供用户编辑
         
-        // 1. 填充表单
-        document.getElementById('ai-char-name').value = charData.name || '';
+        // 1. 填充表单 (确保DOM元素存在)
+        const nameInput = document.getElementById('ai-char-name');
+        const genderSelect = document.getElementById('ai-char-gender');
+        const identityInput = document.getElementById('ai-char-identity');
+        const appearanceInput = document.getElementById('ai-char-appearance');
+        const backgroundInput = document.getElementById('ai-char-background');
+        const tagsInput = document.getElementById('ai-char-tags');
+        const styleSelect = document.getElementById('ai-char-style');
+        const firstMsgInput = document.getElementById('ai-char-first-msg');
+        
+        if (!nameInput || !genderSelect || !identityInput || !appearanceInput || !backgroundInput || !tagsInput || !styleSelect || !firstMsgInput) {
+            console.error('❌ 表单元素未找到，请检查 HTML');
+            alert('UI 同步失败：表单元素未找到\n请刷新页面重试');
+            return;
+        }
+        
+        // 填充数据
+        nameInput.value = charData.name || '';
         
         // 处理性别下拉框
-        const genderSelect = document.getElementById('ai-char-gender');
         if (['男', '女', '其他'].includes(charData.gender)) {
             genderSelect.value = charData.gender;
         } else {
             genderSelect.value = '其他';
         }
         
-        document.getElementById('ai-char-identity').value = charData.identity || '';
-        document.getElementById('ai-char-appearance').value = charData.appearance || '';
-        document.getElementById('ai-char-background').value = charData.background || '';
-        document.getElementById('ai-char-tags').value = (charData.personality_tags || []).join(', ');
+        identityInput.value = charData.identity || '';
+        appearanceInput.value = charData.appearance || '';
+        backgroundInput.value = charData.background || '';
+        tagsInput.value = (charData.personality_tags || []).join(', ');
         
         // 处理风格下拉框 (尽量匹配，否则默认)
-        const styleSelect = document.getElementById('ai-char-style');
         const styleValue = charData.dialogue_style;
         let matchedStyle = '现代日常 (默认)';
         if (styleValue) {
@@ -670,11 +722,24 @@ async function confirmAIGenerateChar() {
         styleSelect.value = matchedStyle;
         
         // 开场白
-        document.getElementById('ai-char-first-msg').value = charData.first_message || '';
+        firstMsgInput.value = charData.first_message || '';
+        
+        // ✅ 强制触发输入事件以更新UI
+        [nameInput, identityInput, appearanceInput, backgroundInput, tagsInput, firstMsgInput].forEach(input => {
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
         
         // 2. 切换模态框
         closeLineeModal('linee-modal-ai-generate'); // 关闭 AI 输入框
         document.getElementById('linee-modal-create-char').classList.remove('hidden'); // 打开高级编辑框
+        
+        // 3. 视觉提示
+        console.log('✅ AI 生成完成，数据已填入表单');
+        console.log('📊 生成的数据:', {
+            name: charData.name,
+            appearance_length: charData.appearance?.length || 0,
+            background_length: charData.background?.length || 0
+        });
         
         // 清空关键词输入
         keywordsInput.value = '';
@@ -1031,6 +1096,11 @@ function handleAvatarUpload(event) {
             if (chat) {
                 chat.avatar = dataUrl;
                 renderChatList();
+            }
+            
+            // ✅ 如果当前正在聊天界面，立即更新聊天室头像
+            if (currentChatFriend === currentFriendProfile.name) {
+                updateChatRoomAvatars();
             }
             
             // 保存到本地
@@ -1564,10 +1634,30 @@ function handleCharAvatarUpload(event) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
+        // 1. 更新全局设置
         chatSettings.charAvatar = e.target.result;
         document.getElementById('char-avatar-url').value = '(本地图片已上传)';
+        
+        // 2. 保存到 localStorage
+        saveLineeSettings();
+        
+        // 3. 强制更新聊天室所有头像
+        updateChatRoomAvatars();
+        
+        console.log('✅ 头像已上传并同步到聊天室');
     };
     reader.readAsDataURL(file);
+}
+
+// 新增函数：更新聊天室中的所有头像
+function updateChatRoomAvatars() {
+    const avatarUrl = chatSettings.charAvatar || 'https://via.placeholder.com/40';
+    const chatAvatars = document.querySelectorAll('.chat-avatar');
+    chatAvatars.forEach(avatar => {
+        if (!avatar.closest('.user-message')) {
+            avatar.src = avatarUrl;
+        }
+    });
 }
 
 function selectPersonaSlot(slot) {

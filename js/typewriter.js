@@ -74,3 +74,4 @@ window.typeWriter = typeWriter;
 window.skipTyping = skipTyping;
 
 console.log('✅ 打字机效果已加载');
+

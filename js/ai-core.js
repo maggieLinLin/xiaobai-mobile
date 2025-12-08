@@ -153,11 +153,18 @@ class WorldBook {
 // --- Prompt Builder ---
 
 class PromptBuilder {
-    static build(character, world_context, history, mode = "OFFLINE") {
+    static build(character, world_context, history, mode = "OFFLINE", realtimeSync = true) {
         const tags_str = character.personality_tags.length ? character.personality_tags.join(", ") : "无";
         
+        // ✅ 添加现实时间同步
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const timeOfDay = hours < 6 ? '凌晨' : hours < 12 ? '上午' : hours < 14 ? '中午' : hours < 18 ? '下午' : hours < 22 ? '晚上' : '深夜';
+        const realTimeInfo = realtimeSync ? `\n【现实时间同步】现在是 ${timeOfDay} ${hours}:${minutes}。请根据此时间调整环境描写（如光线、作息、氛围）。` : '';
+        
         let core_instruction = `
-你正在扮演 ${character.name}。
+你正在扮演 ${character.name}。${realTimeInfo}
 
 【基础信息】性别：${character.gender} | 身份：${character.identity}
 【外貌特征】${character.appearance}
@@ -425,7 +432,7 @@ class ChatSystem {
         this.worldSystem = worldSystem;
     }
 
-    async generateResponse(character, userInput, history, mode = "OFFLINE", apiConfig) {
+    async generateResponse(character, userInput, history, mode = "OFFLINE", apiConfig, justSwitchedMode = false) {
         // 1. Get World Context
         // ✅ 使用角色关联的世界书 (支持多个全局+局部)
         const worldContext = this.worldSystem.getWorldContext(
@@ -435,7 +442,12 @@ class ChatSystem {
         );
 
         // 2. Build Prompt
-        const systemPrompt = PromptBuilder.build(character, worldContext, history, mode);
+        let systemPrompt = PromptBuilder.build(character, worldContext, history, mode);
+        
+        // ✅ 如果刚切换模式，添加防重复指令
+        if (justSwitchedMode) {
+            systemPrompt += `\n\n【系统指令 - 模式切换】\n刚从${mode === 'OFFLINE' ? '线上' : '线下'}模式切换过来。之前的对话已经发生过了。**严禁重复或重演之前的消息内容**。请从当前时刻继续，描写接下来的新反应和新剧情。\n`;
+        }
 
         // 🐛 DEBUG: 存储 Prompt 供调试面板使用
         if (typeof window !== 'undefined') {
