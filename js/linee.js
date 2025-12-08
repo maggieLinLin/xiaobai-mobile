@@ -291,16 +291,22 @@ function renderChatMessages() {
         container.style.padding = '16px';
         container.style.background = '#FFFFFF';
         
-        // ✅ 获取当前聊天的角色头像 (优先使用聊天设置的头像)
+        // ✅ 获取当前聊天的角色头像 (优先使用好友设定的本地头像)
         const currentChat = mockChats.find(c => c.id === currentChatId);
         let avatarUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
         
-        // 优先级1: chatSettings的自定义头像
-        if (chatSettings.charAvatar && chatSettings.charAvatar.trim() !== '' && chatSettings.charAvatar !== '(本地图片已上传)') {
+        // 优先级1: 好友设定中的头像（包括用户上传的本地图片）
+        const friend = lineeFriends.find(f => f.name === currentChat.name);
+        if (friend && friend.avatar) {
+            avatarUrl = friend.avatar;
+            console.log('🖼️ 使用好友设定头像:', friend.avatar.substring(0, 50));
+        }
+        // 优先级2: chatSettings的自定义头像
+        else if (chatSettings.charAvatar && chatSettings.charAvatar.trim() !== '' && chatSettings.charAvatar !== '(本地图片已上传)') {
             avatarUrl = chatSettings.charAvatar;
             console.log('🖼️ 使用聊天设置头像');
         }
-        // 优先级2: AI角色的默认头像
+        // 优先级3: AI角色的默认头像
         else if (currentChat && currentChat.isAI && currentChat.aiCharacterId) {
             const aiChar = aiCharacters[currentChat.aiCharacterId];
             if (aiChar && aiChar.avatar) {
@@ -308,7 +314,7 @@ function renderChatMessages() {
                 console.log('🖼️ 使用AI角色头像');
             }
         }
-        // 优先级3: 聊天对象的头像
+        // 优先级4: 聊天对象的头像
         else if (currentChat && currentChat.avatar) {
             avatarUrl = currentChat.avatar;
             console.log('🖼️ 使用聊天对象头像');
@@ -1651,13 +1657,21 @@ function handleCharAvatarUpload(event) {
 
 // 新增函数：更新聊天室中的所有头像
 function updateChatRoomAvatars() {
-    const avatarUrl = chatSettings.charAvatar || 'https://via.placeholder.com/40';
-    const chatAvatars = document.querySelectorAll('.chat-avatar');
-    chatAvatars.forEach(avatar => {
-        if (!avatar.closest('.user-message')) {
-            avatar.src = avatarUrl;
-        }
-    });
+    // ✅ 优先使用好友设定的头像
+    const currentChat = mockChats.find(c => c.id === currentChatId);
+    const friend = lineeFriends.find(f => f.name === currentChat?.name);
+    
+    let avatarUrl = 'https://via.placeholder.com/40';
+    if (friend && friend.avatar) {
+        avatarUrl = friend.avatar;
+    } else if (chatSettings.charAvatar) {
+        avatarUrl = chatSettings.charAvatar;
+    } else if (currentChat && currentChat.avatar) {
+        avatarUrl = currentChat.avatar;
+    }
+    
+    // 重新渲染消息以更新头像
+    renderChatMessages();
 }
 
 function selectPersonaSlot(slot) {

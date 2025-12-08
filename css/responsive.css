@@ -46,7 +46,6 @@ body, html {
     
     .tab-content {
         padding: clamp(15px, 3vw, 25px) !important;
-        max-height: clamp(300px, 50vh, 500px) !important;
     }
     
     .tab-content h3 {
