@@ -54,3 +54,4 @@ class RelationshipSystem:
         character.relationship.level = self.get_level_description(character.relationship.score)
         return change
 
+

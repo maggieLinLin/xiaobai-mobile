@@ -128,3 +128,4 @@ git push origin main
 2. 是否在正确的目录：`pwd` (PowerShell) 或 `cd` (CMD)
 3. 远程仓库配置：`git remote -v`
 4. 当前分支：`git branch`
+

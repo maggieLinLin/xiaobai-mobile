@@ -143,3 +143,4 @@ const isSelected = state.selectedDate === dateStr;
 - 橘线现在表示"用户选择"，与备忘录内容无关
 - 如果需要显示哪些日期有备忘录，可以考虑添加其他视觉提示（如小圆点）
 - 高度 667px 是基于 iPhone SE 的标准尺寸，最适合大部分手机
+

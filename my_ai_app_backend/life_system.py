@@ -15,3 +15,4 @@ def write_diary(char_id: str, chat_history: list):
     """
     pass
 
+

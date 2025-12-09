@@ -49,3 +49,4 @@ const interval = setInterval(() => {
     attempts++;
     if (attempts > 5) clearInterval(interval);
 }, 200);
+

@@ -45,3 +45,4 @@ class LLMClient:
         time.sleep(1) # 模拟网络延迟
         return f"[模拟回复] 收到你的消息：'{last_user_msg}'。 (当前温度: {temperature})"
 
+

@@ -1,0 +1,92 @@
+<!-- 日記應用 HTML 片段 -->
+<div id="diary-app" class="app-window hidden">
+    <!-- 主頁視圖 -->
+    <div id="diary-home-view" class="diary-view active">
+        <div class="diary-navbar">
+            <button class="diary-navbar-btn" id="diary-back-btn">
+                <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="diary-navbar-title">日記</div>
+            <button class="diary-navbar-btn" onclick="renderDiaryFavorites(); switchDiaryView('favorites')">
+                <ion-icon name="star-outline"></ion-icon>
+            </button>
+        </div>
+        <div id="diary-friends-list"></div>
+    </div>
+
+    <!-- 詳情視圖 -->
+    <div id="diary-detail-view" class="diary-view">
+        <div class="diary-navbar">
+            <button class="diary-navbar-btn" onclick="switchDiaryView('home')">
+                <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="diary-navbar-title" id="diary-detail-title"></div>
+            <button class="diary-navbar-btn" onclick="openGenerateModal()">
+                <ion-icon name="add-outline"></ion-icon>
+            </button>
+        </div>
+        <div id="diary-timeline-container" style="flex: 1; overflow-y: auto; padding: 16px;"></div>
+    </div>
+
+    <!-- 收藏視圖 -->
+    <div id="diary-favorites-view" class="diary-view">
+        <div class="diary-navbar">
+            <button class="diary-navbar-btn" onclick="switchDiaryView('home')">
+                <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="diary-navbar-title">收藏簿</div>
+            <button class="diary-navbar-btn" onclick="openDiarySettings()">
+                <ion-icon name="settings-outline"></ion-icon>
+            </button>
+        </div>
+        <div id="diary-favorites-container" style="flex: 1; overflow-y: auto; padding: 16px;"></div>
+    </div>
+
+    <!-- 生成模態框 -->
+    <div id="diary-generate-modal" class="diary-modal hidden">
+        <div class="diary-modal-content">
+            <div class="diary-modal-title">生成日記</div>
+            <p style="font-size: 13px; color: #6B7280; margin-bottom: 16px;">
+                AI 將根據今日聊天記錄生成一篇私密日記
+            </p>
+            <div class="diary-modal-actions">
+                <button class="diary-modal-btn diary-modal-btn-cancel" onclick="closeGenerateModal()">取消</button>
+                <button class="diary-modal-btn diary-modal-btn-confirm" onclick="generateDiary()">生成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設置模態框 -->
+    <div id="diary-settings-modal" class="diary-modal hidden">
+        <div class="diary-modal-content">
+            <div class="diary-modal-title">日記設置</div>
+            
+            <div class="diary-setting-item">
+                <div class="diary-setting-label">
+                    <div class="diary-setting-title">自動生成日記</div>
+                    <div class="diary-setting-desc">聊天滿 20 條時觸發 AI 生成</div>
+                </div>
+                <div class="diary-toggle" id="diary-auto-gen-toggle-wrapper" onclick="this.classList.toggle('active'); document.getElementById('diary-auto-gen-toggle').checked = !document.getElementById('diary-auto-gen-toggle').checked;">
+                    <input type="checkbox" id="diary-auto-gen-toggle" style="display: none;">
+                    <div class="diary-toggle-knob"></div>
+                </div>
+            </div>
+            
+            <div class="diary-setting-item">
+                <div class="diary-setting-label">
+                    <div class="diary-setting-title">聯動足跡生成</div>
+                    <div class="diary-setting-desc">生成足跡時同步撰寫日記</div>
+                </div>
+                <div class="diary-toggle active" id="diary-sync-footprint-toggle-wrapper" onclick="this.classList.toggle('active'); document.getElementById('diary-sync-footprint-toggle').checked = !document.getElementById('diary-sync-footprint-toggle').checked;">
+                    <input type="checkbox" id="diary-sync-footprint-toggle" checked style="display: none;">
+                    <div class="diary-toggle-knob"></div>
+                </div>
+            </div>
+            
+            <div class="diary-modal-actions">
+                <button class="diary-modal-btn diary-modal-btn-cancel" onclick="closeDiarySettings()">取消</button>
+                <button class="diary-modal-btn diary-modal-btn-confirm" onclick="saveDiarySettings()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>

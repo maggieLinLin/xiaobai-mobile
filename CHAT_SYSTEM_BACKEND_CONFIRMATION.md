@@ -696,3 +696,4 @@ const typingMsg = { text: '输入中...', time, isUser: false, isTyping: true };
 
 系统已准备好进行完整的 AI 角色扮演对话！🎉
 
+

@@ -103,3 +103,4 @@ function updateChatRoomAvatars() {
     ↓
 显示在聊天消息中
 ```
+

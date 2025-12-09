@@ -135,6 +135,7 @@ function initLineeApp() {
             
             if (tab === 'chats') renderChatList();
             if (tab === 'steps') initStepsPage();
+            if (tab === 'diary') openDiaryApp();
         };
     });
     
