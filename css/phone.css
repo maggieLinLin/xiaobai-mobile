@@ -1,4 +1,4 @@
-/* ✅ 终极自适应：动态宽高方案 */
+/* ✅ 终极自适应：边框自动缩放 */
 #phone-container{
     position:fixed;
     top:0;
@@ -13,16 +13,16 @@
 
 #phone-frame{
     background:#FFFFFF;
-    box-shadow:0 20px 60px rgba(0,0,0,0.25);
     overflow:hidden;
-    border:10px solid #78B9DC;
     display:flex;
     flex-direction:column;
     box-sizing:border-box;
     position:relative;
+    border:10px solid #78B9DC;
+    box-shadow:0 20px 60px rgba(0,0,0,0.25);
 }
 
-/* 桌面端：固定尺寸，保持原始大小 */
+/* 桌面端：固定尺寸 */
 @media (min-width:769px){
     #phone-frame{
         width:375px;
@@ -40,39 +40,13 @@
     }
 }
 
-/* 手机端：自适应填充，保持手机比例 (375:667) */
+/* 手机端：自适应缩放，保持边框 */
 @media (max-width:480px){
     #phone-frame{
-        /* 宽度：填充屏幕宽度，留边距 */
-        width:calc(100vw - 32px);
-        /* 高度：根据手机比例计算 (375:667 = 1:1.778) */
-        height:calc((100vw - 32px) * 667 / 375);
-        /* 限制高度不超过屏幕 */
-        max-height:calc(100vh - 32px);
-        border-radius:32px;
-        border-width:8px;
-    }
-}
-
-/* 小屏手机：更细边框 */
-@media (max-width:380px){
-    #phone-frame{
-        border-radius:28px;
-        border-width:6px;
-        width:calc(100vw - 24px);
-        height:calc((100vw - 24px) * 667 / 375);
-        max-height:calc(100vh - 24px);
-    }
-}
-
-/* 超高屏手机：如果高度被限制，则根据高度反推宽度 */
-@media (max-width:480px) and (min-aspect-ratio: 9/19){
-    #phone-frame{
-        /* 高度填充优先 */
-        height:calc(100vh - 32px);
-        /* 宽度根据高度反推 (375:667 的反比) */
-        width:calc((100vh - 32px) * 375 / 667);
-        max-width:calc(100vw - 32px);
+        width:calc(100vw - 20px);
+        height:calc(100vh - 20px);
+        border-radius:clamp(20px, 5vw, 40px);
+        border-width:clamp(4px, 1.5vw, 10px);
     }
 }
 #notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:25px;background:#333;border-radius:0 0 15px 15px;z-index:1000;cursor:pointer}
