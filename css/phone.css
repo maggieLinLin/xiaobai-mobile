@@ -40,11 +40,11 @@
     }
 }
 
-/* 手机端：自适应边框，保持手机感 */
+/* 手机端：自适应边框，避开导航栏 */
 @media (max-width:480px){
     #phone-frame{
         width:100vw;
-        height:100vh;
+        height:100dvh;
         border-radius:clamp(15px, 3vw, 30px);
         border-width:clamp(3px, 1vw, 8px);
     }
