@@ -1933,12 +1933,15 @@ window.confirmAICreateChar = function() {
     const name = document.getElementById('ai-char-name').value.trim();
     if (!name) return alert("请输入名字");
     
+    const appearance = document.getElementById('ai-char-appearance').value.trim();
+    const background = document.getElementById('ai-char-background').value.trim();
+    
     const data = {
         name: name,
         gender: document.getElementById('ai-char-gender').value,
         identity: document.getElementById('ai-char-identity').value,
-        appearance: document.getElementById('ai-char-appearance').value,
-        background: document.getElementById('ai-char-background').value,
+        appearance: appearance,
+        background: background,
         personality_tags: document.getElementById('ai-char-tags').value.split(/[,，]/).map(s => s.trim()).filter(s => s),
         dialogue_style: document.getElementById('ai-char-style').value,
         first_message: document.getElementById('ai-char-first-msg').value,
@@ -1952,7 +1955,9 @@ window.confirmAICreateChar = function() {
     // 2. 添加到好友列表
     lineeFriends.push({ 
         name: char.name, 
-        status: char.identity || "AI Character", 
+        status: char.identity || "AI Character",
+        description: char.background,
+        background: char.background,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${char.name}`,
         isAI: true,
         aiCharacterId: char.id
