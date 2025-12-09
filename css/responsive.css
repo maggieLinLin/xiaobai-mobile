@@ -9,20 +9,11 @@ body, html {
     padding: 0 !important;
 }
 
-/* 桌面端容器居中 */
-@media (min-width: 481px) {
-    #phone-container {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-}
-
-/* 手机端容器贴合 */
-@media (max-width: 480px) {
-    #phone-container {
-        display: block !important;
-    }
+/* 容器居中 */
+#phone-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* 触摸优化 */

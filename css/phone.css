@@ -40,14 +40,13 @@
     }
 }
 
-/* 手机端：全屏贴合，保持边框 */
+/* 手机端：自适应边框，保持手机感 */
 @media (max-width:480px){
     #phone-frame{
         width:100vw;
         height:100vh;
-        border-radius:0;
-        border-width:0;
-        box-shadow:none;
+        border-radius:clamp(15px, 3vw, 30px);
+        border-width:clamp(3px, 1vw, 8px);
     }
 }
 #notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:25px;background:#333;border-radius:0 0 15px 15px;z-index:1000;cursor:pointer}
