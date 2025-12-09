@@ -1952,12 +1952,15 @@ window.confirmAICreateChar = function() {
     const char = new AICore.Character(data);
     aiCharacters[char.id] = char;
     
-    // 2. 添加到好友列表
+    // 2. 合并完整描述
+    const fullDescription = `【身份】${char.identity}\n\n【外貌】${char.appearance}\n\n【性格】${char.personality_tags.join('、')}\n\n【背景故事】${char.background}`;
+    
+    // 3. 添加到好友列表
     lineeFriends.push({ 
         name: char.name, 
         status: char.identity || "AI Character",
-        description: char.background,
-        background: char.background,
+        description: fullDescription,
+        background: fullDescription,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${char.name}`,
         isAI: true,
         aiCharacterId: char.id
