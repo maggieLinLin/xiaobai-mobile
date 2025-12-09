@@ -1173,18 +1173,54 @@
                             </div>
                         </div>
 
-                        <!-- Info Cards -->
-                        <div style="background: white; border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #111827;">背景描述</h3>
-                                <button onclick="toggleEditDescription()" id="edit-desc-btn" style="padding: 6px 12px; border: 1px solid #E5E7EB; background: white; border-radius: 8px; color: #6B7280; font-size: 12px; cursor: pointer;">
-                                    <ion-icon name="create-outline"></ion-icon> 编辑
-                                </button>
+                        <!-- ✅ AI 角色详细设定卡片 -->
+                        <div id="friend-character-settings-card" style="background: white; border-radius: 16px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #111827;">✨ 角色设定</h3>
+                            
+                            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">性别</label>
+                                    <select id="friend-profile-gender" style="width: 100%; padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px;">
+                                        <option value="男">男</option>
+                                        <option value="女">女</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 2;">
+                                    <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">身份/职业</label>
+                                    <input type="text" id="friend-profile-identity" placeholder="例如：28岁霸道总裁" style="width: 100%; padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px;">
+                                </div>
                             </div>
-                            <textarea id="friend-profile-description" placeholder="暂无描述..." style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px; line-height: 1.6; resize: vertical; font-family: inherit;" readonly></textarea>
-                            <div id="desc-save-section" style="display: none; margin-top: 10px; text-align: right;">
-                                <button onclick="saveDescription()" style="padding: 8px 16px; border: none; background: #A0D8EF; color: white; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">保存</button>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">外貌特征</label>
+                                <textarea id="friend-profile-appearance" placeholder="描述角色的外貌、穿着、气质..." rows="3" style="width: 100%; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px; resize: vertical;"></textarea>
                             </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">背景故事</label>
+                                <textarea id="friend-profile-background" placeholder="描述角色的背景故事、经历、性格..." rows="4" style="width: 100%; padding: 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px; resize: vertical;"></textarea>
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">性格标签 (用逗号分隔)</label>
+                                <input type="text" id="friend-profile-tags" placeholder="例如：傲娇、高冷、温柔" style="width: 100%; padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-size: 12px; color: #6B7280; margin-bottom: 4px;">对话风格</label>
+                                <select id="friend-profile-style" style="width: 100%; padding: 8px 10px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 13px;">
+                                    <option value="现代日常 (默认)">现代日常 (默认)</option>
+                                    <option value="古风 (吾, 汝, 甚好)">古风</option>
+                                    <option value="翻译腔 (哦, 我的老伙计)">翻译腔</option>
+                                    <option value="二次元 (颜文字)">二次元</option>
+                                    <option value="赛博朋克">赛博朋克</option>
+                                </select>
+                            </div>
+                            
+                            <button onclick="saveFriendCharacterSettings()" style="width: 100%; padding: 12px; border: none; background: #A0D8EF; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                                ✅ 保存角色设定
+                            </button>
                         </div>
 
                         <!-- World Books Card (Only for AI Characters) -->

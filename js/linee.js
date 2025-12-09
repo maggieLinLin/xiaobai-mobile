@@ -1006,6 +1006,19 @@ function openFriendProfile(friend) {
     document.getElementById('friend-profile-name-input').value = friend.name;
     document.getElementById('friend-profile-nickname').value = friend.nickname || '';
     
+    // ✅ 填充 AI 角色详细设定
+    if (friend.isAI && friend.aiCharacterId) {
+        const aiChar = aiCharacters[friend.aiCharacterId];
+        if (aiChar) {
+            document.getElementById('friend-profile-gender').value = aiChar.gender || '其他';
+            document.getElementById('friend-profile-identity').value = aiChar.identity || '';
+            document.getElementById('friend-profile-appearance').value = aiChar.appearance || '';
+            document.getElementById('friend-profile-background').value = aiChar.background || '';
+            document.getElementById('friend-profile-tags').value = (aiChar.personality_tags || []).join(', ');
+            document.getElementById('friend-profile-style').value = aiChar.dialogue_style || '现代日常 (默认)';
+        }
+    }
+    
     // 设置头像
     const avatarImg = document.getElementById('friend-profile-avatar-img');
     if (friend.avatar) {
@@ -1030,10 +1043,9 @@ function openFriendProfile(friend) {
         bgImg.style.display = 'none';
     }
     
-    // 设置描述
-    const descTextarea = document.getElementById('friend-profile-description');
-    descTextarea.value = friend.description || '';
-    descTextarea.readOnly = true;
+    // ✅ 隐藏旧的背景描述框（已被新欄位取代）
+    const oldDescCard = document.querySelector('#friend-profile-page .info-cards-old');
+    if (oldDescCard) oldDescCard.style.display = 'none';
     
     // ✅ 设置生日和最爱
     const birthdayInput = document.getElementById('friend-profile-birthday');
@@ -1167,41 +1179,38 @@ function toggleEditDescription() {
     }
 }
 
-function saveDescription() {
-    const textarea = document.getElementById('friend-profile-description');
-    const description = textarea.value.trim();
-    
-    if (currentFriendProfile) {
-        currentFriendProfile.description = description;
-        currentFriendProfile.background = description; // 同步到 background 字段
-        
-        // 更新 AI 角色的背景信息
-        if (currentFriendProfile.isAI && currentFriendProfile.aiCharacterId) {
-            const aiChar = aiCharacters[currentFriendProfile.aiCharacterId];
-            if (aiChar) {
-                aiChar.background = description;
-            }
-        }
-        
-        // 更新状态显示
-        if (description) {
-            currentFriendProfile.status = description.substring(0, 50) + (description.length > 50 ? '...' : '');
-            renderLineeFriends();
-        }
-        
-        // 保存到本地
-        saveLineeData();
+// ✅ 新增：保存完整角色设定
+function saveFriendCharacterSettings() {
+    if (!currentFriendProfile || !currentFriendProfile.isAI || !currentFriendProfile.aiCharacterId) {
+        alert('只有 AI 角色才能修改详细设定');
+        return;
     }
     
-    // 退出编辑模式
-    textarea.readOnly = true;
-    textarea.style.borderColor = '#E5E7EB';
-    document.getElementById('desc-save-section').style.display = 'none';
-    document.getElementById('edit-desc-btn').innerHTML = '<ion-icon name="create-outline"></ion-icon> 编辑';
+    const aiChar = aiCharacters[currentFriendProfile.aiCharacterId];
+    if (!aiChar) return;
     
-    alert('描述已保存！');
+    // 读取所有字段
+    aiChar.gender = document.getElementById('friend-profile-gender').value;
+    aiChar.identity = document.getElementById('friend-profile-identity').value.trim();
+    aiChar.appearance = document.getElementById('friend-profile-appearance').value.trim();
+    aiChar.background = document.getElementById('friend-profile-background').value.trim();
+    aiChar.personality_tags = document.getElementById('friend-profile-tags').value.split(/[,，]/).map(s => s.trim()).filter(s => s);
+    aiChar.dialogue_style = document.getElementById('friend-profile-style').value;
     
-    alert('保存成功！');
+    // 同步到好友列表
+    currentFriendProfile.gender = aiChar.gender;
+    currentFriendProfile.identity = aiChar.identity;
+    currentFriendProfile.appearance = aiChar.appearance;
+    currentFriendProfile.background = aiChar.background;
+    currentFriendProfile.personality_tags = aiChar.personality_tags;
+    currentFriendProfile.dialogue_style = aiChar.dialogue_style;
+    currentFriendProfile.status = aiChar.identity || 'AI Character';
+    
+    // 保存
+    saveLineeData();
+    renderLineeFriends();
+    
+    alert('✅ 角色设定已保存！');
 }
 
 // ✅ 生日与最爱功能
@@ -1920,8 +1929,7 @@ window.openAvatarUploader = openAvatarUploader;
 window.openBgUploader = openBgUploader;
 window.handleAvatarUpload = handleAvatarUpload;
 window.handleBgUpload = handleBgUpload;
-window.toggleEditDescription = toggleEditDescription;
-window.saveDescription = saveDescription;
+window.saveFriendCharacterSettings = saveFriendCharacterSettings;
 window.sendMessageToFriend = sendMessageToFriend;
 window.deleteFriend = deleteFriend;
 
@@ -1952,15 +1960,16 @@ window.confirmAICreateChar = function() {
     const char = new AICore.Character(data);
     aiCharacters[char.id] = char;
     
-    // 2. 合并完整描述
-    const fullDescription = `【身份】${char.identity}\n\n【外貌】${char.appearance}\n\n【性格】${char.personality_tags.join('、')}\n\n【背景故事】${char.background}`;
-    
-    // 3. 添加到好友列表
+    // 2. 添加到好友列表（保存完整数据）
     lineeFriends.push({ 
         name: char.name, 
         status: char.identity || "AI Character",
-        description: fullDescription,
-        background: fullDescription,
+        gender: char.gender,
+        identity: char.identity,
+        appearance: char.appearance,
+        background: char.background,
+        personality_tags: char.personality_tags,
+        dialogue_style: char.dialogue_style,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${char.name}`,
         isAI: true,
         aiCharacterId: char.id
